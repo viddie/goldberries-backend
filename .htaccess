@@ -8,6 +8,9 @@ DirectorySlash Off
 RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
 RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
+# Redirect /img/map/<id> (no extension) to map_image.php?id=<id>
+RewriteRule ^img/map/([0-9]+)$ /img/map/map_image.php?id=$1 [QSA,L]
+
 # General rule to route "/api/{endpoint}" to "/api/{endpoint}/{endpoint}.php"
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^api/([^/]+)/?$ api/$1/$1.php [L]
@@ -23,67 +26,67 @@ RewriteRule ^api/([^/]+)/([^/]+)/([^/]+)/?$ api/$1/$2/$3.php [L]
 # Return a 404 for any .sh file requests
 RewriteRule ^.*\.sh$ - [L,R=404]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from submission page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/submission/([0-9]+)$
 RewriteRule ^submission/([0-9]+)$ /embed/submission.php?id=$1 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from suggestions page to embed page
+# Rewrite specifically the Discordbot user agent from suggestions page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/suggestions(/([0-9]+))?/?$ [NC]
 RewriteRule ^suggestions(/([0-9]+))?/?$ /embed/suggestions.php?id=$2 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from challenge page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/challenge/([0-9]+)$
 RewriteRule ^challenge/([0-9]+)$ /embed/challenge.php?id=$1 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from map page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/map/([0-9]+)/?(.*?)$
 RewriteRule ^map/([0-9]+)/?(.*?)$ /embed/map.php?id=$1 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from campaign page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/campaign/([0-9]+)/?(.*?)$
 RewriteRule ^campaign/([0-9]+)/?(.*?)$ /embed/campaign.php?id=$1 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from player page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/player/([0-9]+)/?(.*?)$
 RewriteRule ^player/([0-9]+)/?(.*?)$ /embed/player.php?id=$1 [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from top-golden-list page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/top-golden-list/?(.*?)$
 RewriteRule ^top-golden-list/?(.*?)$ /embed/top-golden-list.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from campaign-list page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/campaign-list/?(.*?)$
 RewriteRule ^campaign-list/?(.*?)$ /embed/campaign-list.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from faq page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/faq/?(.*?)$
 RewriteRule ^faq/?(.*?)$ /embed/faq.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from rules page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/rules/?(.*?)$
 RewriteRule ^rules/?(.*?)$ /embed/rules.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from monthly-recap page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/monthly-recap/?(.*?)$
 RewriteRule ^monthly-recap/?(.*?)$ /embed/monthly-recap.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from rejected-maps page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/rejected-maps/?(.*?)$
 RewriteRule ^rejected-maps/?(.*?)$ /embed/rejected-maps.php [QSA,L]
 
-# Rewrite specifically the Discordbot user agent from submission page to embed page
+# Rewrite specifically the Discordbot user agent from submit page to the embed page
 RewriteCond %{HTTP_USER_AGENT} Discordbot [NC]
 RewriteCond %{REQUEST_URI} ^/submit/?(.*?)$
 RewriteRule ^submit/?(.*?)$ /embed/submit.php [QSA,L]
