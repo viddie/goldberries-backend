@@ -72,7 +72,7 @@ if (file_exists($full_path)) {
 // Different handling depending on destination
 switch ($destination) {
   case "map_image":
-    handle_map_image_upload($_FILES['file'], $full_path, $target_destination, $full_name);
+    handle_map_image_upload($_FILES['file'], $path, $target_destination, $ext);
     break;
 
   default:
@@ -80,10 +80,12 @@ switch ($destination) {
     break;
 }
 
+
 /**
  * Default upload handler
  */
-function handle_default_upload($file, $full_path, $target_destination, $full_name) {
+function handle_default_upload($file, $full_path, $target_destination, $full_name)
+{
   if (move_uploaded_file($file['tmp_name'], $full_path)) {
     api_write([
       "file_name" => $full_name,
@@ -97,85 +99,72 @@ function handle_default_upload($file, $full_path, $target_destination, $full_nam
 /**
  * Custom upload handler for map images
  */
-function handle_map_image_upload($file, $path, $target_destination, $ext) {
-    // Require map_id parameter
-    if (!isset($_POST['map_id']) || !is_numeric($_POST['map_id'])) {
-        die_json(400, "Missing or invalid parameter: map_id");
-    }
-    $map_id = intval($_POST['map_id']);
+function handle_map_image_upload($file, $path, $target_destination, $ext)
+{
+  // Require map_id parameter
+  if (!isset($_POST['map_id']) || !is_numeric($_POST['map_id'])) {
+    die_json(400, "Missing or invalid parameter: map_id");
+  }
+  $map_id = intval($_POST['map_id']);
 
-    // File name is forced to map_id
-    $full_name = $map_id . "." . $ext;
-    $full_path = $path . $full_name;
+  // File name is forced to map_id and extension to webp
+  $full_name = $map_id . ".webp";
+  $full_path = $path . $full_name;
 
-    if (file_exists($full_path)) {
-        die_json(400, "File already exists for this map_id");
-    }
+  // Check image dimensions
+  $image_info = getimagesize($file['tmp_name']);
+  if ($image_info === false) {
+    die_json(400, "Invalid image file");
+  }
 
-    // Check image dimensions
-    $image_info = getimagesize($file['tmp_name']);
-    if ($image_info === false) {
-        die_json(400, "Invalid image file");
-    }
+  list($width, $height) = $image_info;
 
-    list($width, $height) = $image_info;
-    if ($width !== 1920 || $height !== 1080) {
-        die_json(400, "Invalid image dimensions: expected 1920x1080");
-    }
+  //Enforce the image to be 16:9 aspect ratio
+  if ($width * 9 !== $height * 16) {
+    die_json(400, "Invalid image dimensions: expected 16:9 aspect ratio");
+  }
+  if ($width < 320 || $height < 180) {
+    die_json(400, "Invalid image dimensions: minimum size is 320x180");
+  }
 
-    // Load image based on type
-    $mime = $image_info['mime'];
-    switch ($mime) {
-        case 'image/png':
-            $src_image = imagecreatefrompng($file['tmp_name']);
-            break;
-        case 'image/jpeg':
-            $src_image = imagecreatefromjpeg($file['tmp_name']);
-            break;
-        case 'image/gif':
-            $src_image = imagecreatefromgif($file['tmp_name']);
-            break;
-        case 'image/webp':
-            $src_image = imagecreatefromwebp($file['tmp_name']);
-            break;
-        default:
-            die_json(400, "Unsupported image type for map_image");
-    }
+  // Load image based on type
+  $mime = $image_info['mime'];
+  switch ($mime) {
+    case 'image/png':
+      $src_image = imagecreatefrompng($file['tmp_name']);
+      break;
+    case 'image/jpeg':
+      $src_image = imagecreatefromjpeg($file['tmp_name']);
+      break;
+    case 'image/gif':
+      $src_image = imagecreatefromgif($file['tmp_name']);
+      break;
+    case 'image/webp':
+      $src_image = imagecreatefromwebp($file['tmp_name']);
+      break;
+    default:
+      die_json(400, "Unsupported image type for map_image");
+  }
 
-    // Scale down to 320x180 using nearest neighbor
-    $dst_width = 320;
-    $dst_height = 180;
-    $dst_image = imagecreatetruecolor($dst_width, $dst_height);
-    // nearest neighbor scaling
-    imagecopyresized($dst_image, $src_image, 0, 0, 0, 0, $dst_width, $dst_height, $width, $height);
+  // Scale using nearest neighbor
+  $dst_width = 1920;
+  $dst_height = 1080;
+  $dst_image = imagecreatetruecolor($dst_width, $dst_height);
+  imagecopyresized($dst_image, $src_image, 0, 0, 0, 0, $dst_width, $dst_height, $width, $height);
 
-    // Save image in original format
-    $saved = false;
-    switch ($mime) {
-        case 'image/png':
-            $saved = imagepng($dst_image, $full_path);
-            break;
-        case 'image/jpeg':
-            $saved = imagejpeg($dst_image, $full_path, 90); // quality 90
-            break;
-        case 'image/gif':
-            $saved = imagegif($dst_image, $full_path);
-            break;
-        case 'image/webp':
-            $saved = imagewebp($dst_image, $full_path, 90); // quality 90
-            break;
-    }
+  // Save image in webp
+  $saved = imagewebp($dst_image, $full_path, 90); // quality 90
 
-    imagedestroy($src_image);
-    imagedestroy($dst_image);
+  imagedestroy($src_image);
+  imagedestroy($dst_image);
 
-    if (!$saved) {
-        die_json(500, "Failed to save resized map image");
-    }
+  if (!$saved) {
+    die_json(500, "Failed to save resized map image");
+  }
 
-    api_write([
-        "file_name" => $full_name,
-        "path" => "/$target_destination/$full_name",
-    ]);
+  api_write([
+    "file_name" => $full_name,
+    "path" => "/$target_destination/$full_name",
+  ]);
 }
 

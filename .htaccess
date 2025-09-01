@@ -8,8 +8,9 @@ DirectorySlash Off
 RewriteCond %{HTTP_HOST} ^www\.(.*)$ [NC]
 RewriteRule ^(.*)$ https://%1/$1 [R=301,L]
 
-# Redirect /img/map/<id> (no extension) to map_image.php?id=<id>
-RewriteRule ^img/map/([0-9]+)$ /img/map/map_image.php?id=$1 [QSA,L]
+# Redirect /img/map/<id>[&params] to map_image.php?id=<id>[&params]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^img/map/([0-9]+)(?:&(.*))?$ /img/map/map_image.php?id=$1&$2 [QSA,L]
 
 # General rule to route "/api/{endpoint}" to "/api/{endpoint}/{endpoint}.php"
 RewriteCond %{REQUEST_FILENAME} !-f
