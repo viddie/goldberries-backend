@@ -3,6 +3,7 @@
 require_once(dirname(__FILE__) . '/../../bootstrap.inc.php');
 $font_path = dirname(__FILE__) . '/Renogare-Regular.otf';
 $cache_folder = dirname(__FILE__) . '/cache';
+$map_images_folder = dirname(__FILE__) . '/../../img/map';
 
 
 $DB = db_connect();
@@ -26,6 +27,12 @@ $submission->expand_foreign_keys($DB, 5);
 $player = $submission->player;
 $challenge = $submission->challenge;
 $map = $challenge->map;
+$has_map_image = false;
+if ($map) {
+  header("X-Map-ID: " . $map->id);
+  header("X-Map-Image-Path: " . ($map_images_folder . "/" . $map->id . ".webp"));
+  $has_map_image = $map && file_exists($map_images_folder . "/" . $map->id . ".webp");
+}
 $campaign = $challenge->get_campaign();
 
 //Url is in form of https://gamebanana.com/mods/123456
@@ -63,16 +70,41 @@ $python_command = constant('PYTHON_COMMAND');
 if ($python_command === false || $python_command === null) {
   //Read base image from file and output it instead (test server environment)
   header("Content-type: image/jpg");
-  if ($modId !== null) {
-    $img = imagecreatefromjpeg($cacheFile);
-    $text_color = imagecolorallocate($img, 255, 255, 255);
+  if ($has_map_image) {
+    $img = imagecreatefromwebp($map_images_folder . "/" . $map->id . ".webp");
+    //Resize to 1000x500
+    // $img = imagescale($img, 1000, 500);
+    //But dont just stretch it, crop it to fit the aspect ratio first
+    $width = imagesx($img);
+    $height = imagesy($img);
+    $target_aspect = 1000 / 500;
+    $current_aspect = $width / $height;
+    if ($current_aspect > $target_aspect) {
+      //Crop the sides
+      $new_width = $height * $target_aspect;
+      $x = ($width - $new_width) / 2;
+      $img = imagecrop($img, ['x' => $x, 'y' => 0, 'width' => $new_width, 'height' => $height]);
+    } else {
+      //Crop the top and bottom
+      $new_height = $width / $target_aspect;
+      $y = ($height - $new_height) / 2;
+      $img = imagecrop($img, ['x' => 0, 'y' => $y, 'width' => $width, 'height' => $new_height]);
+    }
+    $img = imagescale($img, 1000, 500);
+
   } else {
-    //Create blank 1000x500 image
-    $text_color = imagecolorallocate($img, 0, 0, 0);
-    $img = imagecreatetruecolor(1000, 500);
-    $bg = imagecolorallocate($img, 255, 255, 255);
-    imagefill($img, 0, 0, $bg);
+    if ($modId !== null) {
+      $img = imagecreatefromjpeg($cacheFile);
+      $text_color = imagecolorallocate($img, 255, 255, 255);
+    } else {
+      //Create blank 1000x500 image
+      $text_color = imagecolorallocate($img, 0, 0, 0);
+      $img = imagecreatetruecolor(1000, 500);
+      $bg = imagecolorallocate($img, 255, 255, 255);
+      imagefill($img, 0, 0, $bg);
+    }
   }
+
   //Write text "Test Environment" in the center middle
   $text = "(Test Server)";
   $font_size = 50;
@@ -116,6 +148,8 @@ if ($map !== null) {
   $data["fields"][] = "map_name";
   $data["map_is_archived"] = $map->is_archived;
   $data["fields"][] = "map_is_archived";
+  $data["map_image_url"] = $has_map_image ? ($map_images_folder . "/" . $map->id . ".webp") : null;
+  $data["fields"][] = "map_image_url";
 }
 
 // Encode in base64

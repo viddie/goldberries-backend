@@ -19,3 +19,14 @@ function output_image_embed($url, $title, $description, $image_url)
   $template = str_replace("{{image_url}}", htmlspecialchars($image_url), $template);
   echo $template;
 }
+
+function output_image_with_site_embed($url, $title, $description, $image_url, $site_name)
+{
+  $template = file_get_contents("image-with-site-embed-template.html");
+  $template = str_replace("{{url}}", htmlspecialchars($url), $template);
+  $template = str_replace("{{title}}", htmlspecialchars($title), $template);
+  $template = str_replace("{{description}}", htmlspecialchars($description), $template);
+  $template = str_replace("{{image_url}}", htmlspecialchars($image_url), $template);
+  $template = str_replace("{{site_name}}", htmlspecialchars($site_name), $template);
+  echo $template;
+}

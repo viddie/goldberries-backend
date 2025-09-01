@@ -18,7 +18,7 @@ $throw = isset($_REQUEST['throw']) ? $_REQUEST['throw'] : null;
 
 //For debugging, attach parameters to the header
 
-if ($id <= 0) {
+if ($id < 0) {
   http_response_code(400);
   die();
 }
@@ -35,8 +35,8 @@ if ($ext !== null && !in_array(strtolower($ext), $allowedExtensions)) {
 
 // Find file by trying known extensions
 $foundFile = null;
-foreach ($allowedExtensions as $ext) {
-  $path = $map_folder . "/" . $id . "." . $ext;
+foreach ($allowedExtensions as $ext_temp) {
+  $path = $map_folder . "/" . $id . "." . $ext_temp;
   if (file_exists($path)) {
     $foundFile = $path;
     break;
@@ -45,12 +45,20 @@ foreach ($allowedExtensions as $ext) {
 
 $is_unknown = false;
 if (!$foundFile) {
+  $is_unknown = true;
   if ($throw === "true" || $throw === "1") {
     http_response_code(404);
     die();
   }
   $foundFile = $unknownFile;
-  $is_unknown = true;
+}
+
+if ($id !== 0 && $is_unknown) {
+  //Redirect to id=0 so the client can cache the unknown image.
+  //If we are already on id=0, dont redirect and output the unknown image
+  //Attach the parameters scale and ext. dont need to attach throw since its always false here.
+  header("Location: map_image.php?id=0&scale=$scale" . ($ext !== null ? "&ext=$ext" : ""));
+  exit();
 }
 
 outputImage($foundFile, $ext, $scale, $is_unknown);

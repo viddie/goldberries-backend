@@ -1,8 +1,9 @@
 <?php
 
-require_once (dirname(__FILE__) . '/../bootstrap.inc.php');
-require_once (dirname(__FILE__) . '/embed_include.php');
+require_once(dirname(__FILE__) . '/../bootstrap.inc.php');
+require_once(dirname(__FILE__) . '/embed_include.php');
 
+$map_images_folder = dirname(__FILE__) . '/../img/map';
 $DB = db_connect();
 
 $id = intval($_REQUEST['id']);
@@ -19,10 +20,11 @@ if (!$map) {
 
 $map->expand_foreign_keys($DB, 5);
 $map->fetch_challenges($DB, true);
-$title_str = "Map: " . $map->get_name(true);
+$title_str = $map->get_name(true);
 $description_str = "";
 $campaign_str = $map->campaign->get_name();
-// $description_str .= "For Campaign: " . $campaign_str . "\n\n";
+$has_map_image = file_exists($map_images_folder . "/" . $map->id . ".webp");
+$map_image = $has_map_image ? ("https://" . $_SERVER['HTTP_HOST'] . "/img/map/" . $map->id . "&ext=jpg&scale=6") : null;
 
 if (count($map->challenges) > 0) {
   $description_str .= "Challenges:\n";
@@ -46,4 +48,8 @@ if (count($map->challenges) > 0) {
 
 $real_url = $map->get_url();
 
-output_text_embed($real_url, $title_str, $description_str, $campaign_str);
+if ($has_map_image) {
+  output_image_with_site_embed($real_url, $title_str, $description_str, $map_image, $campaign_str);
+} else {
+  output_text_embed($real_url, $title_str, $description_str, $campaign_str);
+}

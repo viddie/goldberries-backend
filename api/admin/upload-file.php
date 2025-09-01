@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $account = get_user_data();
-check_access($account, false);
+check_access($account, true);
 if (!is_news_writer($account)) {
   die_json(403, "Not authorized");
 }
@@ -101,6 +101,8 @@ function handle_default_upload($file, $full_path, $target_destination, $full_nam
  */
 function handle_map_image_upload($file, $path, $target_destination, $ext)
 {
+  global $account;
+
   // Require map_id parameter
   if (!isset($_POST['map_id']) || !is_numeric($_POST['map_id'])) {
     die_json(400, "Missing or invalid parameter: map_id");
@@ -161,6 +163,10 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
   if (!$saved) {
     die_json(500, "Failed to save resized map image");
   }
+
+  // Delete all cached embeds that reference this map
+  submission_embed_change($map_id, "map");
+  log_info("'" . $account->player->name . "' updated map image for map_id $map_id");
 
   api_write([
     "file_name" => $full_name,
