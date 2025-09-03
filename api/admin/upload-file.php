@@ -56,7 +56,7 @@ $file_name = $_POST['file_name'] ?? pathinfo($_FILES['file']['name'], PATHINFO_F
 //Clean the file name to be only alphanumeric, periods, and hyphens
 $file_name = preg_replace('/[^a-zA-Z0-9\.\-]/', '_', $file_name);
 
-$ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+$ext = strtolower(pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION));
 if (!in_array($ext, $allowed_extensions)) {
   die_json(400, "File extension not allowed");
 }

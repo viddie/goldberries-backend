@@ -169,7 +169,7 @@
           const difficultyId = getCookie('difficulty_id');
 
           let mapImageUrl = escapeHtml(getCookie('map_image_url'));
-          if(mapImageUrl){
+          if(mapImageUrl !== "None"){
             sel("#background").style.backgroundImage = "url('"+mapImageUrl+"')";
           } else {
             sel("#background").style.backgroundImage = "url('cache/"+modId+".jpg')";
