@@ -3,6 +3,7 @@
 require_once(dirname(__FILE__) . '/../bootstrap.inc.php');
 require_once(dirname(__FILE__) . '/embed_include.php');
 
+$map_images_folder = dirname(__FILE__) . '/../img/map';
 $DB = db_connect();
 
 $id = intval($_REQUEST['id']);
@@ -19,6 +20,13 @@ if (!$challenge) {
 
 $challenge->expand_foreign_keys($DB, 5);
 $challenge->fetch_submissions($DB);
+
+$map = $challenge->map;
+$map_image = null;
+if ($map && file_exists($map_images_folder . "/" . $map->id . ".webp")) {
+  $map_image = "https://" . $_SERVER['HTTP_HOST'] . "/img/map/" . $map->id . "&ext=jpg&scale=6";
+}
+
 $title_str = "Challenge: " . $challenge->get_name(true);
 $description_str = "";
 $campaign_str = $challenge->get_campaign()->get_name();
@@ -47,4 +55,8 @@ if ($count_submissions > 0) {
 
 $real_url = $challenge->get_url();
 
-output_text_embed($real_url, $title_str, $description_str, $campaign_str);
+if ($map_image) {
+  output_image_with_site_embed($real_url, $title_str, $description_str, $map_image, $campaign_str);
+} else {
+  output_text_embed($real_url, $title_str, $description_str, $campaign_str);
+}

@@ -23,8 +23,11 @@ $map->fetch_challenges($DB, true);
 $title_str = $map->get_name(true);
 $description_str = "";
 $campaign_str = $map->campaign->get_name();
-$has_map_image = file_exists($map_images_folder . "/" . $map->id . ".webp");
-$map_image = $has_map_image ? ("https://" . $_SERVER['HTTP_HOST'] . "/img/map/" . $map->id . "&ext=jpg&scale=6") : null;
+
+$map_image = null;
+if (file_exists($map_images_folder . "/" . $map->id . ".webp")) {
+  $map_image = "https://" . $_SERVER['HTTP_HOST'] . "/img/map/" . $map->id . "&ext=jpg&scale=6";
+}
 
 if (count($map->challenges) > 0) {
   $description_str .= "Challenges:\n";
@@ -48,7 +51,7 @@ if (count($map->challenges) > 0) {
 
 $real_url = $map->get_url();
 
-if ($has_map_image) {
+if ($map_image) {
   output_image_with_site_embed($real_url, $title_str, $description_str, $map_image, $campaign_str);
 } else {
   output_text_embed($real_url, $title_str, $description_str, $campaign_str);

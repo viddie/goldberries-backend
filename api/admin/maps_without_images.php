@@ -18,12 +18,13 @@ header('Content-Type: text/html');
 
 $query = "SELECT
   *
-FROM view_challenges";
+FROM view_challenges
+WHERE map_id IS NOT NULL AND challenge_is_rejected = FALSE";
 
 $result = pg_query_params_or_die($DB, $query);
 
 $campaigns = [];
-$max_maps = 5426;
+$all_maps = [];
 
 while ($row = pg_fetch_assoc($result)) {
   if ($row['map_id'] === null) {
@@ -52,17 +53,24 @@ while ($row = pg_fetch_assoc($result)) {
       $campaigns[$campaign->id]['maps'][$map->id] = $map;
     }
   }
+  // Collect just for map count
+  if (!isset($all_maps[$map->id])) {
+    $all_maps[$map->id] = $map;
+  }
 }
 
 // Count all maps without images
+$max_maps = count($all_maps);
 $total_maps_without_images = 0;
 foreach ($campaigns as $campaign_data) {
   $total_maps_without_images += count($campaign_data['maps']);
 }
 
-$percentage = (($max_maps - $total_maps_without_images) / $max_maps) * 100;
+$maps_done = $max_maps - $total_maps_without_images;
+$percentage = ($maps_done / $max_maps) * 100;
 $percent_str = number_format($percentage, 2);
-echo "<p><b>Found $total_maps_without_images (out of $max_maps -> $percent_str%) maps without images:</b></p>";
+echo "<p><b>Found ($total_maps_without_images / $max_maps) maps without images.</b><br>";
+echo "<b>Maps done: $maps_done ($percent_str%)</b></p>";
 
 // Output campaign-wise all the maps that dont have images
 

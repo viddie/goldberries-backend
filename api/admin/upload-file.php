@@ -166,7 +166,7 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
 
   // Delete all cached embeds that reference this map
   submission_embed_change($map_id, "map");
-  log_info("'" . $account->player->name . "' updated map image for map_id $map_id");
+  log_info("'" . $account->player->name . "' updated map image for map_id $map_id", "Map");
 
   api_write([
     "file_name" => $full_name,
