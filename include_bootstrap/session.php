@@ -129,20 +129,36 @@ function get_user_data()
 {
   global $DB;
 
+  $account = null;
+
+  // Check based on session token in cookie
   $token = get_token();
-  if ($token == null) {
+  if ($token !== null) {
+    $account = Account::find_by_session_token($DB, $token);
+    if ($account == false) {
+      return null;
+    }
+  }
+
+  // If not available, check for header: X-API-Key
+  if ($account === null && isset($_SERVER['HTTP_X_API_KEY'])) {
+    $api_key = $_SERVER['HTTP_X_API_KEY'];
+    $account = Account::find_by_api_key($DB, $api_key);
+    if ($account == false) {
+      return null;
+    }
+    $account->using_api_key = true;
+  }
+
+  if ($account === null) {
     return null;
   }
 
-  //Fetch account from database
-  //Respect the expire time of the session
-  $account = Account::find_by_session_token($DB, $token);
-  if ($account == false) {
-    return null;
-  }
+  // Ignore banned users
   if (is_suspended($account)) {
     return null;
   }
+
   $account->expand_foreign_keys($DB);
   return $account;
 }
@@ -308,5 +324,21 @@ function check_access($account, $needs_player = true, $reject_suspended = true)
   }
   if ($needs_player && $account->player === null) {
     die_json(403, "Account does not have a player claimed yet");
+  }
+}
+function check_role($account, $min_role)
+{
+  check_access($account);
+  if ($account->role < $min_role) {
+    die_json(403, "Not authorized");
+  }
+}
+function reject_api_keys($account)
+{
+  if ($account === null) {
+    die_json(401, "Not logged in");
+  }
+  if ($account->using_api_key) {
+    die_json(403, "This action is not allowed when using an API key");
   }
 }

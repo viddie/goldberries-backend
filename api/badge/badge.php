@@ -5,16 +5,6 @@ require_once('../api_bootstrap.inc.php');
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = $_REQUEST['id'];
   $badges = Badge::get_request($DB, $id);
-
-  //no FKs
-  // if (is_array($badges)) {
-  //   foreach ($badges as $badge) {
-  //     $badge->expand_foreign_keys($DB, 2, false);
-  //   }
-  // } else {
-  //   $badges->expand_foreign_keys($DB, 2, false);
-  // }
-
   api_write($badges);
 }
 
@@ -53,11 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
-  if ($account === null) {
-    die_json(401, "Not logged in");
-  } else if (!is_verifier($account)) {
-    die_json(403, "Not authorized");
-  }
+  check_role($account, $VERIFIER);
+  reject_api_keys($account);
 
   if (!isset($_REQUEST['id'])) {
     die_json(400, "Missing id");

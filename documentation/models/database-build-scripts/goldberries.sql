@@ -142,6 +142,7 @@ CREATE TABLE account
  last_player_rename timestamptz NULL,
  notifications      integer NOT NULL DEFAULT 3,
  country            text NULL,
+ api_key            varchar(32) NULL,
  CONSTRAINT account_pkey PRIMARY KEY ( "id" ),
  CONSTRAINT account_claimed_player_id_fkey FOREIGN KEY ( claimed_player_id ) REFERENCES player ( "id" ) ON DELETE SET NULL ON UPDATE CASCADE,
  CONSTRAINT account_player_id_fkey FOREIGN KEY ( player_id ) REFERENCES player ( "id" ) ON DELETE SET NULL ON UPDATE CASCADE,

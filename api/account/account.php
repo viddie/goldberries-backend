@@ -267,6 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
 // Delete Request
 if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
+  reject_api_keys($account);
   if (is_verifier($account) && !isset($_REQUEST['self'])) {
     if (!isset($_REQUEST['id'])) {
       die_json(400, "Invalid id");

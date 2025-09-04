@@ -10,11 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 $account = get_user_data();
 // ===== POST Request =====
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-  check_access($account, true);
-
-  if (!is_admin($account)) {
-    die_json(403, 'Forbidden');
-  }
+  check_role($account, $ADMIN);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $settings = new ServerSettings();

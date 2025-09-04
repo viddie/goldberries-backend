@@ -167,11 +167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Delete Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
-  if ($account === null) {
-    die_json(401, "Not logged in");
-  } else if (!is_verifier($account)) {
-    die_json(403, "Not authorized");
-  }
+  check_role($account, $VERIFIER);
+  reject_api_keys($account);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {

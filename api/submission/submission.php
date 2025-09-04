@@ -343,9 +343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // ===== DELETE Request =====
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
-  if ($account === null) {
-    die_json(401, "You must be logged in to delete submissions");
-  }
+  check_access($account);
 
   $id = intval($_REQUEST['id']);
   $submission = Submission::get_by_id($DB, $id);
@@ -355,9 +353,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
   //Trying to delete submission for another player
   if ($submission->player_id !== $account->player->id) {
-    if (!is_helper($account)) {
-      die_json(403, "You are not allowed to delete submissions for other players");
-    }
+    check_role($account, $HELPER);
     //If the account is a helper, they can only delete objects that were created within the last 24 hours
     if ($account->role === $HELPER && !helper_can_delete($submission->date_created)) {
       die_json(403, "You can only delete submissions that were created within the last 24 hours");

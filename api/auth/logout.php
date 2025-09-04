@@ -6,6 +6,7 @@ $account = get_user_data();
 if ($account == null) {
   die_json(401, "Not logged in");
 }
+reject_api_keys($account);
 
 if (logout()) {
   http_response_code(200);

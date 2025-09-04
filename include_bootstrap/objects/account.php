@@ -33,6 +33,8 @@ class Account extends DbObject
   // Other
   public ?JsonDateTime $last_player_rename = null;
   public int $notifications = 3; //Default notifications: Account::$NOTIF_SUB_VERIFIED | Account::$NOTIF_CHALL_PERSONAL
+  public ?string $api_key = null;
+  public bool $using_api_key = false; //Field not set from DB, only set through auth process
 
   // Foreign Keys
   public ?int $player_id = null;
@@ -95,9 +97,11 @@ class Account extends DbObject
     if (isset($arr[$prefix . 'country']))
       $this->country = $arr[$prefix . 'country'];
 
-    if (isset($arr[$prefix . 'last_player_rename'])) {
+    if (isset($arr[$prefix . 'last_player_rename']))
       $this->last_player_rename = new JsonDateTime($arr[$prefix . 'last_player_rename']);
-    }
+
+    if (isset($arr[$prefix . 'api_key']))
+      $this->api_key = $arr[$prefix . 'api_key'];
   }
   function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
@@ -139,7 +143,8 @@ class Account extends DbObject
       'name_color_end' => $this->name_color_end,
       'country' => $this->country,
       'last_player_rename' => $this->last_player_rename,
-      'notifications' => $this->notifications
+      'notifications' => $this->notifications,
+      'api_key' => $this->api_key,
     );
   }
 
@@ -156,7 +161,6 @@ class Account extends DbObject
 
   static function find_by_session_token($DB, string $session_token)
   {
-    global $session_expire_days;
     $sessions = Session::find_by_token($DB, $session_token);
     if ($sessions === false || count($sessions) === 0 || count($sessions) > 1) {
       return false;
@@ -165,6 +169,19 @@ class Account extends DbObject
     $session = $sessions[0];
     $session->expand_foreign_keys($DB);
     return $session->account;
+  }
+
+  static function find_by_api_key($DB, string $api_key)
+  {
+    $query = "SELECT * FROM account WHERE api_key IS NOT NULL AND api_key = $1";
+    $result = pg_query_params_or_die($DB, $query, [$api_key]);
+    if (pg_num_rows($result) === 0) {
+      return false;
+    }
+    $row = pg_fetch_assoc($result);
+    $account = new Account();
+    $account->apply_db_data($row);
+    return $account;
   }
 
   static function find_by_email_verify_code($DB, string $email_verify_code)
@@ -198,6 +215,8 @@ class Account extends DbObject
   {
     $this->password = null;
     $this->email_verify_code = null;
+    $this->api_key = null;
+    $this->using_api_key = false;
 
     if ($remove_email) {
       $this->email = null;

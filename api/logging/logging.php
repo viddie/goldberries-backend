@@ -6,9 +6,7 @@ $account = get_user_data();
 
 // ===== GET Request =====
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-  if ($account === null || !is_verifier($account)) {
-    die_json(403, "Forbidden");
-  }
+  check_role($account, $VERIFIER);
 
   if (!isset($_REQUEST['page'])) {
     die_json(400, "Missing parameter: page");
@@ -31,9 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // ===== DELETE Request =====
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-  if ($account === null || (!is_admin($account))) {
-    die_json(403, "Forbidden");
-  }
+  check_role($account, $ADMIN);
+  reject_api_keys($account);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {

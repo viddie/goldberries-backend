@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 // Delete Request
 if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
   $account = get_user_data();
+  reject_api_keys($account);
 
   if (!isset($_REQUEST['id'])) {
     die_json(400, "Invalid id");
