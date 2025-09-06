@@ -27,15 +27,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // Generate new API key: 32 random characters from 0-9a-f
   $new_api_key = bin2hex(random_bytes(16));
   $target_account->api_key = $new_api_key;
-  $target_account->update($DB);
-  api_write([
-    "api_key" => $new_api_key
-  ]);
+  if ($target_account->update($DB)) {
+    log_info("Updated API key for $account", "Account");
+    api_write([
+      "api_key" => $new_api_key
+    ]);
+  } else {
+    die_json(500, "Failed to update API key");
+  }
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   //Remove your API key
   $target_account->api_key = null;
-  $target_account->update($DB);
-  http_response_code(200);
+  if ($target_account->update($DB)) {
+    log_info("Revoked API key for $account", "Account");
+    http_response_code(200);
+  } else {
+    die_json(500, "Failed to revoke API key");
+  }
 }
