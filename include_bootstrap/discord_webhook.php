@@ -222,7 +222,6 @@ function send_webhook_suggestion_accepted($suggestion)
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
 
-
 function send_webhook_submission_verified($submission)
 {
   global $DB;
@@ -424,7 +423,6 @@ function send_webhook_challenge_moved($challenge, $new_difficulty_id)
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
 
-
 function send_webhook_post_created(Post $post)
 {
   global $DB;
@@ -444,6 +442,27 @@ function send_webhook_post_created(Post $post)
 
   $message = "### {$post->title}\n{$first_paragraph}\n-# {$announcement_ping}Check out the [full post here](<{$post->get_url()}>)";
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+}
+
+function send_webhook_mod_report($player, $topic, $message, $url = null)
+{
+  global $webhooks_enabled;
+  if (!$webhooks_enabled) {
+    return;
+  }
+
+  $webhook_url = constant('MOD_REPORT_WEBHOOK_URL');
+
+  //Validate URL (if given)
+  if ($url !== null && !filter_var($url, FILTER_VALIDATE_URL)) {
+    die_json(400, 'Invalid URL');
+  }
+
+  $player_name = "`" . $player->name . "`";
+  $url_str = $url !== null ? "\n**Provided URL**: <" . $url . ">" : "";
+  $wh_message = "# Report\n\n**Player:** {$player_name}\n**Topic:** `{$topic}`{$url_str}\n**Message:** `" . remove_backticks($message) . "`";
+
+  send_simple_webhook_message($webhook_url, $wh_message);
 }
 
 function clean_post_content($content)
