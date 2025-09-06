@@ -77,18 +77,18 @@ function generate_collage_image($maps, $max_images = 4, $scale = 1)
     $selected_maps = $maps;
   }
 
+  // Create final canvas
+  $canvas_width = 320 * $scale;
+  $canvas_height = 180 * $scale;
+  $canvas = imagecreatetruecolor($canvas_width, $canvas_height);
+
   // Determine grid layout (rows x cols) as square as possible
   $cols = ceil(sqrt($num_images));
   $rows = ceil($num_images / $cols);
 
-  // Sub-image size (base 320x180)
-  $sub_width = 320 * $scale;
-  $sub_height = 180 * $scale;
-
-  // Create final canvas
-  $canvas_width = $cols * $sub_width;
-  $canvas_height = $rows * $sub_height;
-  $canvas = imagecreatetruecolor($canvas_width, $canvas_height);
+  // Sub-image size
+  $sub_width = intval($canvas_width / $cols);
+  $sub_height = intval($canvas_height / $rows);
 
   // Fill background with black
   $black = imagecolorallocate($canvas, 0, 0, 0);

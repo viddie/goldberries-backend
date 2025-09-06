@@ -22,7 +22,9 @@ $campaign->fetch_challenges($DB, false, false);
 $query = "SELECT 
   * 
 FROM view_submissions 
-WHERE submission_is_verified = true 
+WHERE
+  submission_is_verified = true
+  AND submission_is_obsolete = false
   AND campaign_id = $campaign_id 
   -- AND map_is_archived = false 
   AND map_is_progress = true

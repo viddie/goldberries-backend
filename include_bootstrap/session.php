@@ -1,34 +1,5 @@
 <?php
 
-DEFINE('DISCORD_CLIENT_ID', getenv('DISCORD_CLIENT_ID'));
-DEFINE('DISCORD_CLIENT_SECRET', getenv('DISCORD_CLIENT_SECRET'));
-DEFINE('DISCORD_TOKEN_URL', 'https://discord.com/api/oauth2/token');
-DEFINE('DISCORD_API_URL', 'https://discord.com/api');
-if (getenv('DEBUG') === 'true') {
-  DEFINE('DISCORD_OAUTH_URL', 'https://discord.com/api/oauth2/authorize?client_id=1196814348203593729&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%2Fapi%2Fauth%2Fdiscord_auth.php&scope=identify');
-  DEFINE('DISCORD_REDIRECT_URI', 'http://localhost/api/auth/discord_auth.php');
-  DEFINE('REDIRECT_POST_LOGIN', 'http://localhost:3000');
-  DEFINE('REDIRECT_POST_LINK_ACCOUNT', 'http://localhost:3000/my-account');
-} else {
-  DEFINE('DISCORD_OAUTH_URL', 'https://discord.com/oauth2/authorize?client_id=1196814348203593729&response_type=code&redirect_uri=https%3A%2F%2Fgoldberries.net%2Fapi%2Fauth%2Fdiscord_auth.php&scope=identify');
-  DEFINE('DISCORD_REDIRECT_URI', 'https://goldberries.net/api/auth/discord_auth.php');
-  DEFINE('REDIRECT_POST_LOGIN', 'https://goldberries.net');
-  DEFINE('REDIRECT_POST_LINK_ACCOUNT', 'https://goldberries.net/my-account');
-}
-
-//Role Management
-$USER = 0;
-$EX_HELPER = 10;
-$EX_VERIFIER = 11;
-$EX_ADMIN = 12;
-$NEWS_WRITER = 15;
-$HELPER = 20;
-$VERIFIER = 30;
-$ADMIN = 40;
-
-$VALID_ROLES = [$USER, $EX_HELPER, $EX_VERIFIER, $EX_ADMIN, $NEWS_WRITER, $HELPER, $VERIFIER, $ADMIN];
-//===============
-
 session_start();
 
 function get_discord_url()
