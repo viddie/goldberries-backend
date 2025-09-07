@@ -9,7 +9,7 @@
 - [Backend Repository](https://github.com/viddie/goldberries-backend) [YOU ARE HERE]
 - [Celeste Modded Done Deathless Discord Server](https://discord.gg/GeJvmMycaC)
 
-## Frontend Repository
+## Backend Repository
 
 This repository contains the backend. The backend provides an API written in PHP, ontop of a postgres database.
 
