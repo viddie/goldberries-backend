@@ -62,7 +62,7 @@ function is_valid_name($name): bool
 function check_url($url, $field_name = null)
 {
   if (!is_valid_url($url)) {
-    die_json(400, $field_name === null ? "invalid url" : "{$field_name} is not a valid url");
+    die_json(400, $field_name === null ? "Invalid URL" : "{$field_name} is not a valid URL");
   }
 }
 

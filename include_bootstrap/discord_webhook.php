@@ -454,13 +454,13 @@ function send_webhook_mod_report($player, $topic, $message, $url = null)
   $webhook_url = constant('MOD_REPORT_WEBHOOK_URL');
 
   //Validate URL (if given)
-  if ($url !== null && !filter_var($url, FILTER_VALIDATE_URL)) {
-    die_json(400, 'Invalid URL');
+  if ($url !== null) {
+    check_url($url);
   }
 
   $player_name = "`" . $player->name . "`";
   $url_str = $url !== null ? "\n**Provided URL**: <" . $url . ">" : "";
-  $wh_message = "# Report\n\n**Player:** {$player_name}\n**Topic:** `{$topic}`{$url_str}\n**Message:** `" . remove_backticks($message) . "`";
+  $wh_message = "# Report\n\n**By:** {$player_name}\n**Topic:** `{$topic}`{$url_str}\n**Message:** `" . remove_backticks($message) . "`";
 
   send_simple_webhook_message($webhook_url, $wh_message);
 }

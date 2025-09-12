@@ -10,9 +10,10 @@ $account = get_user_data();
 check_access($account);
 
 //Extract parameters: topic, message, url (optional)
-$topic = trim($_REQUEST['topic'] ?? null);
-$message = trim($_REQUEST['message'] ?? null);
-$url = trim($_REQUEST['url'] ?? null);
+$data = format_assoc_array_bools(parse_post_body_as_json());
+$topic = trim($data['topic'] ?? null);
+$message = trim($data['message'] ?? null);
+$url = trim($data['url'] ?? null);
 if ($topic === null || $message === null) {
   die_json(400, 'Missing parameters');
 }
