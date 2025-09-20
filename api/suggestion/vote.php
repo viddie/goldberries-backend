@@ -35,7 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(404, "suggestion with id {$data['suggestion_id']} does not exist");
   }
   if ($suggestion->is_verified !== true && !is_helper($account)) {
-    die_json(400, "Suggestion is not verified yet");
+    if ($suggestion->is_verified === null && $suggestion->author_id === $account->player_id) {
+      // Author can vote on their own unverified suggestion
+    } else {
+      die_json(400, "Suggestion is not verified yet");
+    }
   }
   if ($suggestion->is_closed() && !is_verifier($account)) {
     die_json(400, "Suggestion is closed");
