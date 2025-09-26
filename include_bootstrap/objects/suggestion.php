@@ -262,6 +262,13 @@ class Suggestion extends DbObject
         $this->challenge->map->challenges = array_values(array_filter($this->challenge->map->challenges, function ($c) {
           return $c->id !== $this->challenge->id;
         }));
+      } else if ($this->challenge->campaign_id !== null) {
+        $this->challenge->campaign->fetch_challenges($DB, true, false, true);
+        //Remove the $this->challenge from the campaign's challenges.
+        //Also remove challenges that dont have the same label. Thats how i'll just define "related challenges" for fgrs
+        $this->challenge->campaign->challenges = array_values(array_filter($this->challenge->campaign->challenges, function ($c) {
+          return $c->id !== $this->challenge->id && $c->label === $this->challenge->label;
+        }));
       }
     }
     $this->fetch_votes($DB);
