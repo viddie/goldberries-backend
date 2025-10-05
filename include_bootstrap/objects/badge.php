@@ -10,6 +10,29 @@ class Badge extends DbObject
   public static int $BADGE_LEVEL_2 = 8;
   public static int $BADGE_LEVEL_3 = 16;
 
+  // Tier's sort value minus 1 = index in this array for the badge ID
+  public static array $TIER_BADGES = [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24
+  ];
+
   public string $icon_url;
   public string $title;
   public string $description;
@@ -68,6 +91,95 @@ class Badge extends DbObject
       $badges[] = $badge;
     }
     return $badges;
+  }
+
+  static function add_players_tier_badge($DB, $player_id, $sort)
+  {
+    if ($sort < 1 || $sort > count(self::$TIER_BADGES)) {
+      log_error("Invalid tier sort value: $sort", "Submission");
+      return false;
+    }
+
+    $current = Badge::get_players_tier_badge($DB, $player_id);
+    if ($current !== null) {
+      $current_sort = array_search($current->id, self::$TIER_BADGES) + 1;
+      if ($current_sort >= $sort) {
+        // Player already has this or a better badge
+        return true;
+      } else {
+        // Player has a lower badge, delete it
+        $badge_player = new BadgePlayer();
+        $badge_player->id = $current->data['badge_player_id'];
+        if ($badge_player->delete($DB)) {
+          log_info("Deleted lower tier badge " . $current->id . " for player_id: $player_id", "Submission");
+        } else {
+          log_error("Failed to delete lower tier badge " . $current->id . " for player_id: $player_id", "Submission");
+          return false;
+        }
+      }
+    }
+
+    // Add the new badge
+    $new_badge_id = self::$TIER_BADGES[$sort - 1];
+    $badge_player = new BadgePlayer();
+    $badge_player->badge_id = $new_badge_id;
+    $badge_player->player_id = $player_id;
+    $badge_player->date_awarded = new JsonDateTime();
+    if ($badge_player->insert($DB)) {
+      log_info("Awarded highest tier badge $new_badge_id to player_id: $player_id", "Submission");
+      return true;
+    } else {
+      log_error("Failed to award highest tier badge $new_badge_id to player_id: $player_id", "Submission");
+      return false;
+    }
+  }
+
+  static function get_players_tier_badge($DB, $player_id)
+  {
+    //Find the tier badge of the player. Every player can only have one tier badge.
+    $badge_ids = implode(",", self::$TIER_BADGES);
+    $query = "SELECT
+      badge.*,
+      badge_player.id AS badge_player_id,
+      badge_player.date_awarded AS date_awarded
+      FROM badge
+        JOIN badge_player ON badge.id = badge_player.badge_id
+      WHERE badge_player.player_id = $1 AND badge.id IN ($badge_ids)";
+
+    $result = pg_query_params_or_die($DB, $query, [$player_id]);
+
+    $badges = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $badge = new Badge();
+      $badge->apply_db_data($row);
+      $badge->data['badge_player_id'] = intval($row['badge_player_id']);
+      $badge->data['date_awarded'] = new JsonDateTime($row['date_awarded']);
+      $badges[] = $badge;
+    }
+
+    // If there is more than 1 row, delete the lowest badges
+    $count = count($badges);
+    if ($count > 1) {
+      // Sort badges by tier (highest tier first)
+      usort($badges, function ($a, $b) {
+        $sort_a = array_search($a->id, self::$TIER_BADGES);
+        $sort_b = array_search($b->id, self::$TIER_BADGES);
+        return $sort_b - $sort_a;
+      });
+
+      // Start at 1 to keep the highest
+      for ($i = 1; $i < $count; $i++) {
+        $badge_to_delete = $badges[$i];
+        $badge_player = new BadgePlayer();
+        $badge_player->id = $badge_to_delete->data['badge_player_id'];
+        if ($badge_player->delete($DB)) {
+          log_info("Deleted lower highest tier badge " . $badge->id . " for player_id: $player_id");
+        } else {
+          log_error("Failed to delete lower highest tier badge " . $badge->id . " for player_id: $player_id");
+        }
+      }
+    }
+    return $count === 0 ? null : $badges[0];
   }
 
   // === Utility Functions ===

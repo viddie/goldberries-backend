@@ -185,12 +185,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           VerificationNotice::delete_for_submission_id($DB, $old_submission->id);
         }
         $old_submission->expand_foreign_keys($DB, 5);
-        if ($was_verified && !$skip_webhook) {
-          send_webhook_submission_verified($old_submission);
-          if ($is_first_clear) {
-            send_webhook_first_clear_verified($old_submission);
+
+        if ($was_verified) {
+          if (!$skip_webhook) {
+            send_webhook_submission_verified($old_submission);
+            if ($is_first_clear) {
+              send_webhook_first_clear_verified($old_submission);
+            }
+          }
+
+          // Check high tier badge if verified successfully
+          if ($old_submission->is_verified === true) {
+            Badge::add_players_tier_badge($DB, $old_submission->player_id, $old_submission->challenge->difficulty->sort);
           }
         }
+
         api_write($old_submission);
       } else {
         die_json(500, "Failed to update submission");
