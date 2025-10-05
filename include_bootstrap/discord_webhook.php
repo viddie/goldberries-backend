@@ -68,9 +68,15 @@ function send_webhook_suggestion_verified($suggestion)
     // - count of each tier suggested, sorted from most common to least common (and % of all suggestions) 
 
     $difficulties = [];
-    $count_submissions = count($challenge->submissions);
+    $count_submissions = 0;
     $count_suggestions = 0;
     foreach ($challenge->submissions as $submission) {
+      $account = $submission->player->get_account($DB);
+      if ($account !== null && $account->is_suspended) {
+        continue; //Ignore suspended users
+      }
+      $count_submissions++;
+
       $diff_suggestion = $submission->suggested_difficulty;
       //Not sure if this is the best way to handle personal suggestions in the embed
       if ($diff_suggestion === null)
@@ -172,9 +178,14 @@ function send_webhook_suggestion_notification($suggestion)
   $allowed_mentions = ["users" => []];
   foreach ($challenge->submissions as $submission) {
     $account = $submission->player->get_account($DB);
-    if ($account !== null && $account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_SUGGESTION_VERIFIED)) {
-      $ping_list[] = "<@{$account->discord_id}>";
-      $allowed_mentions["users"][] = $account->discord_id;
+    if ($account !== null) {
+      if ($account->is_suspended) {
+        continue; //Ignore suspended users
+      }
+      if ($account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_SUGGESTION_VERIFIED)) {
+        $ping_list[] = "<@{$account->discord_id}>";
+        $allowed_mentions["users"][] = $account->discord_id;
+      }
     }
   }
   $ping_addition = count($ping_list) > 0 ? " " . implode(" ", $ping_list) : "";
@@ -356,11 +367,17 @@ function send_webhook_challenge_marked_personal($challenge)
 
   $list_impacted = [];
   $allowed_mentions = ["users" => []];
+  $total_count = 0;
   foreach ($challenge->submissions as $submission) {
+    $account = $submission->player->get_account($DB);
+    if ($account !== null && $account->is_suspended) {
+      continue; //Ignore suspended users
+    }
+    $total_count++;
+
     if ($submission->suggested_difficulty_id !== null && !$submission->is_personal) {
       $submission_url = $submission->get_url();
       $name = "[{$submission->player->name}](<{$submission_url}>)";
-      $account = $submission->player->get_account($DB);
       if ($account !== null && $account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_CHALL_PERSONAL)) {
         $name .= " (<@{$account->discord_id}>)";
         $allowed_mentions["users"][] = $account->discord_id;
@@ -374,7 +391,6 @@ function send_webhook_challenge_marked_personal($challenge)
     $impacted_str = "No Submissions";
   }
   $impacted_count = count($list_impacted);
-  $total_count = count($challenge->submissions);
   $message = ":bangbang: All difficulty suggestions for {$challenge_name} were marked as personal, as new strats have been discovered! Impacted submissions (**$impacted_count** out of **$total_count**): {$impacted_str}";
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
@@ -403,9 +419,14 @@ function send_webhook_challenge_moved($challenge, $new_difficulty_id)
   $allowed_mentions = ["users" => []];
   foreach ($challenge->submissions as $submission) {
     $account = $submission->player->get_account($DB);
-    if ($account !== null && $account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_CHALL_MOVED)) {
-      $ping_list[] = "<@{$account->discord_id}>";
-      $allowed_mentions["users"][] = $account->discord_id;
+    if ($account !== null) {
+      if ($account->is_suspended) {
+        continue; //Ignore suspended users
+      }
+      if ($account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_CHALL_MOVED)) {
+        $ping_list[] = "<@{$account->discord_id}>";
+        $allowed_mentions["users"][] = $account->discord_id;
+      }
     }
   }
   $ping_addition = count($ping_list) > 0 ? "\n" . implode(" ", $ping_list) : "";
