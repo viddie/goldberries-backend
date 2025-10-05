@@ -12,25 +12,26 @@ class Badge extends DbObject
 
   // Tier's sort value minus 1 = index in this array for the badge ID
   public static array $TIER_BADGES = [
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    21,
-    22,
-    23,
-    24
+    6, //t1
+    7, //t2
+    8, //t3
+    9, //t4
+    10, //t5
+    11, //t6
+    12, //t7
+    13, //t8
+    14, //t9
+    15, //t10
+    16, //t11
+    17, //t12
+    18, //t13
+    19, //t14
+    37, //t15
+    20, //t16
+    21, //t17
+    22, //t18
+    23, //t19
+    24 //t20
   ];
 
   public string $icon_url;
@@ -105,7 +106,7 @@ class Badge extends DbObject
       $current_sort = array_search($current->id, self::$TIER_BADGES) + 1;
       if ($current_sort >= $sort) {
         // Player already has this or a better badge
-        return true;
+        return false;
       } else {
         // Player has a lower badge, delete it
         $badge_player = new BadgePlayer();
