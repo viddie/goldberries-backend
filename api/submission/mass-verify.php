@@ -71,12 +71,7 @@ foreach ($submissions as $submission) {
     $submission->expand_foreign_keys($DB, 5);
 
     if ($is_verified) {
-      // Check for first submission on challenge
-      $challenge = Challenge::get_by_id($DB, $submission->challenge_id);
-      $challenge->fetch_submissions($DB, true);
-      if (count($challenge->submissions) === 1) {
-        send_webhook_first_clear_verified($submission);
-      }
+      webhook_check_challenge_sub_count($submission);
 
       // Check high tier badge if verified successfully
       Badge::add_players_tier_badge($DB, $submission->player_id, $submission->challenge->difficulty->sort);

@@ -327,6 +327,59 @@ function send_webhook_multi_submission_verified($submissions)
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
 
+// Check if this submission sends the sub count on a challenge above the notification thresholds
+$challenge_sub_count_thresholds = [
+  "once" => [
+    5 => 16,
+    10 => 13,
+    20 => 10,
+    30 => 7,
+    50 => 4,
+  ],
+  "repeating" => [
+    100 => 1
+  ],
+];
+function webhook_check_challenge_sub_count($submission)
+{
+  global $DB;
+  global $webhooks_enabled;
+  global $challenge_sub_count_thresholds;
+
+  if (!$webhooks_enabled)
+    return;
+  if ($submission->is_verified !== true)
+    return;
+
+  $challenge = Challenge::get_by_id($DB, $submission->challenge_id);
+  $challenge->fetch_submissions($DB, true);
+  $challenge_sub_count = count($challenge->submissions);
+
+  if ($challenge_sub_count === 1) {
+    send_webhook_first_clear_verified($submission);
+    return;
+  }
+
+  $difficulty = $challenge->difficulty;
+  $sort = $difficulty->sort;
+
+  // For all other steps, its dependent on the difficulty->sort value.
+  foreach ($challenge_sub_count_thresholds['once'] as $target_sub_count => $value) {
+    if ($challenge_sub_count === $target_sub_count && $sort >= $value) {
+      send_webhook_challenge_n_subs_verified($challenge, $target_sub_count);
+      break;
+    }
+  }
+
+  // For the repeating steps, check if sub count is %value == 0 AND still check difficulty value
+  foreach ($challenge_sub_count_thresholds['repeating'] as $target_sub_count => $value) {
+    if ($challenge_sub_count % $target_sub_count === 0 && $sort >= $value) {
+      send_webhook_challenge_n_subs_verified($challenge, $target_sub_count);
+      break;
+    }
+  }
+}
+
 function send_webhook_first_clear_verified($submission)
 {
   global $DB;
@@ -337,9 +390,9 @@ function send_webhook_first_clear_verified($submission)
 
   $submission->expand_foreign_keys($DB, 5);
 
-  $account = $submission->player->get_account($DB);
+  // $account = $submission->player->get_account($DB);
   $player_name = "@`{$submission->player->get_name_escaped()}`";
-  $webhook_url = constant('CHANGELOG_WEBHOOK_URL');
+  $webhook_url = constant('MILESTONES_WEBHOOK_URL');
   $allowed_mentions = ["users" => []];
 
   $challenge_name = $submission->get_challenge_name_for_discord();
@@ -351,6 +404,27 @@ function send_webhook_first_clear_verified($submission)
   $message = ":white_check_mark: $player_name → [First clear](<{$submission_url}>) on {$challenge_name} ($tier_name)!";
 
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+}
+
+function send_webhook_challenge_n_subs_verified($challenge, $n)
+{
+  global $DB;
+  global $webhooks_enabled;
+  if (!$webhooks_enabled) {
+    return;
+  }
+
+  $challenge->expand_foreign_keys($DB, 5);
+  $webhook_url = constant('MILESTONES_WEBHOOK_URL');
+
+  $challenge_name = $challenge->get_name_for_discord();
+
+  $difficulty = $challenge->difficulty;
+  $tier_name = $difficulty->to_tier_name();
+
+  $message = ":trophy: {$challenge_name} ($tier_name) has reached **$n** clears!";
+
+  send_simple_webhook_message($webhook_url, $message);
 }
 
 function send_webhook_challenge_marked_personal($challenge)

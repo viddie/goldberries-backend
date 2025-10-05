@@ -82,6 +82,7 @@ export POST_CHANGELOG_WEBHOOK_URL=<url>
 export POST_NEWS_WEBHOOK_URL=<url>
 export REPORT_WEBHOOK_URL=<url>
 export MOD_REPORT_WEBHOOK_URL=<url>
+export MILESTONES_WEBHOOK_URL=<url>
 
 export PYTHON_COMMAND=python3
 export TRAFFIC_FILE=/var/log/apache2/goldberries.net_traffic.log

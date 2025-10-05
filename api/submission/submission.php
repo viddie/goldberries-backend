@@ -111,7 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
 
       $was_verified = false;
-      $is_first_clear = false;
       if ($old_submission->is_verified !== $submission->is_verified) {
         if ($old_submission->challenge_id === null && $submission->is_verified !== null) {
           die_json(400, "Cannot verify or reject a submission without a challenge");
@@ -125,14 +124,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $old_submission->date_verified = new JsonDateTime();
         $old_submission->verifier_id = $account->player->id;
 
-        //Check if this is the first submission for this challenge
-        if ($submission->is_verified) {
-          $challenge = Challenge::get_by_id($DB, $old_submission->challenge_id);
-          $challenge->fetch_submissions($DB, true);
-          if (count($challenge->submissions) === 0) {
-            $is_first_clear = true;
-          }
-        }
       }
       $old_submission->is_verified = $submission->is_verified;
       if ($submission->player_notes !== null && strlen($submission->player_notes) > 5000) {
@@ -189,9 +180,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($was_verified) {
           if (!$skip_webhook) {
             send_webhook_submission_verified($old_submission);
-            if ($is_first_clear) {
-              send_webhook_first_clear_verified($old_submission);
-            }
+            webhook_check_challenge_sub_count($old_submission);
           }
 
           // Check high tier badge if verified successfully
