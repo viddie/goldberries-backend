@@ -351,7 +351,7 @@ function webhook_check_challenge_sub_count($submission)
   if ($submission->is_verified !== true)
     return;
 
-  $challenge = Challenge::get_by_id($DB, $submission->challenge_id);
+  $challenge = Challenge::get_by_id($DB, $submission->challenge_id, 5);
   $challenge->fetch_submissions($DB, true);
   $challenge_sub_count = count($challenge->submissions);
 
@@ -390,15 +390,18 @@ function send_webhook_first_clear_verified($submission)
 
   $submission->expand_foreign_keys($DB, 5);
 
-  // $account = $submission->player->get_account($DB);
+  $difficulty = $submission->challenge->difficulty;
+  $sort = $difficulty->sort;
+  $webhook_url = constant('CHANGELOG_WEBHOOK_URL');
+  if ($sort >= 14) {
+    $webhook_url = constant('MILESTONES_WEBHOOK_URL');
+  }
+
   $player_name = "@`{$submission->player->get_name_escaped()}`";
-  $webhook_url = constant('MILESTONES_WEBHOOK_URL');
   $allowed_mentions = ["users" => []];
 
   $challenge_name = $submission->get_challenge_name_for_discord();
   $submission_url = $submission->get_url();
-
-  $difficulty = $submission->challenge->difficulty;
   $tier_name = $difficulty->to_tier_name();
 
   $message = ":white_check_mark: $player_name → [First clear](<{$submission_url}>) on {$challenge_name} ($tier_name)!";
@@ -408,17 +411,14 @@ function send_webhook_first_clear_verified($submission)
 
 function send_webhook_challenge_n_subs_verified($challenge, $n)
 {
-  global $DB;
   global $webhooks_enabled;
   if (!$webhooks_enabled) {
     return;
   }
 
-  $challenge->expand_foreign_keys($DB, 5);
   $webhook_url = constant('MILESTONES_WEBHOOK_URL');
 
   $challenge_name = $challenge->get_name_for_discord();
-
   $difficulty = $challenge->difficulty;
   $tier_name = $difficulty->to_tier_name();
 
