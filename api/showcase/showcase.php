@@ -29,16 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
   }
 
+  //If none were found, take the X hardest submissions the player has done instead
   if (count($submissions) === 0) {
-    //If none were found, take the 10 hardest submissions the player has done instead
-    $query = "SELECT * FROM view_submissions WHERE submission_is_verified = true AND player_id = $1 AND submission_is_obsolete = false ORDER BY difficulty_sort DESC LIMIT 9";
-    $result = pg_query_params($DB, $query, array($player->id));
-    while ($row = pg_fetch_assoc($result)) {
-      $submission = new Submission();
-      $submission->apply_db_data($row, 'submission_');
-      $submission->expand_foreign_keys($row, 5);
-      $submissions[] = $submission;
-    }
+    $submissions = Submission::get_hardest_for_player($DB, $player->id, 9);
     $type = "hardest";
   }
 

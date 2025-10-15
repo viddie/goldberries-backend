@@ -216,9 +216,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       Challenge::generate_changelog($DB, $old_challenge, $challenge);
       log_info("'{$account->player->name}' updated {$challenge}", "Challenge");
       submission_embed_change($challenge->id, "challenge");
-      if ($old_challenge->difficulty_id !== $challenge->difficulty_id && !$skip_webhook) {
-        send_webhook_challenge_moved($old_challenge, $challenge->difficulty_id);
+
+      if ($old_challenge->difficulty_id !== $challenge->difficulty_id) {
+        if (!$skip_webhook) {
+          send_webhook_challenge_moved($old_challenge, $challenge->difficulty_id);
+        }
+        // Check for badge changes
+        $challenge->fetch_submissions($DB);
+        foreach ($challenge->submissions as $submission) {
+          Badge::check_players_tier_badge($DB, $submission->player_id);
+        }
       }
+
       api_write($challenge);
     } else {
       die_json(500, "Failed to update challenge");
