@@ -32,6 +32,18 @@ class Change extends DbObject
       'date' => $this->date,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'campaign_id',
+      'map_id',
+      'challenge_id',
+      'player_id',
+      'author_id',
+      'description',
+      'date',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

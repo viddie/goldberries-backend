@@ -58,6 +58,29 @@ class Submission extends DbObject
       'frac' => $this->frac,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'date_created',
+      'proof_url',
+      'raw_session_url',
+      'player_notes',
+      'is_personal',
+      'is_verified',
+      'date_verified',
+      'verifier_notes',
+      'is_fc',
+      'challenge_id',
+      'player_id',
+      'suggested_difficulty_id',
+      'verifier_id',
+      'new_challenge_id',
+      'is_obsolete',
+      'time_taken',
+      'date_achieved',
+      'frac',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

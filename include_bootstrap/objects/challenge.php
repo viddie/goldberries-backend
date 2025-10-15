@@ -56,6 +56,27 @@ class Challenge extends DbObject
     );
   }
 
+  static function static_field_set()
+  {
+    return [
+      'label',
+      'description',
+      'date_created',
+      'requires_fc',
+      'has_fc',
+      'is_arbitrary',
+      'campaign_id',
+      'map_id',
+      'objective_id',
+      'difficulty_id',
+      'sort',
+      'icon_url',
+      'is_rejected',
+      'reject_note',
+    ];
+  }
+
+
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);

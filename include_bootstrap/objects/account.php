@@ -147,6 +147,30 @@ class Account extends DbObject
       'api_key' => $this->api_key,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'player_id',
+      'claimed_player_id',
+      'email',
+      'password',
+      'discord_id',
+      'suspension_reason',
+      'email_verified',
+      'email_verify_code',
+      'role',
+      'is_suspended',
+      'links',
+      'input_method',
+      'about_me',
+      'name_color_start',
+      'name_color_end',
+      'country',
+      'last_player_rename',
+      'notifications',
+      'api_key',
+    ];
+  }
 
   // === Find Functions ===
   static function find_by_discord_id($DB, string $discord_id)

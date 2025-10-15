@@ -43,6 +43,25 @@ class Campaign extends DbObject
       'note' => $this->note,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'name',
+      'url',
+      'date_added',
+      'icon_url',
+      'sort_major_name',
+      'sort_major_labels',
+      'sort_major_colors',
+      'sort_minor_name',
+      'sort_minor_labels',
+      'sort_minor_colors',
+      'author_gb_id',
+      'author_gb_name',
+      'note',
+    ];
+  }
+
 
   function apply_db_data($arr, $prefix = '')
   {
@@ -91,26 +110,6 @@ class Campaign extends DbObject
 
   function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
-  }
-
-  static function get_view_fields(): array
-  {
-    return [
-      'campaign_id',
-      'campaign_name',
-      'campaign_url',
-      'campaign_date_added',
-      'campaign_icon_url',
-      'campaign_sort_major_name',
-      'campaign_sort_major_labels',
-      'campaign_sort_major_colors',
-      'campaign_sort_minor_name',
-      'campaign_sort_minor_labels',
-      'campaign_sort_minor_colors',
-      'campaign_author_gb_id',
-      'campaign_author_gb_name',
-      'campaign_note',
-    ];
   }
 
   // === Find Functions ===

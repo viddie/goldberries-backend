@@ -45,6 +45,14 @@ class Session extends DbObject
       'account_id' => $this->account_id
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'token',
+      'created',
+      'account_id'
+    ];
+  }
 
   // === Find Functions ===
   static function find_by_token($DB, string $token)

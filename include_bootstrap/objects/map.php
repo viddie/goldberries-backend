@@ -53,6 +53,26 @@ class Map extends DbObject
       'is_progress' => $this->is_progress,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'name',
+      'url',
+      'date_added',
+      'is_archived',
+      'sort_major',
+      'sort_minor',
+      'sort_order',
+      'author_gb_id',
+      'author_gb_name',
+      'campaign_id',
+      'note',
+      'collectibles',
+      'golden_changes',
+      'counts_for_id',
+      'is_progress',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

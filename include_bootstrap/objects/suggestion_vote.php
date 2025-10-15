@@ -26,6 +26,15 @@ class SuggestionVote extends DbObject
       'comment' => $this->comment,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'suggestion_id',
+      'player_id',
+      'vote',
+      'comment',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

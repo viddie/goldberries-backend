@@ -21,6 +21,13 @@ class Player extends DbObject
     );
   }
 
+  static function static_field_set()
+  {
+    return [
+      'name',
+    ];
+  }
+
   function apply_db_data($arr, $prefix = '', $customization = true)
   {
     $this->id = intval($arr[$prefix . 'id']);

@@ -40,6 +40,20 @@ class Suggestion extends DbObject
       'date_accepted' => $this->date_accepted,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'author_id',
+      'challenge_id',
+      'current_difficulty_id',
+      'suggested_difficulty_id',
+      'comment',
+      'is_verified',
+      'date_created',
+      'is_accepted',
+      'date_accepted',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

@@ -19,6 +19,15 @@ class ServerSettings extends DbObject
       'maintenance_mode' => $this->maintenance_mode,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'registrations_enabled',
+      'submissions_enabled',
+      'global_notices',
+      'maintenance_mode',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

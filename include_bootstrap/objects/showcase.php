@@ -22,6 +22,14 @@ class Showcase extends DbObject implements JsonSerializable
       'submission_id' => $this->submission_id,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'account_id',
+      'index',
+      'submission_id',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

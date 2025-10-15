@@ -9,7 +9,9 @@ abstract class DbObject
 
   // === Abstract Functions ===
   abstract function get_field_set();
+  abstract static function static_field_set();
   abstract function apply_db_data($arr, $prefix = '');
+  abstract function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true);
 
   // $DB is either a database connection or an array containing a row of the results of a query
   function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
@@ -19,9 +21,6 @@ abstract class DbObject
     $this->max_expanded = $depth;
     $this->do_expand_foreign_keys($DB, $depth, $expand_structure);
   }
-
-  // Actually to the expansion
-  abstract function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true);
 
   // === Update Functions ===
   function insert($DB)
@@ -149,5 +148,26 @@ abstract class DbObject
       }
     }
     return true;
+  }
+
+  /**
+   * Should return an array of fields formatted for use in a SELECT statement.
+   * E.g. ["player.id AS player_id", "player.name AS player_name"]
+   * @param mixed $prefix specify a prefix to add to the field names, e.g. "player_"
+   * @param mixed $table_name specify a different table name than the default, e.g. postgres table alias
+   * @return array An array of strings formatted for use in a SELECT statement.
+   */
+  static function format_fields_for_select($prefix = null, $table_name = null)
+  {
+    $table = $table_name ?? static::$table_name;
+    $fields = static::static_field_set();
+    // Add ID field as its in every table
+    array_unshift($fields, 'id');
+    $formatted = [];
+    foreach ($fields as $field) {
+      $as = $prefix ? "{$prefix}{$field}" : $field;
+      $formatted[] = "{$table}.{$field} AS {$as}";
+    }
+    return $formatted;
   }
 }

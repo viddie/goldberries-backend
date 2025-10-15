@@ -22,6 +22,16 @@ class Logging extends DbObject
     );
   }
 
+  static function static_field_set()
+  {
+    return [
+      'message',
+      'level',
+      'topic',
+      'date',
+    ];
+  }
+
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);

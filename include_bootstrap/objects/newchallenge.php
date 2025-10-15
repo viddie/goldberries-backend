@@ -22,6 +22,16 @@ class NewChallenge extends DbObject
       'golden_changes' => $this->golden_changes,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'url',
+      'name',
+      'description',
+      'collectibles',
+      'golden_changes',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

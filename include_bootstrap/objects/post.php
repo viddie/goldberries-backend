@@ -29,6 +29,18 @@ class Post extends DbObject
       'content' => $this->content,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'author_id',
+      'date_created',
+      'date_edited',
+      'type',
+      'image_url',
+      'title',
+      'content',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

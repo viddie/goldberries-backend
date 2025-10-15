@@ -21,6 +21,14 @@ class VerificationNotice extends DbObject
       'message' => $this->message,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'verifier_id',
+      'submission_id',
+      'message',
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {

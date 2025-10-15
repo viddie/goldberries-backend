@@ -17,6 +17,15 @@ class Difficulty extends DbObject
       'sort' => $this->sort,
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'name',
+      'subtier',
+      'sort',
+    ];
+  }
+
 
   function apply_db_data($arr, $prefix = '')
   {

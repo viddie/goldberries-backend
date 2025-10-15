@@ -23,6 +23,15 @@ class BadgePlayer extends DbObject
     );
   }
 
+  static function static_field_set()
+  {
+    return [
+      'player_id',
+      'badge_id',
+      'date_awarded',
+    ];
+  }
+
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);

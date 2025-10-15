@@ -57,6 +57,18 @@ class Badge extends DbObject
     );
   }
 
+  static function static_field_set()
+  {
+    return [
+      'icon_url',
+      'title',
+      'description',
+      'color',
+      'date_created',
+      'flags',
+    ];
+  }
+
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);

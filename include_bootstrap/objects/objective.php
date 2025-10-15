@@ -22,6 +22,16 @@ class Objective extends DbObject
       'icon_url' => $this->icon_url
     );
   }
+  static function static_field_set()
+  {
+    return [
+      'name',
+      'description',
+      'display_name_suffix',
+      'is_arbitrary',
+      'icon_url'
+    ];
+  }
 
   function apply_db_data($arr, $prefix = '')
   {
