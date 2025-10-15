@@ -366,7 +366,7 @@ function webhook_check_challenge_sub_count($submission)
   // For all other steps, its dependent on the difficulty->sort value.
   foreach ($challenge_sub_count_thresholds['once'] as $target_sub_count => $value) {
     if ($challenge_sub_count === $target_sub_count && $sort >= $value) {
-      send_webhook_challenge_n_subs_verified($challenge, $target_sub_count);
+      send_webhook_challenge_n_subs_verified($challenge, $challenge_sub_count);
       break;
     }
   }
@@ -374,7 +374,7 @@ function webhook_check_challenge_sub_count($submission)
   // For the repeating steps, check if sub count is %value == 0 AND still check difficulty value
   foreach ($challenge_sub_count_thresholds['repeating'] as $target_sub_count => $value) {
     if ($challenge_sub_count % $target_sub_count === 0 && $sort >= $value) {
-      send_webhook_challenge_n_subs_verified($challenge, $target_sub_count);
+      send_webhook_challenge_n_subs_verified($challenge, $challenge_sub_count);
       break;
     }
   }
