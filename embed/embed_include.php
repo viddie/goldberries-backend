@@ -123,6 +123,28 @@ function generate_collage_image($maps, $max_images = 4, $scale = 1)
   return $canvas;
 }
 
+function save_campaign_collage_image($campaign, $image)
+{
+  $folder = dirname(__FILE__) . '/img/campaign-collage';
+  if (!is_dir($folder)) {
+    mkdir($folder, 0755, true);
+  }
+  $file = $folder . "/" . $campaign->id . ".webp";
+  imagewebp($image, $file, 85);
+}
+
+function get_campaign_collage_image($campaign)
+{
+  $folder = dirname(__FILE__) . '/img/campaign-collage';
+  $file = $folder . "/" . $campaign->id . ".webp";
+
+  if (file_exists($file)) {
+    return imagecreatefromwebp($file);
+  }
+
+  return null;
+}
+
 
 function get_map_image($map)
 {

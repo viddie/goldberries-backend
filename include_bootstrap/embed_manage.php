@@ -57,7 +57,23 @@ function submission_embed_change($object_id, $object_type)
     }
   }
 
+  // If the object type is campaign, also delete the collage image
+  if ($object_type == "campaign") {
+    campaign_collage_embed_change($object_id);
+  }
+
   //Log what has happened
   log_debug("Deleted all embeds referencing '$object_type' with id $object_id", "Embed");
+}
+
+function campaign_collage_embed_change($campaign_id)
+{
+  $folder = dirname(__FILE__) . '/../embed/img/campaign-collage';
+  $file = $folder . "/" . $campaign_id . ".webp";
+  if (file_exists($file)) {
+    unlink($file);
+    return true;
+  }
+  return false;
 }
 

@@ -33,6 +33,14 @@ if (!$campaign) {
   die();
 }
 
+// Check for cached image
+$image = get_campaign_collage_image($campaign);
+if ($image !== null) {
+  output_image($image, $ext);
+  exit();
+}
+
+// Generate new image
 $campaign->expand_foreign_keys($DB, 5);
 $campaign->fetch_maps($DB, true, false, true);
 $maps_not_archived = [];
@@ -61,6 +69,15 @@ foreach ($collage_images as $entry) {
 
 $image = generate_collage_image($maps_not_archived, $max_images, $scale);
 if ($image) {
+  save_campaign_collage_image($campaign, $image);
+  output_image($image, $ext);
+  exit();
+}
+
+http_response_code(500);
+
+function output_image($image, $ext)
+{
   switch ($ext) {
     case 'png':
       header('Content-Type: image/png');
@@ -77,7 +94,4 @@ if ($image) {
       break;
   }
   imagedestroy($image);
-  exit();
 }
-
-http_response_code(500);
