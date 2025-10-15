@@ -32,20 +32,6 @@ GROUP BY difficulty.id
 ORDER BY difficulty.sort DESC
 ```
 
-## Verified Submission Count
-
-```
-SELECT
-  player.name,
-  COUNT(submission.id) as verified_submissions
-FROM submission
-JOIN player ON submission.verifier_id = player.id
-JOIN challenge ON submission.challenge_id = challenge.id
-JOIN map ON challenge.map_id = map.id
-GROUP BY player.id
-ORDER BY verified_submissions DESC
-```
-
 ## Submission Count by Country
 
 ```
