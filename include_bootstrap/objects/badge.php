@@ -94,7 +94,7 @@ class Badge extends DbObject
     return $badges;
   }
 
-  static function add_players_tier_badge($DB, $player_id, $sort)
+  static function add_players_tier_badge($DB, $player_id, $sort, $silent = false)
   {
     if ($sort < 1 || $sort > count(self::$TIER_BADGES)) {
       log_error("Invalid tier sort value: $sort", "Submission");
@@ -112,7 +112,9 @@ class Badge extends DbObject
         $badge_player = new BadgePlayer();
         $badge_player->id = $current->data['badge_player_id'];
         if ($badge_player->delete($DB)) {
-          log_info("Deleted lower tier badge " . $current->id . " for player_id: $player_id", "Submission");
+          if (!$silent) {
+            log_info("Deleted lower tier badge " . $current->id . " for player_id: $player_id", "Submission");
+          }
         } else {
           log_error("Failed to delete lower tier badge " . $current->id . " for player_id: $player_id", "Submission");
           return false;
@@ -127,7 +129,9 @@ class Badge extends DbObject
     $badge_player->player_id = $player_id;
     $badge_player->date_awarded = new JsonDateTime();
     if ($badge_player->insert($DB)) {
-      log_info("Awarded highest tier badge $new_badge_id to player_id: $player_id", "Submission");
+      if (!$silent) {
+        log_info("Awarded highest tier badge $new_badge_id to player_id: $player_id", "Submission");
+      }
       return true;
     } else {
       log_error("Failed to award highest tier badge $new_badge_id to player_id: $player_id", "Submission");
@@ -205,15 +209,13 @@ class Badge extends DbObject
       // Delete badge
       $badge_player = new BadgePlayer();
       $badge_player->id = $current_badge->data['badge_player_id'];
-      if ($badge_player->delete($DB)) {
-        log_info("Deleted current tier badge " . $current_badge->id . " for player_id: $player_id", "Submission");
-      } else {
+      if (!$badge_player->delete($DB)) {
         log_error("Failed to delete current tier badge " . $current_badge->id . " for player_id: $player_id", "Submission");
         return false;
       }
     }
     // Add new badge
-    self::add_players_tier_badge($DB, $player_id, $hardest_sort);
+    self::add_players_tier_badge($DB, $player_id, $hardest_sort, true);
     return true;
   }
 
