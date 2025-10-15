@@ -36,7 +36,7 @@ class Objective extends DbObject
       $this->icon_url = $arr[$prefix . 'icon_url'];
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
   }
 

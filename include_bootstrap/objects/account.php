@@ -103,7 +103,7 @@ class Account extends DbObject
     if (isset($arr[$prefix . 'api_key']))
       $this->api_key = $arr[$prefix . 'api_key'];
   }
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;

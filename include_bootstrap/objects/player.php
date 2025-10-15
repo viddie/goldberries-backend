@@ -55,7 +55,7 @@ class Player extends DbObject
     }
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     global $DB;
     if ($depth <= 1)

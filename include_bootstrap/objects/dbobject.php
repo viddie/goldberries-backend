@@ -5,13 +5,23 @@ abstract class DbObject
   public static string $table_name;
 
   public int $id;
+  private int $max_expanded = 1;
 
   // === Abstract Functions ===
   abstract function get_field_set();
   abstract function apply_db_data($arr, $prefix = '');
 
   // $DB is either a database connection or an array containing a row of the results of a query
-  abstract function expand_foreign_keys($DB, $depth = 2, $expand_structure = true);
+  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  {
+    if ($this->max_expanded >= $depth)
+      return;
+    $this->max_expanded = $depth;
+    $this->do_expand_foreign_keys($DB, $depth, $expand_structure);
+  }
+
+  // Actually to the expansion
+  abstract function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true);
 
   // === Update Functions ===
   function insert($DB)

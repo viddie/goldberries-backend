@@ -85,7 +85,7 @@ class Challenge extends DbObject
       $this->reject_note = $arr[$prefix . 'reject_note'];
   }
 
-  function expand_foreign_keys($DB, $depths = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depths = 2, $expand_structure = true)
   {
     $isFromSqlResult = is_array($DB);
 

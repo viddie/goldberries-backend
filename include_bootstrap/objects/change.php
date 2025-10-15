@@ -51,7 +51,7 @@ class Change extends DbObject
       $this->author_id = intval($arr[$prefix . 'author_id']);
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;

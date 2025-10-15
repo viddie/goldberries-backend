@@ -68,7 +68,7 @@ class Badge extends DbObject
     $this->flags = intval($arr[$prefix . 'flags']);
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;
@@ -181,6 +181,40 @@ class Badge extends DbObject
       }
     }
     return $count === 0 ? null : $badges[0];
+  }
+
+  // Fetch the hardest submission of this player, remove the existing badge if available, add the definitely correct badge.
+  static function check_players_tier_badge($DB, $player_id)
+  {
+    $submissions = Submission::get_hardest_for_player($DB, $player_id, 1);
+    if (count($submissions) === 0) {
+      return false;
+    }
+
+    $submission = $submissions[0];
+    $hardest_sort = $submission->challenge->difficulty->sort;
+    $current_badge = self::get_players_tier_badge($DB, $player_id);
+    if ($current_badge !== null) {
+      // Check if the current badge is different from the hardest submission
+      $current_sort = array_search($current_badge->id, self::$TIER_BADGES) + 1;
+      if ($current_sort === $hardest_sort) {
+        // Player already has this or a better badge
+        return false;
+      }
+
+      // Delete badge
+      $badge_player = new BadgePlayer();
+      $badge_player->id = $current_badge->data['badge_player_id'];
+      if ($badge_player->delete($DB)) {
+        log_info("Deleted current tier badge " . $current_badge->id . " for player_id: $player_id", "Submission");
+      } else {
+        log_error("Failed to delete current tier badge " . $current_badge->id . " for player_id: $player_id", "Submission");
+        return false;
+      }
+    }
+    // Add new badge
+    self::add_players_tier_badge($DB, $player_id, $hardest_sort);
+    return true;
   }
 
   // === Utility Functions ===

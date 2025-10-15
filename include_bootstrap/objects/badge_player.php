@@ -31,7 +31,7 @@ class BadgePlayer extends DbObject
     $this->date_awarded = new JsonDateTime($arr[$prefix . 'date_awarded']);
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;

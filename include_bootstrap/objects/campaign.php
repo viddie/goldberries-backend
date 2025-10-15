@@ -89,7 +89,7 @@ class Campaign extends DbObject
       $this->note = $arr[$prefix . 'note'];
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
   }
 

@@ -98,7 +98,7 @@ class Submission extends DbObject
       $this->new_challenge_id = intval($arr[$prefix . 'new_challenge_id']);
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;
@@ -223,6 +223,20 @@ class Submission extends DbObject
       'page' => $page,
       'per_page' => $per_page,
     ];
+  }
+
+  static function get_hardest_for_player($DB, int $player_id, int $count)
+  {
+    $query = "SELECT * FROM view_submissions WHERE submission_is_verified = true AND player_id = $1 AND submission_is_obsolete = false ORDER BY difficulty_sort DESC LIMIT $count";
+    $result = pg_query_params($DB, $query, [$player_id]);
+    $submissions = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $submission = new Submission();
+      $submission->apply_db_data($row, 'submission_');
+      $submission->expand_foreign_keys($row, 5);
+      $submissions[] = $submission;
+    }
+    return $submissions;
   }
 
   // === Utility Functions ===

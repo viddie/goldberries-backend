@@ -64,7 +64,7 @@ class Suggestion extends DbObject
       $this->date_accepted = new JsonDateTime($arr[$prefix . 'date_accepted']);
   }
 
-  function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
     if ($depth <= 1)
       return;
