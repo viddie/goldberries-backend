@@ -58,7 +58,7 @@ class NewChallenge extends DbObject
       $this->golden_changes = $arr[$prefix . 'golden_changes'];
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
   }
 

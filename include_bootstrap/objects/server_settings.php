@@ -51,7 +51,7 @@ class ServerSettings extends DbObject
     }
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
   }
 

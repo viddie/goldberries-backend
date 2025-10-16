@@ -80,10 +80,8 @@ class Badge extends DbObject
     $this->flags = intval($arr[$prefix . 'flags']);
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
   }
 
   // === Find Functions ===

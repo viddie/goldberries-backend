@@ -78,11 +78,8 @@ class Suggestion extends DbObject
       $this->date_accepted = new JsonDateTime($arr[$prefix . 'date_accepted']);
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     if ($expand_structure) {
       if ($this->challenge_id !== null) {
         $this->challenge = Challenge::get_by_id($DB, $this->challenge_id, $depth - 1, $expand_structure);

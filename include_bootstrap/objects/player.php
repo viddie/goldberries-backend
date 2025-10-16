@@ -62,11 +62,9 @@ class Player extends DbObject
     }
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
     global $DB;
-    if ($depth <= 1)
-      return;
 
     $accounts = Account::find_by_player_id($DB, $this->id);
     if ($accounts !== false && count($accounts) === 1) {

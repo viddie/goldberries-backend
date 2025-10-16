@@ -58,11 +58,8 @@ class Post extends DbObject
       $this->image_url = $arr[$prefix . 'image_url'];
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     if ($this->author_id !== null) {
       $this->author = Player::get_by_id($DB, $this->author_id, 3, false);
     }

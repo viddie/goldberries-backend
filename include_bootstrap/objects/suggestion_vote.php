@@ -51,11 +51,8 @@ class SuggestionVote extends DbObject
     }
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     $isFromSqlResult = is_array($DB);
 
     if ($expand_structure && $this->suggestion_id !== null) {

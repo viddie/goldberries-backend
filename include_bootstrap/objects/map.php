@@ -133,11 +133,8 @@ class Map extends DbObject
       $this->counts_for_id = intval($arr[$prefix . 'counts_for_id']);
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     $isFromSqlResult = is_array($DB);
 
     if ($expand_structure && isset($this->campaign_id)) {

@@ -24,11 +24,8 @@ class Session extends DbObject
     $this->created = new JsonDateTime($arr[$prefix . 'created']);
     $this->account_id = intval($arr[$prefix . 'account_id']);
   }
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     if ($this->account_id !== null) {
       $this->account = Account::get_by_id($DB, $this->account_id, $depth - 1);
       $this->account->expand_foreign_keys($DB, $depth - 1, $expand_structure);

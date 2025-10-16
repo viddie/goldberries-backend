@@ -39,11 +39,8 @@ class Showcase extends DbObject implements JsonSerializable
     $this->submission_id = intval($arr[$prefix . 'submission_id']);
   }
 
-  function do_expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
-    if ($depth <= 1)
-      return;
-
     if ($expand_structure) {
       if ($this->submission_id !== null) {
         $this->submission = Submission::get_by_id($DB, $this->submission_id, $depth - 1, $expand_structure);

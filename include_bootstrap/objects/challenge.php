@@ -106,7 +106,7 @@ class Challenge extends DbObject
       $this->reject_note = $arr[$prefix . 'reject_note'];
   }
 
-  function do_expand_foreign_keys($DB, $depths = 2, $expand_structure = true)
+  protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
     $isFromSqlResult = is_array($DB);
 
@@ -114,9 +114,9 @@ class Challenge extends DbObject
       if ($isFromSqlResult) {
         $this->campaign = new Campaign();
         $this->campaign->apply_db_data($DB, "campaign_");
-        $this->campaign->expand_foreign_keys($DB, $depths - 1);
+        $this->campaign->expand_foreign_keys($DB, $depth - 1);
       } else {
-        $this->campaign = Campaign::get_by_id($DB, $this->campaign_id, $depths - 1);
+        $this->campaign = Campaign::get_by_id($DB, $this->campaign_id, $depth - 1);
       }
     }
 
@@ -124,9 +124,9 @@ class Challenge extends DbObject
       if ($isFromSqlResult) {
         $this->map = new Map();
         $this->map->apply_db_data($DB, "map_");
-        $this->map->expand_foreign_keys($DB, $depths - 1);
+        $this->map->expand_foreign_keys($DB, $depth - 1);
       } else {
-        $this->map = Map::get_by_id($DB, $this->map_id, $depths - 1);
+        $this->map = Map::get_by_id($DB, $this->map_id, $depth - 1);
       }
     }
 
