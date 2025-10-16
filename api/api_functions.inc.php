@@ -273,7 +273,7 @@ function parse_campaigns_no_submissions($result): array
       $challenge->submissions = null;
       //When using view_campaigns, count_submissions is no longer available.
       // $challenge->data['count_submissions'] = intval($row['count_submissions']);
-      $challenge->expand_foreign_keys($row, 1, false);
+      $challenge->expand_foreign_keys($row, 2, false);
       if ($challenge->map_id === null) {
         $campaign->challenges[$challenge_id] = $challenge;
       } else {
