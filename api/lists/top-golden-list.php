@@ -156,7 +156,7 @@ while ($row = pg_fetch_assoc($result)) {
     $challenge = new Challenge();
     $challenge->apply_db_data($row, "challenge_");
     $challenge->submissions = array();
-    $challenge->expand_foreign_keys($row, 1, false);
+    $challenge->expand_foreign_keys($row, 2, false);
     $response['challenges'][$challenge_id] = $challenge;
   } else {
     $challenge = $response['challenges'][$challenge_id];
