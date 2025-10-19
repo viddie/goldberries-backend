@@ -67,12 +67,11 @@ outputImage($foundFile, $ext, $scale, $is_unknown);
 // ------------------------------------------------------------
 // Functions
 // ------------------------------------------------------------
-
 function outputImage($path, $ext, $scale = 1, $is_unknown = false)
 {
   global $targetWidth, $targetHeight, $savedScale;
 
-  //Check file if its not the unknown image
+  // Check file if it's not the unknown image
   if (!$is_unknown) {
     $path = check_source_image($path);
     if ($path === false) {
@@ -81,7 +80,22 @@ function outputImage($path, $ext, $scale = 1, $is_unknown = false)
     }
   }
 
-  //The image is guaranteed to be webp at this point
+  // --- Add caching headers based on file modification time ---
+  $lastModified = gmdate('D, d M Y H:i:s', filemtime($path)) . ' GMT';
+  header('Cache-Control: public, max-age=31536000, immutable');
+  header('Last-Modified: ' . $lastModified);
+
+  // If client already has a fresh copy, return 304 Not Modified
+  if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+    $ifModifiedSince = strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+    if ($ifModifiedSince && $ifModifiedSince >= filemtime($path)) {
+      header('HTTP/1.1 304 Not Modified');
+      exit;
+    }
+  }
+  // --- end caching headers ---
+
+  // The image is guaranteed to be webp at this point
   $info = getimagesize($path);
   if ($info === false) {
     http_response_code(500);
@@ -91,8 +105,8 @@ function outputImage($path, $ext, $scale = 1, $is_unknown = false)
   // No scaling & target extension is webp → just stream file contents
   if ($scale === $savedScale && ($ext === null || $ext === 'webp')) {
     header('Content-Type: image/webp');
-    echo file_get_contents($path);
-    die();
+    readfile($path);
+    exit;
   }
 
   // Load source image
