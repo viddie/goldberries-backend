@@ -202,7 +202,7 @@ function parse_campaigns($result): array
       $challenge = new Challenge();
       $challenge->apply_db_data($row, "challenge_");
       $challenge->submissions = [];
-      $challenge->expand_foreign_keys($row, 1, false);
+      $challenge->expand_foreign_keys($row, 2, false);
       if ($challenge->map_id === null) {
         $campaign->challenges[$challenge_id] = $challenge;
       } else {
