@@ -128,6 +128,10 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
   if ($width < 320 || $height < 180) {
     die_json(400, "Invalid image dimensions: minimum size is 320x180");
   }
+  // Enforce width and height needing to be an integer multiple of 320x180
+  if ($width % 320 !== 0 || $height % 180 !== 0) {
+    die_json(400, "Invalid image dimensions: width and height must be integer multiples of 320x180");
+  }
 
   // Load image based on type
   $mime = $image_info['mime'];
@@ -155,7 +159,7 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
   imagecopyresized($dst_image, $src_image, 0, 0, 0, 0, $dst_width, $dst_height, $width, $height);
 
   // Save image in webp
-  $saved = imagewebp($dst_image, $full_path, 90); // quality 90
+  $saved = imagewebp($dst_image, $full_path, 90);
 
   imagedestroy($src_image);
   imagedestroy($dst_image);

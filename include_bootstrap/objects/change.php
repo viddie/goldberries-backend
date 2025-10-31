@@ -204,7 +204,7 @@ class Change extends DbObject
     return "(Change, id:{$this->id}, description:'{$this->description}', date:{$dateStr}, objType:{$linkedObjectType}, objId:{$linkedObjectId})";
   }
 
-  static function create_change($DB, string $type, int $id, string $description)
+  static function create_change($DB, string $type, int $id, string $description, ?int $author_id = null, ?JsonDateTime $date = null)
   {
     $account = get_user_data();
     if ($account === null)
@@ -214,8 +214,8 @@ class Change extends DbObject
 
     $change = new Change();
     $change->description = $description;
-    $change->date = new JsonDateTime();
-    $change->author_id = $account->player->id;
+    $change->date = $date ?? new JsonDateTime();
+    $change->author_id = $author_id ?? $account->player->id;
 
     switch ($type) {
       case 'campaign':

@@ -113,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
         $target->role = $accountReq->role;
         $role_name = get_role_name($target->role);
         log_warn("'{$account->player->name}' assigned role '{$role_name}' to {$target}", "Account");
+        Change::create_change($DB, "player", $target->player_id, "Assigned role '{$role_name}'");
       } else {
         die_json(403, "You cannot assign this role");
       }
