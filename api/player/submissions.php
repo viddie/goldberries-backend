@@ -1,6 +1,6 @@
 <?php
 
-require_once ('../api_bootstrap.inc.php');
+require_once('../api_bootstrap.inc.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
@@ -19,7 +19,7 @@ $show_arbitrary = isset($_GET['arbitrary']) ? $_GET['arbitrary'] === "true" : fa
 $query .= " AND player_id = $1";
 
 if (!$show_archived) {
-  $query .= " AND map_is_archived = false";
+  $query .= " AND (map_is_archived = false OR map_is_archived IS NULL)";
 }
 if (!$show_arbitrary) {
   $query .= " AND objective_is_arbitrary = false AND (challenge_is_arbitrary = false OR challenge_is_arbitrary IS NULL)";
