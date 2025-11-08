@@ -30,10 +30,15 @@ function send_webhook_suggestion_verified($suggestion)
   //Send notification to the suggestion box
   send_webhook_suggestion_notification($suggestion);
 
+  $content = "";
+  $allowedMentionsParse = [];
+
   $name = $map === null ? ($campaign === null ? "General Suggestion" : $campaign->get_name()) : $map->get_name();
   $title = "Suggestion for '$name' by {$suggestion->author->name}";
   if ($map === null && $campaign === null) {
     $title = "General Suggestion by {$suggestion->author->name}";
+    $content = "<@&1436455421425615010>";
+    $allowedMentionsParse[] = "roles";
   }
   $suggestion_url = constant("BASE_URL") . "/suggestions/" . $suggestion->id;
 
@@ -119,13 +124,13 @@ function send_webhook_suggestion_verified($suggestion)
 
 
   $json_data = json_encode([
-    "content" => "", //"New Suggestion: $name",
+    "content" => $content, //"New Suggestion: $name",
     // "username" => "krasin.space",
     //"avatar_url" => "https://ru.gravatar.com/userimage/28503754/1168e2bddca84fec2a63addb348c571d.jpg?size=512",
     // "tts" => false,
     // "file" => "",
     "allowed_mentions" => [
-      "parse" => []
+      "parse" => $allowedMentionsParse
     ],
     "embeds" => [
       [
