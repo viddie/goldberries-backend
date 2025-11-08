@@ -43,11 +43,8 @@ GROUP BY date_trunc('month', submission.date_achieved, 'UTC') AT TIME ZONE 'UTC'
 ORDER BY date_achieved DESC, difficulty.id
 ";
 
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
-$tier_clears = array();
+$result = pg_query_params_or_die($DB, $query);
+$tier_clears = [];
 
 while ($row = pg_fetch_assoc($result)) {
   $date = $row['date_achieved'];
@@ -61,11 +58,8 @@ while ($row = pg_fetch_assoc($result)) {
 //t0+ submissions
 $time_filter = "submission_date_achieved AT TIME ZONE 'UTC' >= '$month-01' AND submission_date_achieved AT TIME ZONE 'UTC' < '$month-01'::date + INTERVAL '1 month'";
 $query = "SELECT * FROM view_submissions WHERE submission_is_verified = TRUE AND submission_new_challenge_id IS NULL AND difficulty_sort >= $all_clears_tier_sort AND $time_filter ORDER BY submission_date_achieved DESC";
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
-$submissions_t0 = array();
+$result = pg_query_params_or_die($DB, $query);
+$submissions_t0 = [];
 while ($row = pg_fetch_assoc($result)) {
   $submission = new Submission();
   $submission->apply_db_data($row, "submission_");
@@ -83,11 +77,8 @@ WHERE challenge_id IS NOT NULL AND difficulty_sort >= $first_clears_tier_sort AN
 GROUP BY challenge_id
 HAVING MIN(submission_date_achieved AT TIME ZONE 'UTC') >= '$month-01' AND MIN(submission_date_achieved AT TIME ZONE 'UTC') < '$month-01'::date + INTERVAL '1 month'
 ORDER BY first_clear_date DESC";
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
-$newly_cleared_t3 = array();
+$result = pg_query_params_or_die($DB, $query);
+$newly_cleared_t3 = [];
 while ($row = pg_fetch_assoc($result)) {
   $challenge = Challenge::get_by_id($DB, $row['challenge_id']);
   $challenge->expand_foreign_keys($DB, 5);
@@ -110,12 +101,16 @@ foreach ($newly_cleared_t3 as $challenge) {
 
 //Challenge changes
 $time_filter = "change_date >= '$month-01' AND change_date < '$month-01'::date + INTERVAL '1 month'";
-$query = "SELECT * FROM view_challenge_changes WHERE $time_filter AND change_description ILIKE 'Moved from%'";
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
-$challenge_changes = array();
+$query = "SELECT
+  *
+FROM view_challenge_changes
+WHERE
+  $time_filter
+  AND change_description ILIKE 'Moved from%'
+  AND change_description NOT ILIKE '%Undetermined%'
+";
+$result = pg_query_params_or_die($DB, $query);
+$challenge_changes = [];
 while ($row = pg_fetch_assoc($result)) {
   $change = new Change();
   $change->apply_db_data($row, "change_");
@@ -125,10 +120,10 @@ while ($row = pg_fetch_assoc($result)) {
 
 
 api_write(
-  array(
+  [
     "tier_clears" => $tier_clears,
     "submissions_t0" => $submissions_t0,
     "challenge_changes" => $challenge_changes,
     "newly_cleared_t3" => $newly_cleared_t3,
-  )
+  ]
 );
