@@ -11,7 +11,7 @@ function submission_embed_get_name($submission)
   $player = $submission->player;
   return $campaign->id . "-" . ($map !== null ? $map->id : 0) . "-" . $challenge->id . "-" . $submission->id . "-" . $player->id;
 }
-function submission_embed_change($object_id, $object_type)
+function submission_embed_change($object_id, $object_type, $campaign_id = null)
 {
   //When one object in the hierarchy gets changed, all cached embeds referencing this object need to be deleted
   //To do this, build a regex pattern that matches all embeds that reference this object
@@ -38,7 +38,6 @@ function submission_embed_change($object_id, $object_type)
   }
 
   $pattern .= "\.jpg";
-  // error_log("Pattern: $pattern");
 
   //List all files in the submission folder
   $base_path = __DIR__ . "/../embed/img/submission";
@@ -48,18 +47,15 @@ function submission_embed_change($object_id, $object_type)
     return;
   }
   $files = array_diff($arr, array('.', '..'));
-  // error_log("Files: " . print_r($files, true));
   foreach ($files as $file) {
-    // error_log("Checking file: $file");
-    //If the file matches the pattern, delete it
     if (preg_match("/$pattern/", $file)) {
       unlink($base_path . "/" . $file);
     }
   }
 
   // If the object type is campaign, also delete the collage image
-  if ($object_type == "campaign") {
-    campaign_collage_embed_change($object_id);
+  if ($object_type == "map" && $campaign_id !== null) {
+    campaign_collage_embed_change($campaign_id);
   }
 
   //Log what has happened
@@ -68,6 +64,7 @@ function submission_embed_change($object_id, $object_type)
 
 function campaign_collage_embed_change($campaign_id)
 {
+  log_debug("Deleted collage image for campaign id $campaign_id", "Campaign");
   $folder = dirname(__FILE__) . '/../embed/img/campaign-collage';
   $file = $folder . "/" . $campaign_id . ".webp";
   if (file_exists($file)) {

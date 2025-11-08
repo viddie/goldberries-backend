@@ -101,6 +101,7 @@ function handle_default_upload($file, $full_path, $target_destination, $full_nam
  */
 function handle_map_image_upload($file, $path, $target_destination, $ext)
 {
+  global $DB;
   global $account;
 
   // Require map_id parameter
@@ -108,6 +109,11 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
     die_json(400, "Missing or invalid parameter: map_id");
   }
   $map_id = intval($_POST['map_id']);
+  $map = Map::get_by_id($DB, $map_id, 2, true); // get map and campaign
+  if ($map === false) {
+    die_json(404, "Map with id $map_id not found");
+  }
+  $campaign_id = $map->campaign_id;
 
   // File name is forced to map_id and extension to webp
   $full_name = $map_id . ".webp";
@@ -169,7 +175,7 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
   }
 
   // Delete all cached embeds that reference this map
-  submission_embed_change($map_id, "map");
+  submission_embed_change($map_id, "map", $campaign_id);
   log_info("'" . $account->player->name . "' updated map image for map_id $map_id", "Map");
 
   api_write([
