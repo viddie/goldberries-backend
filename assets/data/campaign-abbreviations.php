@@ -132,5 +132,13 @@ $CAMPAIGN_ABBREVIATIONS = [
   [
     "abbreviation" => ["pdbc"],
     "id" => 655,
+  ],
+  [
+    "abbreviation" => ["awwpd"],
+    "id" => 1570,
+  ],
+  [
+    "abbreviation" => ["cts"],
+    "id" => 1281,
   ]
 ];

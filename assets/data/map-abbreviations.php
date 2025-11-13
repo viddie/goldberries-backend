@@ -30,7 +30,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 3936,
   ],
   [
-    "abbreviation" => ["4d", "o4d"],
+    "abbreviation" => ["4d", "o4d", "4dv1"],
     "id" => 1755,
   ],
   [
@@ -42,7 +42,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 3938,
   ],
   [
-    "abbreviation" => ["5d", "o5d"],
+    "abbreviation" => ["5d", "o5d", "5dv1"],
     "id" => 1756,
   ],
   [
@@ -66,7 +66,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 120,
   ],
   [
-    "abbreviation" => ["8d"],
+    "abbreviation" => ["8dv2", "o8d"],
     "id" => 1759,
   ],
   [
@@ -90,7 +90,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 1762,
   ],
   [
-    "abbreviation" => ["4dark"],
+    "abbreviation" => ["o4dark", "4darkv1"],
     "id" => 1763,
   ],
   [
@@ -106,7 +106,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2315,
   ],
   [
-    "abbreviation" => ["ehs", "sjehs", "ss", "exhs"],
+    "abbreviation" => ["ehs", "sjehs", "ss", "exhs", "sjexhs"],
     "id" => 2345,
   ],
   [
@@ -126,7 +126,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2427,
   ],
   [
-    "abbreviation" => ["ehs", "scehs", "exhs"],
+    "abbreviation" => ["ehs", "scehs", "exhs", "scexhs"],
     "id" => 2443,
   ],
   [
@@ -410,7 +410,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2504,
   ],
   [
-    "abbreviation" => ["o8d"],
+    "abbreviation" => ["8dv1", "oo8d"],
     "id" => 2875,
   ],
   [
@@ -422,27 +422,27 @@ $MAP_ABBREVIATIONS = [
     "id" => 1749,
   ],
   [
-    "abbreviation" => ["oo7d", "o7d"],
+    "abbreviation" => ["oo7d", "o7d", "7dv1"],
     "id" => 2548,
   ],
   [
-    "abbreviation" => ["o7d"],
+    "abbreviation" => ["o7d", "7dv1.5"],
     "id" => 2876,
   ],
   [
-    "abbreviation" => ["o3d", "o3dark", "3dark"],
+    "abbreviation" => ["o3d", "o3dark", "3dark", "3dv2"],
     "id" => 2546,
   ],
   [
-    "abbreviation" => ["oo3d", "o3d"],
+    "abbreviation" => ["oo3d", "o3d", "3dv1"],
     "id" => 2547,
   ],
   [
-    "abbreviation" => ["o6d"],
+    "abbreviation" => ["o6d", "6dv1"],
     "id" => 2877,
   ],
   [
-    "abbreviation" => ["o9d"],
+    "abbreviation" => ["o9d", "9dv1"],
     "id" => 2879,
   ],
   [
@@ -642,7 +642,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 840,
   ],
   [
-    "abbreviation" => ["sruins"],
+    "abbreviation" => ["sruins", "spruins", "spuins"],
     "id" => 2146,
   ],
   [
@@ -960,5 +960,129 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["anachronism", "ancestor"],
     "id" => 4411,
+  ],
+  [
+    "abbreviation" => ["oa3d", "ooa3d", "o3d", "oo3d"],
+    "id" => 2536,
+  ],
+  [
+    "abbreviation" => ["oa7d", "o7d"],
+    "id" => 2910,
+  ],
+  [
+    "abbreviation" => ["oa3d", "o3d"],
+    "id" => 118,
+  ],
+  [
+    "abbreviation" => ["maq"],
+    "id" => 2155,
+  ],
+  [
+    "abbreviation" => ["o9b", "9b"],
+    "id" => 2540,
+  ],
+  [
+    "abbreviation" => ["sf"],
+    "id" => 2207,
+  ],
+  [
+    "abbreviation" => ["rummit"],
+    "id" => 2180,
+  ],
+  [
+    "abbreviation" => ["wale"],
+    "id" => 2247,
+  ],
+  [
+    "abbreviation" => ["jomt"],
+    "id" => 2130,
+  ],
+  [
+    "abbreviation" => ["lagoda"],
+    "id" => 2335,
+  ],
+  [
+    "abbreviation" => ["vc"],
+    "id" => 2764,
+  ],
+  [
+    "abbreviation" => ["debula"],
+    "id" => 2496,
+  ],
+  [
+    "abbreviation" => ["atoipact"],
+    "id" => 2041,
+  ],
+  [
+    "abbreviation" => ["z1e", "z1ea", "z1i", "z1ia"],
+    "id" => 3251,
+  ],
+  [
+    "abbreviation" => ["trtp"],
+    "id" => 3369,
+  ],
+  [
+    "abbreviation" => ["ctsa"],
+    "id" => 2998,
+  ],
+  [
+    "abbreviation" => ["ctsb"],
+    "id" => 5808,
+  ],
+  [
+    "abbreviation" => ["ctsc"],
+    "id" => 5809,
+  ],
+  [
+    "abbreviation" => ["ctsd"],
+    "id" => 5810,
+  ],
+  [
+    "abbreviation" => ["8d"],
+    "id" => 4982,
+  ],
+  [
+    "abbreviation" => ["clisis", "tcc"],
+    "id" => 2218,
+  ],
+  [
+    "abbreviation" => ["4dark"],
+    "id" => 3937,
+  ],
+  [
+    "abbreviation" => ["5dark"],
+    "id" => 3939,
+  ],
+  [
+    "abbreviation" => ["6dark"],
+    "id" => 4602,
+  ],
+  [
+    "abbreviation" => ["7dark"],
+    "id" => 4603,
+  ],
+  [
+    "abbreviation" => ["tdlotckm"],
+    "id" => 3710,
+  ],
+  [
+    "abbreviation" => ["o8d", "oo8d", "8dv1"],
+    "id" => 4986,
+  ],
+  [
+    "abbreviation" => ["o8d", "oo8d", "8dv1"],
+    "id" => 4987,
+  ],
+  [
+    "abbreviation" => ["o5d", "5dv1"],
+    "id" => 4988,
+  ],
+  [
+    "abbreviation" => ["o6e", "6ev1"],
+    "id" => 4984,
+  ],
+  [
+    "abbreviation" => ["6e", "6ev2"],
+    "id" => 4985,
   ]
 ];
