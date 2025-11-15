@@ -6,6 +6,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
 
+$account = get_user_data();
+
 $all_submissions = isset($_GET['all_submissions']) && $_GET['all_submissions'] === "true";
 $limit_challenges = isset($_GET['limit_challenges']) ? intval($_GET['limit_challenges']) : null;
 
@@ -21,6 +23,11 @@ $max_diff_sort = isset($_GET['max_diff_sort']) ? intval($_GET['max_diff_sort']) 
 //Clear states: 0 = all, 1 = Only C, 2 = Only FC, 3 = Only FC or C/FC (No C), 4 = Only C or C/FC (No FC)
 $clear_state = isset($_GET['clear_state']) ? intval($_GET['clear_state']) : 0;
 
+// Options
+$highlight_player_id = isset($_GET['highlight_player_id']) ? intval($_GET['highlight_player_id']) : null;
+if ($highlight_player_id === null && $account != null) {
+  $highlight_player_id = $account->player_id;
+}
 
 
 $query = "SELECT * FROM view_submissions";
@@ -32,6 +39,7 @@ $is_player = isset($_GET['player']);
 $is_campaign = isset($_GET['campaign']);
 if ($is_player) {
   $where[] = "player_id = " . intval($_GET['player']);
+  $highlight_player_id = null; //Player has done all challenges in the returned data
 } else {
   $where[] = "(player_account_is_suspended IS NULL OR player_account_is_suspended = false)";
 }
@@ -192,6 +200,9 @@ foreach ($response['challenges'] as $challenge_id => $challenge) {
     $response['challenges'][$challenge_id]->data["is_stable"] = is_challenge_stable($challenge);
     $response['challenges'][$challenge_id]->data["frac"] = challenge_fractional_placement($challenge);
     $response['challenges'][$challenge_id]->data["sugg_count"] = get_suggestion_count($challenge);
+    if ($highlight_player_id != null) {
+      $response['challenges'][$challenge_id]->data["done"] = get_player_has_done($challenge, $highlight_player_id);
+    }
   }
 
   if (!$all_submissions) {
@@ -273,4 +284,14 @@ function get_suggestion_count($challenge)
     }
   }
   return $suggestion_count;
+}
+
+function get_player_has_done($challenge, $highlight_player_id)
+{
+  foreach ($challenge->submissions as $submission) {
+    if ($submission->player_id === $highlight_player_id) {
+      return true;
+    }
+  }
+  return false;
 }
