@@ -25,9 +25,6 @@ $clear_state = isset($_GET['clear_state']) ? intval($_GET['clear_state']) : 0;
 
 // Options
 $highlight_player_id = isset($_GET['highlight_player_id']) ? intval($_GET['highlight_player_id']) : null;
-if ($highlight_player_id === null && $account != null) {
-  $highlight_player_id = $account->player_id;
-}
 
 
 $query = "SELECT * FROM view_submissions";
@@ -127,7 +124,7 @@ while ($row = pg_fetch_assoc($resultDifficulties)) {
   $tierIndex = get_tier_index($difficulty);
 
   if (!isset($response['tiers'][$tierIndex]))
-    $response['tiers'][$tierIndex] = array();
+    $response['tiers'][$tierIndex] = [];
 
   $response['tiers'][$tierIndex] = $difficulty;
   $difficulties[$difficulty->id] = $difficulty;

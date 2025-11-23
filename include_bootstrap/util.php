@@ -173,37 +173,6 @@ function get_tier_index($difficulty)
 
   //Rework: New index is equal to: MAX_SORT - difficulty.sort
   return $MAX_SORT - $difficulty->sort;
-
-  // switch ($difficulty->name) {
-  //   case "Tier 0":
-  //     return 0;
-  //   case "Tier 0.5":
-  //     return 1;
-  //   case "Tier 1":
-  //     return 2;
-  //   case "Tier 2":
-  //     return 3;
-  //   case "Tier 3":
-  //     return 4;
-  //   case "Tier 4":
-  //     return 5;
-  //   case "Tier 5":
-  //     return 6;
-  //   case "Tier 6":
-  //     return 7;
-  //   case "Tier 7":
-  //     return 8;
-  //   case "Tier 7.5":
-  //     return 9;
-  //   case "High Standard":
-  //     return 10;
-  //   case "Mid Standard":
-  //     return 11;
-  //   case "Low Standard":
-  //     return 12;
-  //   case "Undetermined":
-  //     return 13;
-  // }
 }
 
 function fetch_data($url)
