@@ -66,7 +66,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 120,
   ],
   [
-    "abbreviation" => ["8dv2", "o8d"],
+    "abbreviation" => ["8dv2", "o8d", "8d"],
     "id" => 1759,
   ],
   [
@@ -90,7 +90,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 1762,
   ],
   [
-    "abbreviation" => ["o4dark", "4darkv1"],
+    "abbreviation" => ["o4dark", "4darkv1", "4dark"],
     "id" => 1763,
   ],
   [
@@ -410,7 +410,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2504,
   ],
   [
-    "abbreviation" => ["8dv1", "oo8d"],
+    "abbreviation" => ["8dv1", "oo8d", "8d"],
     "id" => 2875,
   ],
   [
@@ -422,27 +422,27 @@ $MAP_ABBREVIATIONS = [
     "id" => 1749,
   ],
   [
-    "abbreviation" => ["oo7d", "o7d", "7dv1"],
+    "abbreviation" => ["oo7d", "o7d", "7dv1", "7d"],
     "id" => 2548,
   ],
   [
-    "abbreviation" => ["o7d", "7dv1.5"],
+    "abbreviation" => ["o7d", "7dv1.5", "7d"],
     "id" => 2876,
   ],
   [
-    "abbreviation" => ["o3d", "o3dark", "3dark", "3dv2"],
+    "abbreviation" => ["o3d", "o3dark", "3dark", "3dv2", "3d"],
     "id" => 2546,
   ],
   [
-    "abbreviation" => ["oo3d", "o3d", "3dv1"],
+    "abbreviation" => ["oo3d", "o3d", "3dv1", "3d"],
     "id" => 2547,
   ],
   [
-    "abbreviation" => ["o6d", "6dv1"],
+    "abbreviation" => ["o6d", "6dv1", "6d"],
     "id" => 2877,
   ],
   [
-    "abbreviation" => ["o9d", "9dv1"],
+    "abbreviation" => ["o9d", "9dv1", "9d"],
     "id" => 2879,
   ],
   [
@@ -450,11 +450,11 @@ $MAP_ABBREVIATIONS = [
     "id" => 2878,
   ],
   [
-    "abbreviation" => ["o8d"],
+    "abbreviation" => ["o8d", "8d"],
     "id" => 2549,
   ],
   [
-    "abbreviation" => ["o6d"],
+    "abbreviation" => ["o6d", "6d"],
     "id" => 2550,
   ],
   [
@@ -623,7 +623,7 @@ $MAP_ABBREVIATIONS = [
   ],
   [
     "abbreviation" => ["twh"],
-    "id" => 1215,
+    "id" => 2514,
   ],
   [
     "abbreviation" => ["swut"],
@@ -1066,19 +1066,19 @@ $MAP_ABBREVIATIONS = [
     "id" => 3710,
   ],
   [
-    "abbreviation" => ["o8d", "oo8d", "8dv1"],
+    "abbreviation" => ["o8d", "oo8d", "8dv1", "8d"],
     "id" => 4986,
   ],
   [
-    "abbreviation" => ["o8d", "oo8d", "8dv1"],
+    "abbreviation" => ["o8d", "oo8d", "8dv1", "8d"],
     "id" => 4987,
   ],
   [
-    "abbreviation" => ["o5d", "5dv1"],
+    "abbreviation" => ["o5d", "5dv1", "5d"],
     "id" => 4988,
   ],
   [
-    "abbreviation" => ["o6e", "6ev1"],
+    "abbreviation" => ["o6e", "6ev1", "6e"],
     "id" => 4984,
   ],
   [
