@@ -149,7 +149,7 @@ class Player extends DbObject
   static function search_by_name($DB, string $search, string $raw_search, bool $is_exact_search)
   {
     $similar = $is_exact_search ? "" : " OR SIMILARITY(player_name, '$raw_search') > 0.3";
-    $query = "SELECT * FROM view_players WHERE player_name ILIKE '$search' $similar ORDER BY player_name";
+    $query = "SELECT * FROM view_players WHERE (player_account_is_suspended = FALSE OR player_account_is_suspended IS NULL) AND (player_name ILIKE '$search' $similar) ORDER BY player_name";
     $result = pg_query_params_or_die($DB, $query, []);
 
     $players = array();
