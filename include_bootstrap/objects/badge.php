@@ -31,7 +31,8 @@ class Badge extends DbObject
     21, //t17
     22, //t18
     23, //t19
-    24 //t20
+    24, //t20
+    38 //t21
   ];
 
   public string $icon_url;
