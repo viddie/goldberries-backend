@@ -14,7 +14,7 @@ if ($month !== null && !preg_match('/^\d{4}-\d{2}$/', $month)) {
 $where_campaign = "";
 $where_map = "WHERE 1 = 1";
 $where_challenge = "WHERE challenge.is_rejected = FALSE";
-$where_submission = "WHERE submission.is_verified = TRUE";
+$where_submission = "WHERE submission.is_verified = TRUE AND submission.is_obsolete = FALSE";
 
 if ($month !== null) {
   $where_campaign = "WHERE date_trunc('month', campaign.date_added, 'UTC') < '$month-01'";
@@ -59,7 +59,7 @@ FROM submission
 JOIN challenge ON submission.challenge_id = challenge.id
 LEFT JOIN map ON challenge.map_id = map.id
 JOIN difficulty ON challenge.difficulty_id = difficulty.id
-WHERE $time_filter AND challenge.is_rejected = FALSE AND submission.is_verified = TRUE
+WHERE $time_filter AND challenge.is_rejected = FALSE AND submission.is_verified = TRUE AND submission.is_obsolete = FALSE
 GROUP BY difficulty.id
 ORDER BY difficulty.id";
 $result = pg_query($DB, $query);

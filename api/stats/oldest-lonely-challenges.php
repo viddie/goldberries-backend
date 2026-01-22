@@ -19,7 +19,7 @@ FROM view_challenges
 JOIN submission ON view_challenges.challenge_id = submission.challenge_id
 JOIN player ON submission.player_id = player.id
 JOIN account ON player.id = account.player_id
-WHERE view_challenges.count_submissions = 1
+WHERE submission.is_verified = TRUE AND view_challenges.count_submissions = 1
 ORDER BY days_difference DESC LIMIT 100";
 $result = pg_query_params_or_die($DB, $query);
 
