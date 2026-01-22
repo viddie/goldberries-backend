@@ -22,7 +22,7 @@ $query = "SELECT * FROM view_campaigns";
 
 if ($search !== null) {
   $search = pg_escape_string($search);
-  $query .= " WHERE campaign_name ILIKE '%" . $search . "%' OR map_name ILIKE '%" . $search . "%'";
+  $query .= " WHERE campaign_name ILIKE '%" . $search . "%' OR map_name ILIKE '%" . $search . "%' OR challenge_label ILIKE '%" . $search . "%'";
 }
 
 if ($sort !== null) {
