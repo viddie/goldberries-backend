@@ -4,3 +4,4 @@ embed/img/submission/*
 [0-9]*.webp
 !unknown.webp
 /embed/img/campaign-collage
+.github/copilot-instructions.md
