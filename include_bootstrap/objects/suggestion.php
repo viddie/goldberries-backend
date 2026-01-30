@@ -117,13 +117,27 @@ class Suggestion extends DbObject
     return true;
   }
 
-  static function get_paginated($DB, $page, $per_page, $challenge = null, $expired = null, $account = null, $type = "all")
+  static function get_paginated($DB, $page, $per_page, $challenge = null, $expired = null, $account = null, $type = "all", $search = null)
   {
-    $query = "SELECT * FROM suggestion";
+    $needs_join = $search !== null;
+
+    if ($needs_join) {
+      $query = "SELECT DISTINCT suggestion.* FROM suggestion
+        LEFT JOIN challenge ON suggestion.challenge_id = challenge.id
+        LEFT JOIN map ON challenge.map_id = map.id
+        LEFT JOIN campaign ON COALESCE(challenge.campaign_id, map.campaign_id) = campaign.id
+        LEFT JOIN player AS author ON suggestion.author_id = author.id";
+    } else {
+      $query = "SELECT * FROM suggestion";
+    }
 
     $where = array();
+    if ($search !== null) {
+      $search = pg_escape_string($DB, $search);
+      $where[] = "(campaign.name ILIKE '%" . $search . "%' OR map.name ILIKE '%" . $search . "%' OR author.name ILIKE '%" . $search . "%' OR suggestion.comment ILIKE '%" . $search . "%')";
+    }
     if ($challenge !== null) {
-      $where[] = "challenge_id = " . $challenge;
+      $where[] = "suggestion.challenge_id = " . $challenge;
     }
     if ($expired === true) {
       $where[] = "(suggestion.is_accepted IS NOT NULL OR suggestion.is_verified = false)";
@@ -156,13 +170,26 @@ class Suggestion extends DbObject
       $where[] = "suggestion.challenge_id IS NOT NULL";
     } else if ($type === "challenge_own" && $player_id !== null) {
       $where[] = "suggestion.challenge_id IS NOT NULL";
-      $query = "SELECT 
-          suggestion.*,
-          BOOL_OR(player.id = $player_id) AS has_player
-        FROM suggestion
-        JOIN challenge ON suggestion.challenge_id = challenge.id
-        JOIN submission ON challenge.id = submission.challenge_id
-        JOIN player ON submission.player_id = player.id";
+      if ($needs_join) {
+        $query = "SELECT DISTINCT
+            suggestion.*,
+            BOOL_OR(sub_player.id = $player_id) AS has_player
+          FROM suggestion
+          LEFT JOIN challenge ON suggestion.challenge_id = challenge.id
+          LEFT JOIN map ON challenge.map_id = map.id
+          LEFT JOIN campaign ON COALESCE(challenge.campaign_id, map.campaign_id) = campaign.id
+          LEFT JOIN player AS author ON suggestion.author_id = author.id
+          JOIN submission ON challenge.id = submission.challenge_id
+          JOIN player AS sub_player ON submission.player_id = sub_player.id";
+      } else {
+        $query = "SELECT 
+            suggestion.*,
+            BOOL_OR(player.id = $player_id) AS has_player
+          FROM suggestion
+          JOIN challenge ON suggestion.challenge_id = challenge.id
+          JOIN submission ON challenge.id = submission.challenge_id
+          JOIN player ON submission.player_id = player.id";
+      }
     }
 
     if (count($where) > 0) {
@@ -170,7 +197,11 @@ class Suggestion extends DbObject
     }
 
     if ($type === "challenge_own" && $player_id !== null) {
-      $query .= " GROUP BY suggestion.id HAVING BOOL_OR(player.id = $player_id)";
+      if ($needs_join) {
+        $query .= " GROUP BY suggestion.id HAVING BOOL_OR(sub_player.id = $player_id)";
+      } else {
+        $query .= " GROUP BY suggestion.id HAVING BOOL_OR(player.id = $player_id)";
+      }
     }
 
     $query .= " ORDER BY suggestion.date_accepted DESC, suggestion.date_created DESC";

@@ -13,7 +13,8 @@ $per_page = intval($_REQUEST['per_page']) <= 0 ? 20 : intval($_REQUEST['per_page
 $challenge = intval($_REQUEST['challenge']) === 0 ? null : intval($_REQUEST['challenge']);
 $expired = $_REQUEST['expired'] === 'true' ? true : ($_REQUEST['expired'] === 'false' ? false : null);
 $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "all";
+$search = isset($_REQUEST['search']) && $_REQUEST['search'] !== '' ? $_REQUEST['search'] : null;
 
-$suggestions = Suggestion::get_paginated($DB, $page, $per_page, $challenge, $expired, $account, $type);
+$suggestions = Suggestion::get_paginated($DB, $page, $per_page, $challenge, $expired, $account, $type, $search);
 
 api_write($suggestions);
