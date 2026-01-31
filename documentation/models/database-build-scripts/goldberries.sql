@@ -500,6 +500,8 @@ CREATE VIEW "view_submissions" AS SELECT
   pa.suspension_reason AS player_account_suspension_reason,
   pa.name_color_start AS player_account_name_color_start,
   pa.name_color_end AS player_account_name_color_end,
+  pa.country AS player_account_country,
+  pa.input_method AS player_account_input_method,
 
   v.id AS verifier_id,
   v.name AS verifier_name,

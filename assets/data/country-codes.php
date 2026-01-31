@@ -1,4 +1,5 @@
 <?php
+// ISO 3166-1 alpha-2 country codes (lowercase)
 $COUNTRY_CODES = array(
   "af" => "Afghanistan",
   "ax" => "Åland Islands",

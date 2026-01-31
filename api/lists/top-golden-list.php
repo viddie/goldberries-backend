@@ -22,6 +22,8 @@ $min_diff_sort = isset($_GET['min_diff_sort']) ? intval($_GET['min_diff_sort']) 
 $max_diff_sort = isset($_GET['max_diff_sort']) ? intval($_GET['max_diff_sort']) : $MAX_SORT;
 //Clear states: 0 = all, 1 = Only C, 2 = Only FC, 3 = Only FC or C/FC (No C), 4 = Only C or C/FC (No FC)
 $clear_state = isset($_GET['clear_state']) ? intval($_GET['clear_state']) : 0;
+$filter_country = isset($_GET['country']) ? $_GET['country'] : null;
+$filter_input_method = isset($_GET['input_method']) ? $_GET['input_method'] : null;
 
 // Options
 $highlight_player_id = isset($_GET['highlight_player_id']) ? intval($_GET['highlight_player_id']) : null;
@@ -92,6 +94,12 @@ if ($end_date !== null) {
     die_json(400, "Invalid end_date format");
   }
   $where[] = "submission_date_achieved AT TIME ZONE 'UTC' <= '$end_date'";
+}
+if ($filter_country !== null) {
+  $where[] = "player_account_country = '" . pg_escape_string($DB, $filter_country) . "'";
+}
+if ($filter_input_method !== null) {
+  $where[] = "player_account_input_method = '" . pg_escape_string($DB, $filter_input_method) . "'";
 }
 
 
