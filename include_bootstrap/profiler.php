@@ -2,7 +2,10 @@
 
 $PROFILER_DATA = [];
 $PROFILER_TIMER = null;
-//Time for profiler as milliseconds
+
+/**
+ * Start the profiler. Records the start timestamp.
+ */
 function profiler_start()
 {
   global $PROFILER_DATA, $PROFILER_TIMER;
@@ -12,23 +15,25 @@ function profiler_start()
     'steps' => []
   ];
 }
+
+/**
+ * Record a profiler step. Only captures timing data - no calculations performed.
+ * 
+ * @param string|null $name Name of the step (auto-generated if null)
+ * @param int $depth Nesting depth (0 = top level, 1 = substep of most recent depth-0 step, etc.)
+ * @param mixed $data Optional arbitrary data to attach to the step
+ */
 function profiler_step($name = null, $depth = 0, $data = null)
 {
-  global $PROFILER_DATA, $PROFILER_TIMER;
+  global $PROFILER_DATA;
   if (!isset($PROFILER_DATA['start'])) {
     profiler_start();
     return;
   }
 
-  //If a depth of 0 is specified, the step is added to the end of PROFILER_DATA['steps']
-  //If a depth of 1 is specified, the step is attached to the most recent step of depth 0, as its own substep array
-  //If a depth of 2 is specified, it does the same thing except further down
-  //Additionally, if after adding a step of a certain level, the previous step of the same level had substeps, add a field 'end_substeps' to the previous step
-  //If along the path to a certain level a step is missing, add it
-
-  $start_time = $PROFILER_DATA['start'];
   $diff = get_time_diff();
 
+  // Navigate to the correct nesting level
   $level = &$PROFILER_DATA['steps'];
   for ($i = 0; $i < $depth; $i++) {
     $last_step = &$level[count($level) - 1];
@@ -38,49 +43,60 @@ function profiler_step($name = null, $depth = 0, $data = null)
     $level = &$last_step['steps'];
   }
 
-  //Close the substeps of the previous step if it had any
-  if (count($level) > 0) {
-    $last_step = &$level[count($level) - 1];
-    if (isset($last_step['steps'])) {
-      $sum = 0;
-      foreach ($last_step['steps'] as $substep) {
-        $sum += $substep['time'];
-        //If substeps_total exists, also add that to the sum
-        if (isset($substep['substeps_total'])) {
-          $sum += $substep['substeps_total'];
-        }
-      }
-      $last_step['substeps_total'] = $sum;
-    }
-  }
-
-  //Insert the step into the currently selected level
+  // Record the step data
   $num_steps = count($level);
-  $value = $name ?? "Step $num_steps";
   $entry = [
-    'name' => $value,
+    'name' => $name ?? "Step $num_steps",
     'time' => $diff
   ];
   if ($data !== null) {
     $entry['data'] = $data;
   }
   $level[] = $entry;
-
-  // $num_steps = count($PROFILER_DATA['steps']);
-  // $diff = get_current_time_ms() - $start_time;
-  // $value = $name ?? "Step $num_steps";
-  // $PROFILER_DATA['steps'][] = [
-  //   'name' => $value,
-  //   'time' => $diff
-  // ];
 }
+
+/**
+ * End the profiler and calculate all statistics.
+ * 
+ * @param array|null $output If provided, profiler data will be added to this array under 'profiler' key
+ */
 function profiler_end(&$output = null)
 {
   global $PROFILER_DATA;
   $PROFILER_DATA['time'] = get_current_time_ms() - $PROFILER_DATA['start'];
+
+  profiler_calculate_stats($PROFILER_DATA['steps']);
+
   if ($output !== null) {
     $output['profiler'] = $PROFILER_DATA;
   }
+}
+
+/**
+ * Recursively calculate statistics for all steps.
+ * Currently calculates: substeps_total (sum of time spent in all nested substeps)
+ * 
+ * @param array $steps Reference to steps array to process
+ * @return int Total time of all steps at this level (including their substeps)
+ */
+function profiler_calculate_stats(&$steps)
+{
+  if (empty($steps)) {
+    return 0;
+  }
+
+  $level_total = 0;
+
+  foreach ($steps as &$step) {
+    $level_total += $step['time'];
+
+    if (isset($step['steps']) && !empty($step['steps'])) {
+      $step['substeps_total'] = profiler_calculate_stats($step['steps']);
+      $level_total += $step['substeps_total'];
+    }
+  }
+
+  return $level_total;
 }
 function profiler_get_data()
 {

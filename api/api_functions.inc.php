@@ -97,6 +97,7 @@ function api_write($output, $check_numbers = false, $run_profiler = false)
 
 function api_write_for_profiler($output, $flags)
 {
+  profiler_end();
   $json = json_encode($output, $flags);
   //Parse json again
   $obj = json_decode($json, true);
