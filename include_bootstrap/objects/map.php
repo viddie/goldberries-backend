@@ -35,6 +35,17 @@ class Map extends DbObject
   // === Abstract Functions ===
   function get_field_set()
   {
+    // Filter out collectibles with empty IDs before serializing
+    $collectibles_str = null;
+    if ($this->collectibles !== null) {
+      $filtered = array_values(array_filter($this->collectibles->arr, fn($item) => !empty($item[0])));
+      if (count($filtered) > 0) {
+        $temp = new StringList(5);
+        $temp->arr = $filtered;
+        $collectibles_str = $temp->__toString();
+      }
+    }
+
     return array(
       'name' => $this->name,
       'url' => $this->url === null ? null : $this->url->__toString(),
@@ -47,7 +58,7 @@ class Map extends DbObject
       'author_gb_name' => $this->author_gb_name,
       'campaign_id' => $this->campaign_id,
       'note' => $this->note,
-      'collectibles' => $this->collectibles === null ? null : $this->collectibles->__toString(),
+      'collectibles' => $collectibles_str,
       'golden_changes' => $this->golden_changes,
       'counts_for_id' => $this->counts_for_id,
       'is_progress' => $this->is_progress,
@@ -116,6 +127,8 @@ class Map extends DbObject
     if (isset($arr[$prefix . 'collectibles'])) {
       $value = $arr[$prefix . 'collectibles'];
       if (is_array($value)) {
+        // Filter out collectibles with empty IDs (first value in array)
+        $value = array_values(array_filter($value, fn($item) => !empty($item[0])));
         if (count($value) > 0) {
           $this->collectibles = new StringList(5);
           $this->collectibles->arr = $value;
@@ -124,6 +137,11 @@ class Map extends DbObject
         }
       } else {
         $this->collectibles = new StringList(5, $value);
+        // Filter out collectibles with empty IDs (first value in array)
+        $this->collectibles->arr = array_values(array_filter($this->collectibles->arr, fn($item) => !empty($item[0])));
+        if (count($this->collectibles->arr) === 0) {
+          $this->collectibles = null;
+        }
       }
     }
     if (isset($arr[$prefix . 'golden_changes']))

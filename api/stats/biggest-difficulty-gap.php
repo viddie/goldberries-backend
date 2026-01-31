@@ -42,7 +42,7 @@ WHERE t.rank <= 2
 GROUP BY t.player_id
 HAVING COUNT(*) = 2
 ORDER BY difficulty_gap DESC, first_difficulty_sort DESC
-LIMIT 100;
+LIMIT 300;
 ";
 
 $result = pg_query_params_or_die($DB, $query);
