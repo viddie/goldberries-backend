@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $type = $_REQUEST['type'] ?? null;
   if ($type === null) {
@@ -22,8 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($changes);
 }
+#endregion
 
-// Delete Request
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
   $account = get_user_data();
   reject_api_keys($account);
@@ -51,3 +53,4 @@ if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
     http_response_code(200);
   }
 }
+#endregion

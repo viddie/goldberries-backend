@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region OAuth Flow
 if (isset($_REQUEST['code'])) {
   //Got code from discord oauth, now get access token
 
@@ -108,7 +109,9 @@ if (isset($_REQUEST['code'])) {
   //Redirect to discord oauth
   header("Location: " . get_discord_url());
 }
+#endregion
 
+#region Utility Functions
 function apiRequest($url, $post = FALSE, $headers = array())
 {
   $ch = curl_init($url);
@@ -131,3 +134,4 @@ function apiRequest($url, $post = FALSE, $headers = array())
   $response = curl_exec($ch);
   return json_decode($response);
 }
+#endregion

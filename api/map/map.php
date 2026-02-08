@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $challenges = isset($_REQUEST['challenges']) && $_REQUEST['challenges'] === 'true';
   $submissions = isset($_REQUEST['submissions']) && $_REQUEST['submissions'] === 'true';
@@ -30,7 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($maps);
 }
+#endregion
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -89,8 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     api_write($maps);
   }
 }
+#endregion
 
 
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $HELPER);
@@ -123,3 +128,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete map");
   }
 }
+#endregion

@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   die_json(405, 'Method Not Allowed');
 }
@@ -21,3 +22,4 @@ if ($topic === null || $message === null) {
 $player = $account->player;
 
 send_webhook_mod_report($player, $topic, $message, $url);
+#endregion

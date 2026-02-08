@@ -2,7 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   die_json(405, 'Method Not Allowed');
 }
@@ -135,3 +135,4 @@ foreach ($grouped_submissions as $player_id => $campaigns) {
 }
 
 api_write($submissions);
+#endregion

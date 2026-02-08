@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -219,7 +220,9 @@ foreach ($response['challenges'] as $challenge_id => $challenge) {
 $response['challenges'] = array_values($response['challenges']);
 
 api_write($response);
+#endregion
 
+#region Utility Functions
 function is_challenge_stable($challenge)
 {
   global $TRIVIAL_ID, $UNDETERMINED_ID;
@@ -300,3 +303,4 @@ function get_player_has_done($challenge, $highlight_player_id)
   }
   return false;
 }
+#endregion

@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $depth = 3;
 
@@ -22,8 +23,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($posts);
 }
+#endregion
 
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -75,8 +78,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
+#endregion
 
 
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $NEWS_WRITER);
@@ -112,3 +117,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete post");
   }
 }
+#endregion

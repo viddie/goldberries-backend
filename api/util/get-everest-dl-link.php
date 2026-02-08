@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -23,6 +24,9 @@ $fileId = getFileId($params["itemtype"], $params["itemid"]);
 // Everest one-click dl link format: everest:https://gamebanana.com/mmdl/<file_id>,Mod,<mod_id>
 $downloadLink = "everest:https://gamebanana.com/mmdl/" . $fileId . "," . $params["itemtype"] . "," . $params["itemid"];
 api_write(array("download_url" => $downloadLink));
+#endregion
+
+#region Utility Functions
 
 function getFileId($item_type, $item_id)
 {
@@ -91,3 +95,4 @@ function getGamebananaParameters($url)
 
   return array("itemtype" => $itemtype, "itemid" => $itemid);
 }
+#endregion

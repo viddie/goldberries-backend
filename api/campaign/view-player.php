@@ -6,6 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
 
+#region GET Request
 //Player info request. This endpoint will return all submissions for all maps in the campaign for the player
 
 $campaign_id = isset($_GET['id']) ? intval($_GET['id']) : null;
@@ -39,7 +40,9 @@ if (!$result) {
 
 $campaign_view = parse_campaign_player_view($result);
 api_write($campaign_view);
+#endregion
 
+#region Utility Functions
 function parse_campaign_player_view($result)
 {
   $maps = array(); //Fill this array with all challenges and submissions this player has made
@@ -90,3 +93,4 @@ function parse_campaign_player_view($result)
 
   return $maps;
 }
+#endregion

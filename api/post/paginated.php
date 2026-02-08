@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -22,3 +23,4 @@ $type = $_REQUEST['type'];
 
 $response = Post::get_paginated($DB, $page, $per_page, $type, $search, $author_id);
 api_write($response);
+#endregion

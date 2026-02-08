@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Invalid request method');
 }
@@ -127,3 +128,4 @@ api_write(
     "newly_cleared_t3" => $newly_cleared_t3,
   ]
 );
+#endregion

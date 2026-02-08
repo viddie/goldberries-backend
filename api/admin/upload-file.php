@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
   die_json(405, 'Method Not Allowed');
 }
@@ -79,7 +80,10 @@ switch ($destination) {
     handle_default_upload($_FILES['file'], $full_path, $target_destination, $full_name);
     break;
 }
+#endregion
 
+
+#region Utility Functions
 
 /**
  * Default upload handler
@@ -183,4 +187,4 @@ function handle_map_image_upload($file, $path, $target_destination, $ext)
     "path" => "/$target_destination/$full_name",
   ]);
 }
-
+#endregion

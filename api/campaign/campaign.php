@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $maps = isset($_REQUEST['maps']) && $_REQUEST['maps'] === 'true';
   $challenges = isset($_REQUEST['challenges']) && $_REQUEST['challenges'] === 'true';
@@ -67,8 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     die_json(400, "Missing id or gamebanana_id");
   }
 }
+#endregion
 
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -105,8 +108,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
+#endregion
 
 
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $HELPER);
@@ -139,3 +144,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete campaign");
   }
 }
+#endregion

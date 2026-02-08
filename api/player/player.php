@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $customization = isset($_REQUEST['customization']) && $_REQUEST['customization'] === 'true';
 
@@ -13,8 +14,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $players = Player::get_request($DB, $id, 2, $customization);
   api_write($players);
 }
+#endregion
 
-// Post Request
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -163,8 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
+#endregion
 
-// Delete Request
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $VERIFIER);
@@ -197,3 +200,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   submission_embed_change($player->id, "player");
   http_response_code(200);
 }
+#endregion

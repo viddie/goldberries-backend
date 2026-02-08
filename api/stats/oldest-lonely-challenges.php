@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Invalid request method');
 }
@@ -44,3 +45,4 @@ while ($row = pg_fetch_assoc($result)) {
 }
 
 api_write($data);
+#endregion

@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $submissions = isset($_REQUEST['submissions']) && $_REQUEST['submissions'] === 'true';
   // $depth = isset($_REQUEST['depth']) ? intval($_REQUEST['depth']) : 3;
@@ -33,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($challenges);
 }
+#endregion
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -45,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $data = format_assoc_array_bools(parse_post_body_as_json());
 
 
-  // ====== Special Challenge Requests =====
+  #region Special Challenge Requests
 
   if ($data["split"] === "t") {
     //Split request. data is the challenge that is to be split
@@ -184,7 +187,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die();
   }
 
-  // ======================================
+  #endregion
+
   //Regular challenge creation/update request from here
 
   $challenge = new Challenge();
@@ -246,8 +250,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
+#endregion
 
 
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $HELPER);
@@ -281,3 +287,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete challenge");
   }
 }
+#endregion

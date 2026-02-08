@@ -4,7 +4,7 @@ require_once('../api_bootstrap.inc.php');
 
 $account = get_user_data();
 
-// ===== GET Request =====
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : null;
   if ($id === null) {
@@ -25,8 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   api_write($suggestion);
   exit();
 }
+#endregion
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
 
@@ -152,8 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
   }
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_access($account, true);
 
@@ -185,3 +187,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   log_info("{$suggestion} was deleted by '{$account->player->name}'", "Suggestion");
   http_response_code(200);
 }
+#endregion

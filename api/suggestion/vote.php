@@ -4,7 +4,7 @@ require_once('../api_bootstrap.inc.php');
 
 $account = get_user_data();
 
-// ===== GET Request =====
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $depth = isset($_REQUEST['depth']) ? intval($_REQUEST['depth']) : 2;
   $id = $_REQUEST['id'] ?? null;
@@ -16,8 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   api_write($votes);
   exit();
 }
+#endregion
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
 
@@ -65,8 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(500, "Failed to create vote");
   }
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_access($account, true);
 
@@ -98,3 +100,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
   http_response_code(200);
 }
+#endregion

@@ -2,6 +2,7 @@
 
 require_once ('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -19,7 +20,9 @@ if (!preg_match('/^https:\/\/gamebanana.com\/mods\/[0-9]+/', $url)) {
 
 $modData = getModData($url);
 api_write($modData);
+#endregion
 
+#region Utility Functions
 
 function getModData($url)
 {
@@ -73,3 +76,4 @@ function getGamebananaParameters($url)
 
   return array("itemtype" => $itemtype, "itemid" => $itemid);
 }
+#endregion

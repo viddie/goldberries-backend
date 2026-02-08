@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = $_REQUEST['id'];
   $difficulties = Difficulty::get_request($DB, $id);
@@ -15,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   }
   api_write($difficulties);
 }
+#endregion
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');

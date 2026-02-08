@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -14,3 +15,4 @@ $per_page = max(1, min(1000, $per_page));
 $player = isset($_REQUEST['player']) ? intval($_REQUEST['player']) : null;
 $result = Submission::get_recent_submissions($DB, $verified, $page, $per_page, $player);
 api_write($result);
+#endregion

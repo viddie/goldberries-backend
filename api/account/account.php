@@ -7,6 +7,7 @@ if ($account === null) {
   die_json(401, "Not logged in");
 }
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   if (!is_verifier($account)) {
     die_json(403, "Not authorized");
@@ -28,8 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   api_write($accounts);
   exit();
 }
+#endregion
 
-// Post Request
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === "POST") {
   $request = format_assoc_array_bools(parse_post_body_as_json());
 
@@ -265,8 +267,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     exit();
   }
 }
+#endregion
 
-// Delete Request
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
   reject_api_keys($account);
   if (is_verifier($account) && !isset($_REQUEST['self'])) {
@@ -310,3 +313,4 @@ if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
     exit();
   }
 }
+#endregion

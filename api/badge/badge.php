@@ -2,12 +2,15 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = $_REQUEST['id'];
   $badges = Badge::get_request($DB, $id);
   api_write($badges);
 }
+#endregion
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   if ($account === null) {
@@ -39,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   api_write($badge);
 }
+#endregion
 
-
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $VERIFIER);
@@ -62,3 +66,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete badge");
   }
 }
+#endregion

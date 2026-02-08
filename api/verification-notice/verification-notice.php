@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   die_json(405, 'Method Not Allowed');
 }
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
 
@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(500, "Failed to create VerificationNotice");
   }
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_access($account, true);
 
@@ -62,3 +63,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   log_info("{$notice} was removed by '{$account->player->name}'", "VerificationNotice");
   http_response_code(200);
 }
+#endregion

@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -18,3 +19,4 @@ $search = isset($_REQUEST['search']) && $_REQUEST['search'] !== '' ? $_REQUEST['
 $suggestions = Suggestion::get_paginated($DB, $page, $per_page, $challenge, $expired, $account, $type, $search);
 
 api_write($suggestions);
+#endregion

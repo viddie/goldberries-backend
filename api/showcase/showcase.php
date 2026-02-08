@@ -4,7 +4,7 @@ require_once('../api_bootstrap.inc.php');
 
 $account = get_user_data();
 
-// ===== GET Request =====
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = isset($_REQUEST['player_id']) ? intval($_REQUEST['player_id']) : null;
   if ($id === null) {
@@ -43,8 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   );
   exit();
 }
+#endregion
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
 
@@ -105,6 +106,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   api_write($submissions);
 }
+#endregion
 
-// ===== DELETE Request =====
 // No delete interface

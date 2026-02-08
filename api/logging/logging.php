@@ -4,7 +4,7 @@ require_once('../api_bootstrap.inc.php');
 
 $account = get_user_data();
 
-// ===== GET Request =====
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   check_role($account, $VERIFIER);
 
@@ -26,8 +26,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($logs);
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_role($account, $ADMIN);
   reject_api_keys($account);
@@ -48,3 +49,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
   http_response_code(200);
 }
+#endregion

@@ -2,13 +2,15 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $settings = ServerSettings::get_settings($DB);
   api_write($settings);
 }
+#endregion
 
 $account = get_user_data();
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_role($account, $ADMIN);
 
@@ -23,8 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(500, "Failed to update ServerSettings");
   }
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   die_json(405, 'Method Not Allowed');
 }
+#endregion

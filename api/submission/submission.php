@@ -2,7 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
-// ===== GET Request =====
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $id = $_REQUEST['id'];
   // $depth = isset($_REQUEST['depth']) ? intval($_REQUEST['depth']) : 4;
@@ -25,9 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   api_write($submissions);
 }
+#endregion
 
 
-// ===== POST Request =====
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   check_access($account, true);
@@ -337,8 +338,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     api_write($new_submission);
   }
 }
+#endregion
 
-// ===== DELETE Request =====
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_access($account);
@@ -370,3 +372,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to delete submission");
   }
 }
+#endregion

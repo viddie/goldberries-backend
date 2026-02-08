@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, "Method not allowed");
 }
@@ -40,3 +41,4 @@ if (pg_num_rows($result) > 0) {
 }
 
 api_write($response);
+#endregion

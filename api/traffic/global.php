@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -103,7 +104,9 @@ $response["basic"] = unpack_all_interval_response($interval, $result, true);
 
 
 api_write($response, true);
+#endregion
 
+#region Utility Functions
 function unpack_all_interval_response($interval, $result, $assoc = false, $key_key = null, $value_key = null)
 {
   if ($interval === "all") {
@@ -143,3 +146,4 @@ function unpack_all_interval_response($interval, $result, $assoc = false, $key_k
   }
   return $ret;
 }
+#endregion

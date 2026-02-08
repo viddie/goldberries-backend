@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -45,3 +46,4 @@ if (!$result) {
 
 $campaigns = parse_campaigns($result);
 api_write($campaigns);
+#endregion

@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region Verification
 //=== Verification ===
 if (isset($_GET['verify'])) {
   $code = $_GET['verify'];
@@ -33,8 +34,10 @@ if (isset($_GET['verify'])) {
   http_response_code(200);
   exit();
 }
+#endregion
 
 
+#region Registration
 //=== Registration ===
 $email = $_REQUEST['email'];
 $password = $_REQUEST['password'];
@@ -92,3 +95,4 @@ if (mail($recipient, $subject, $message, $headers) === false) {
 
 //redirect to verify notice page
 http_response_code(200);
+#endregion

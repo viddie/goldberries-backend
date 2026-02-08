@@ -2,6 +2,7 @@
 
 require_once ('../api_bootstrap.inc.php');
 
+#region Verification
 //=== Verification ===
 if (isset($_REQUEST['token'])) {
   $code = $_REQUEST['token'];
@@ -40,8 +41,10 @@ if (isset($_REQUEST['token'])) {
   http_response_code(200);
   exit();
 }
+#endregion
 
 
+#region Password Reset
 //=== Registration ===
 $email = $_REQUEST['email'] ?? null;
 if ($email == null) {
@@ -93,3 +96,4 @@ if (mail($recipient, $subject, $message, $headers) === false) {
 }
 
 http_response_code(200);
+#endregion

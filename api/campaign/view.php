@@ -6,6 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
 
+#region GET Request
 //Campaign info request. This endpoint will return all campaign info, but only superficial data on all players
 
 $campaign_id = isset($_GET['id']) ? intval($_GET['id']) : null;
@@ -42,7 +43,9 @@ api_write([
   "campaign" => $campaign,
   "players" => $players
 ]);
+#endregion
 
+#region Utility Functions
 function parse_campaign_view($result, $campaign)
 {
   $players = array();
@@ -222,3 +225,4 @@ function parse_campaign_view($result, $campaign)
 
   return $players;
 }
+#endregion

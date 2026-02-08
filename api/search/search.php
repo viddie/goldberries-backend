@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -118,3 +119,4 @@ if (in_array("authors", $in)) {
 $response["str_len"] = strlen($unmodified_search);
 
 api_write($response);
+#endregion

@@ -6,12 +6,14 @@ $account = get_user_data();
 check_access($account, false);
 
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   api_write([
     "api_key" => $account->api_key
   ]);
   exit();
 }
+#endregion
 
 // Check if 'id' is set, if yes it must be a verifier+ targeting some other account
 $target_account = $account;
@@ -23,6 +25,7 @@ if (isset($_REQUEST['id'])) {
   }
 }
 
+#region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // Generate new API key: 32 random characters from 0-9a-f
   $new_api_key = bin2hex(random_bytes(16));
@@ -36,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(500, "Failed to update API key");
   }
 }
+#endregion
 
+#region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   //Remove your API key
   $target_account->api_key = null;
@@ -47,3 +52,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     die_json(500, "Failed to revoke API key");
   }
 }
+#endregion

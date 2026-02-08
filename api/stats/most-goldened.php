@@ -2,6 +2,7 @@
 
 require_once('../api_bootstrap.inc.php');
 
+#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Invalid request method');
 }
@@ -19,7 +20,7 @@ $data = [
 
 $cached_campaigns = [];
 
-// ====== CAMPAIGNS ======
+#region Campaigns
 $query = "SELECT
   campaign_id,
   COUNT(*) AS submission_count
@@ -59,9 +60,10 @@ foreach ($campaigns as $campaign) {
     }
   }
 }
+#endregion
 
 
-// ====== MAPS ======
+#region Maps
 $query = "SELECT
   map_id,
   COUNT(*) AS submission_count
@@ -107,5 +109,7 @@ foreach ($maps as $map) {
     }
   }
 }
+#endregion
 
 api_write($data);
+#endregion

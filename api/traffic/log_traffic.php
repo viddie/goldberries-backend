@@ -313,10 +313,11 @@ foreach ($lines as $line) {
 
 echo "Done processing '$i' entries \n";
 
-
+#region Utility Functions
 function echo_if_debug($message)
 {
   global $is_debug;
   if ($is_debug)
     echo $message;
 }
+#endregion
