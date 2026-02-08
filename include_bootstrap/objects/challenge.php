@@ -14,6 +14,7 @@ class Challenge extends DbObject
   public ?string $icon_url = null;
   public bool $is_rejected = false;
   public ?string $reject_note = null;
+  public int $likes = 0;
 
   // Foreign Keys
   public ?int $campaign_id = null;
@@ -53,6 +54,7 @@ class Challenge extends DbObject
       'icon_url' => $this->icon_url,
       'is_rejected' => $this->is_rejected,
       'reject_note' => $this->reject_note,
+      'likes' => $this->likes,
     );
   }
 
@@ -73,6 +75,7 @@ class Challenge extends DbObject
       'icon_url',
       'is_rejected',
       'reject_note',
+      'likes',
     ];
   }
 
@@ -85,6 +88,7 @@ class Challenge extends DbObject
     $this->requires_fc = $arr[$prefix . 'requires_fc'] === 't';
     $this->has_fc = $arr[$prefix . 'has_fc'] === 't';
     $this->is_rejected = $arr[$prefix . 'is_rejected'] === 't';
+    $this->likes = intval($arr[$prefix . 'likes']);
 
     if (isset($arr[$prefix . 'date_created']))
       $this->date_created = new JsonDateTime($arr[$prefix . 'date_created']);

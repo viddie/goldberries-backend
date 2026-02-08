@@ -17,6 +17,9 @@ abstract class DbObject
   // $DB is either a database connection or an array containing a row of the results of a query
   function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
+    if ($depth <= 1)
+      return;
+
     if ($expand_structure) {
       if ($this->max_expanded_structure >= $depth)
         return;

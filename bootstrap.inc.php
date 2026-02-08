@@ -23,6 +23,7 @@ $requireObjects = array(
   "suggestion",
   "suggestion_vote",
   "showcase",
+  "like",
   "verification_notice",
   "server_settings",
   "post",
