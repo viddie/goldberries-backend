@@ -1,9 +1,8 @@
 <?php
 
-require_once ('../api_bootstrap.inc.php');
+require_once('../api_bootstrap.inc.php');
 
 #region Verification
-//=== Verification ===
 if (isset($_REQUEST['token'])) {
   $code = $_REQUEST['token'];
   $password = $_REQUEST['password'] ?? null;
@@ -45,7 +44,6 @@ if (isset($_REQUEST['token'])) {
 
 
 #region Password Reset
-//=== Registration ===
 $email = $_REQUEST['email'] ?? null;
 if ($email == null) {
   die_json(400, "Missing email or password");
