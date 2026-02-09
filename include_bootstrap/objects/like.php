@@ -3,11 +3,16 @@
 class Like extends DbObject
 {
   public static string $table_name = 'like';
+  public static array $valid_states = ['current', 'on_hold', 'soon', 'backlog'];
 
   public int $challenge_id;
   public int $player_id;
   public ?JsonDateTime $date_created = null;
   public bool $is_wishlist = false;
+  public ?string $state = null;
+  public ?int $progress = null;
+  public ?string $comment = null;
+  public ?JsonDateTime $date_updated = null;
 
   // Linked Objects
   public ?Challenge $challenge = null;
@@ -23,6 +28,10 @@ class Like extends DbObject
       'player_id' => $this->player_id,
       'date_created' => $this->date_created,
       'is_wishlist' => $this->is_wishlist,
+      'state' => $this->state,
+      'progress' => $this->progress,
+      'comment' => $this->comment,
+      'date_updated' => $this->date_updated,
     );
   }
 
@@ -33,6 +42,10 @@ class Like extends DbObject
       'player_id',
       'date_created',
       'is_wishlist',
+      'state',
+      'progress',
+      'comment',
+      'date_updated',
     ];
   }
 
@@ -43,6 +56,15 @@ class Like extends DbObject
     $this->player_id = intval($arr[$prefix . 'player_id']);
     $this->is_wishlist = $arr[$prefix . 'is_wishlist'] === 't';
     $this->date_created = new JsonDateTime($arr[$prefix . 'date_created']);
+
+    if (isset($arr[$prefix . 'state']))
+      $this->state = $arr[$prefix . 'state'];
+    if (isset($arr[$prefix . 'progress']))
+      $this->progress = intval($arr[$prefix . 'progress']);
+    if (isset($arr[$prefix . 'comment']))
+      $this->comment = $arr[$prefix . 'comment'];
+    if (isset($arr[$prefix . 'date_updated']))
+      $this->date_updated = new JsonDateTime($arr[$prefix . 'date_updated']);
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
@@ -121,6 +143,45 @@ class Like extends DbObject
 
     return true;
   }
+
+  /**
+   * Get all likes for a specific player, sorted by date_updated (or date_created if date_updated is null).
+   * Returns an associative array with 'likes' (list of Like objects) and 'challenges' (challenge_id => Challenge).
+   * @param resource $DB Database connection
+   * @param int $player_id The player ID to get likes for
+   * @return array { likes: Like[], challenges: array<int, Challenge> }
+   */
+  static function getPlayerLikes($DB, int $player_id): array
+  {
+    // Step 1: Fetch all like objects for the player
+    $query = "SELECT * FROM \"like\" WHERE player_id = $1 ORDER BY COALESCE(date_updated, date_created) DESC";
+    $result = pg_query_params_or_die($DB, $query, [$player_id], "Failed to get likes for player {$player_id}");
+
+    $likes = [];
+    $challenge_ids = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $like = new Like();
+      $like->apply_db_data($row);
+      $likes[] = $like;
+      $challenge_ids[] = $like->challenge_id;
+    }
+
+    // Step 2: Batch-fetch all challenges from view_challenges
+    $challenges = [];
+    if (count($challenge_ids) > 0) {
+      $challenges = Challenge::fetch_challenges_assoc($DB, $challenge_ids);
+    }
+
+    // Step 3: insert them into the like objects
+    foreach ($likes as $like) {
+      if (isset($challenges[$like->challenge_id])) {
+        $like->challenge = $challenges[$like->challenge_id];
+      }
+    }
+
+    return $likes;
+  }
+
 
   // === Utility Functions ===
   function __toString()

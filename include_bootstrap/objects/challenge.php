@@ -230,6 +230,37 @@ class Challenge extends DbObject
     return $challenges;
   }
 
+  /**
+   * Fetch challenges from view_challenges by IDs and return as an associative array (challenge_id => Challenge).
+   * @param resource $DB Database connection
+   * @param array $challenge_ids Array of challenge IDs
+   * @return array<int, Challenge> Associative array of challenge_id => Challenge
+   */
+  static function fetch_challenges_assoc($DB, array $challenge_ids): array
+  {
+    $placeholders = [];
+    for ($i = 1; $i <= count($challenge_ids); $i++) {
+      $placeholders[] = '$' . $i;
+    }
+    $in_clause = implode(',', $placeholders);
+
+    $query = "SELECT * FROM view_challenges WHERE challenge_id IN ({$in_clause})";
+    $result = pg_query_params_or_die($DB, $query, $challenge_ids, "Failed to fetch challenges for likes");
+
+    $challenges = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $challenge = new Challenge();
+      $challenge->apply_db_data($row, "challenge_");
+      $challenge->data = [
+        'count_submissions' => intval($row['count_submissions']),
+      ];
+      $challenge->expand_foreign_keys($row, 3);
+      $challenges[$challenge->id] = $challenge;
+    }
+
+    return $challenges;
+  }
+
   // === Utility Functions ===
   function is_challenge_arbitrary(): bool
   {

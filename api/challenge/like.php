@@ -20,7 +20,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   }
 
   $likes = Like::getLikes($DB, $challenge_id);
-  // die_json(400, "Test error");
   api_write($likes);
 }
 #endregion
@@ -35,6 +34,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $like = new Like();
   $like->apply_db_data(format_assoc_array_bools($data));
 
+  // Validate wishlist-only fields
+  if (!$like->is_wishlist) {
+    if ($like->state !== null) {
+      die_json(400, "state can only be set when is_wishlist is true");
+    }
+    if ($like->progress !== null) {
+      die_json(400, "progress can only be set when is_wishlist is true");
+    }
+    if ($like->comment !== null) {
+      die_json(400, "comment can only be set when is_wishlist is true");
+    }
+  }
+
+  // Validate state enum
+  if ($like->state !== null && !in_array($like->state, Like::$valid_states, true)) {
+    die_json(400, "Invalid state value. Must be one of: " . implode(', ', Like::$valid_states));
+  }
+
+  // Validate progress bounds
+  if ($like->progress !== null && ($like->progress < 0 || $like->progress > 100)) {
+    die_json(400, "progress must be between 0 and 100");
+  }
+
+  // Validate comment length
+  if ($like->comment !== null && mb_strlen($like->comment) > 1000) {
+    die_json(400, "comment must be at most 1000 characters");
+  }
+
   // Creating a new like
   if (!isset($data['id'])) {
     // Validate challenge_id exists
@@ -45,6 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Set date_created to now
     $like->player_id = $account->player->id;
     $like->date_created = new JsonDateTime();
+
+    // Set date_updated if any wishlist fields are provided
+    if ($like->is_wishlist && ($like->state !== null || $like->progress !== null || $like->comment !== null)) {
+      $like->date_updated = new JsonDateTime();
+    }
 
     $challenge = Challenge::get_by_id($DB, $like->challenge_id, 1, false);
     if ($challenge === false) {
@@ -82,8 +114,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // challenge_id and date_created cannot be modified
-    // Only is_wishlist can be updated
+    // Update allowed fields
     $old_like->is_wishlist = $like->is_wishlist;
+    $old_like->state = $like->state;
+    $old_like->progress = $like->progress;
+    $old_like->comment = $like->comment;
+
+    // If wishlist is turned off, clear all wishlist fields
+    if (!$old_like->is_wishlist) {
+      $old_like->state = null;
+      $old_like->progress = null;
+      $old_like->comment = null;
+      $old_like->date_updated = null;
+    } else {
+      // Set date_updated to now on any update
+      $old_like->date_updated = new JsonDateTime();
+    }
 
     if (!$old_like->update($DB)) {
       die_json(500, "Failed to update like");
