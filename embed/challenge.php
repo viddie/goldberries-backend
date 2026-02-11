@@ -39,8 +39,7 @@ foreach ($challenge->submissions as $submission) {
     $count_submissions++;
   }
 }
-$submission_label = $count_submissions === 1 ? "Submission" : "Submissions";
-$description_str .= "# of {$submission_label}: {$count_submissions}";
+$description_str .= "# of Submissions: {$count_submissions}";
 
 if ($count_submissions > 0) {
   $submission = null;

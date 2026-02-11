@@ -38,7 +38,10 @@ class Map extends DbObject
     // Filter out collectibles with empty IDs before serializing
     $collectibles_str = null;
     if ($this->collectibles !== null) {
-      $filtered = array_values(array_filter($this->collectibles->arr, fn($item) => !empty($item[0])));
+      $filtered = array_values(array_filter(
+        $this->collectibles->arr,
+        fn($item) => !self::is_collectible_empty($item)
+      ));
       if (count($filtered) > 0) {
         $temp = new StringList(5);
         $temp->arr = $filtered;
@@ -127,8 +130,8 @@ class Map extends DbObject
     if (isset($arr[$prefix . 'collectibles'])) {
       $value = $arr[$prefix . 'collectibles'];
       if (is_array($value)) {
-        // Filter out collectibles with empty IDs (first value in array)
-        $value = array_values(array_filter($value, fn($item) => !empty($item[0])));
+        // Filter out collectibles that are fully empty
+        $value = array_values(array_filter($value, fn($item) => !self::is_collectible_empty($item)));
         if (count($value) > 0) {
           $this->collectibles = new StringList(5);
           $this->collectibles->arr = $value;
@@ -137,8 +140,11 @@ class Map extends DbObject
         }
       } else {
         $this->collectibles = new StringList(5, $value);
-        // Filter out collectibles with empty IDs (first value in array)
-        $this->collectibles->arr = array_values(array_filter($this->collectibles->arr, fn($item) => !empty($item[0])));
+        // Filter out collectibles that are fully empty
+        $this->collectibles->arr = array_values(array_filter(
+          $this->collectibles->arr,
+          fn($item) => !self::is_collectible_empty($item)
+        ));
         if (count($this->collectibles->arr) === 0) {
           $this->collectibles = null;
         }
@@ -398,5 +404,19 @@ class Map extends DbObject
       return "[$campaign_name_with_author](<$campaign_url>)";
     else
       return "[{$campaign_name_with_author}](<$campaign_url>) / [{$archived_prefix}{$this->name}](<$map_url>)";
+  }
+
+  private static function is_collectible_empty($item): bool
+  {
+    if (is_array($item)) {
+      foreach ($item as $value) {
+        if ($value !== '') {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    return $item === '' || $item === null;
   }
 }

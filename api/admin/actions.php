@@ -203,9 +203,9 @@ function action_swap_lobbies($DB)
   return [
     'message' => "Swapped lobbies {$sort_a} ({$label_b}) and {$sort_b} ({$label_a}) in campaign '{$campaign->name}'",
     'data' => [
-      'campaign' => $campaign,
       'count_a_to_b' => $count_a_to_b,
       'count_b_to_a' => $count_b_to_a,
+      'campaign' => $campaign,
     ],
   ];
 }
