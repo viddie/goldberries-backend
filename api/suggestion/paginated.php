@@ -16,7 +16,9 @@ $expired = $_REQUEST['expired'] === 'true' ? true : ($_REQUEST['expired'] === 'f
 $type = isset($_REQUEST['type']) ? $_REQUEST['type'] : "all";
 $search = isset($_REQUEST['search']) && $_REQUEST['search'] !== '' ? $_REQUEST['search'] : null;
 
+profiler_start();
+profiler_step("Fetching suggestions...");
 $suggestions = Suggestion::get_paginated($DB, $page, $per_page, $challenge, $expired, $account, $type, $search);
 
-api_write($suggestions);
+api_write($suggestions, false, true);
 #endregion

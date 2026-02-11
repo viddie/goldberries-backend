@@ -25,7 +25,7 @@ class Suggestion extends DbObject
   // Associative Objects
   public ?array $votes = null; /* SuggestionVote[] */
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -95,8 +95,95 @@ class Suggestion extends DbObject
       $this->suggested_difficulty = Difficulty::get_by_id($DB, $this->suggested_difficulty_id);
     }
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Expand Batching
+  /**
+   * Retrieves all FK relationships of the given level in the hierarchy. Level 1 is the current object, level 2 is directly linked objects, etc.
+   * @param mixed $level the level in the hierarchy to get the expand list for
+   * @param mixed $expand_structure whether the current expand is for structure expansion or regular expansion
+   * @return array An array of `table_name => [ ids ]` pairs that should be requested from the DB
+   */
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->challenge_id !== null) {
+        $arr = DbObject::merge_expand_lists($arr, $this->challenge->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($this->author_id !== null) {
+        $arr = DbObject::merge_expand_lists($arr, $this->author->get_expand_list($level - 1, false));
+      }
+      if ($this->current_difficulty_id !== null) {
+        $arr = DbObject::merge_expand_lists($arr, $this->current_difficulty->get_expand_list($level - 1, false));
+      }
+      if ($this->suggested_difficulty_id !== null) {
+        $arr = DbObject::merge_expand_lists($arr, $this->suggested_difficulty->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure && $this->challenge_id !== null) {
+      DbObject::add_to_expand_list($arr, Challenge::class, $this->challenge_id);
+    }
+    if ($this->author_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->author_id);
+    }
+    if ($this->current_difficulty_id !== null) {
+      DbObject::add_to_expand_list($arr, Difficulty::class, $this->current_difficulty_id);
+    }
+    if ($this->suggested_difficulty_id !== null) {
+      DbObject::add_to_expand_list($arr, Difficulty::class, $this->suggested_difficulty_id);
+    }
+    return $arr;
+  }
+
+  /**
+   * Applies the expanded data to the objects FKs, or forwards the call to the linked objects if the level is > 1.
+   * @param mixed $data the data list containing the expanded objects
+   * @param mixed $level the level in the hierarchy to apply the expand list for
+   * @param mixed $expand_structure whether the current expand is for structure expansion or regular expansion
+   * @return void
+   */
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->challenge_id !== null) {
+        $this->challenge->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($this->author_id !== null) {
+        $this->author->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->current_difficulty_id !== null) {
+        $this->current_difficulty->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->suggested_difficulty_id !== null) {
+        $this->suggested_difficulty->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->challenge_id !== null) {
+      $this->challenge = new Challenge();
+      $this->challenge->apply_db_data(DbObject::get_object_from_data_list($data, Challenge::class, $this->challenge_id));
+    }
+    if ($this->author_id !== null) {
+      $this->author = new Player();
+      $this->author->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->author_id));
+    }
+    if ($this->current_difficulty_id !== null) {
+      $this->current_difficulty = new Difficulty();
+      $this->current_difficulty->apply_db_data(DbObject::get_object_from_data_list($data, Difficulty::class, $this->current_difficulty_id));
+    }
+    if ($this->suggested_difficulty_id !== null) {
+      $this->suggested_difficulty = new Difficulty();
+      $this->suggested_difficulty->apply_db_data(DbObject::get_object_from_data_list($data, Difficulty::class, $this->suggested_difficulty_id));
+    }
+  }
+
+  #endregion
+
+  #region Find Functions
   function fetch_votes($DB): bool
   {
     $query = "SELECT * FROM view_suggestion_votes WHERE suggestion_vote_suggestion_id = $1";
@@ -281,8 +368,9 @@ class Suggestion extends DbObject
     $diff = $now->diff($suggestion->date_created);
     return $diff->days < self::$placement_cooldown_days;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $dateStr = date_to_long_string($this->date_created);
@@ -332,4 +420,5 @@ class Suggestion extends DbObject
   {
     return constant("BASE_URL") . "/suggestions/" . $this->id;
   }
+  #endregion
 }

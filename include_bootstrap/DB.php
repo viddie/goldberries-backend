@@ -11,6 +11,7 @@ function db_connect()
  * returns the associated assoc array if it does, false if not */
 function db_fetch_id($DB, string $table_noesc, int $id)
 {
+  profiler_step("db_fetch_id: {$table_noesc} id={$id}");
   $table = pg_escape_identifier(strtolower($table_noesc));
   $result = pg_query_params(
     $DB,
