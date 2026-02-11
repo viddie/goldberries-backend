@@ -20,7 +20,7 @@ if ($id <= 0) {
   http_response_code(400);
   die();
 }
-$scale = isset($_REQUEST['scale']) ? intval($_REQUEST['scale']) : 6;
+$scale = isset($_REQUEST['scale']) ? max(1, min(12, intval($_REQUEST['scale']))) : 6;
 $ext = isset($_REQUEST['ext']) ? strtolower($_REQUEST['ext']) : 'webp';
 if (!in_array($ext, $allowed_extensions)) {
   die_json(400, "Invalid image extension");
@@ -34,7 +34,7 @@ if (!$campaign) {
 }
 
 // Check for cached image
-$image = get_campaign_collage_image($campaign);
+$image = get_campaign_collage_image($campaign, $scale);
 if ($image !== null) {
   output_image($image, $ext);
   exit();
@@ -69,7 +69,7 @@ foreach ($collage_images as $entry) {
 
 $image = generate_collage_image($maps_not_archived, $max_images, $scale);
 if ($image) {
-  save_campaign_collage_image($campaign, $image);
+  save_campaign_collage_image($campaign, $image, $scale);
   output_image($image, $ext);
   exit();
 }
