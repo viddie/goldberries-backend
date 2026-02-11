@@ -65,6 +65,39 @@ class Post extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($this->author_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->author->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($this->author_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->author_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($this->author_id !== null) {
+        $this->author->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($this->author_id !== null) {
+      $this->author = new Player();
+      $this->author->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->author_id));
+    }
+  }
+  #endregion
+
   // === Find Functions ===
   static function get_paginated($DB, $page, $per_page, $type, $search, $author_id)
   {

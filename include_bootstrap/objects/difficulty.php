@@ -41,6 +41,15 @@ class Difficulty extends DbObject
   {
   }
 
+  protected function get_expand_list($level, $expand_structure)
+  {
+    return [];
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+  }
+
   // === Find Functions ===
 
   // === Utility Functions ===

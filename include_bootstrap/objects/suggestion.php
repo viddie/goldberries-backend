@@ -98,27 +98,21 @@ class Suggestion extends DbObject
   #endregion
 
   #region Expand Batching
-  /**
-   * Retrieves all FK relationships of the given level in the hierarchy. Level 1 is the current object, level 2 is directly linked objects, etc.
-   * @param mixed $level the level in the hierarchy to get the expand list for
-   * @param mixed $expand_structure whether the current expand is for structure expansion or regular expansion
-   * @return array An array of `table_name => [ ids ]` pairs that should be requested from the DB
-   */
   protected function get_expand_list($level, $expand_structure)
   {
     $arr = [];
     if ($level > 1) {
       if ($expand_structure && $this->challenge_id !== null) {
-        $arr = DbObject::merge_expand_lists($arr, $this->challenge->get_expand_list($level - 1, $expand_structure));
+        DbObject::merge_expand_lists($arr, $this->challenge->get_expand_list($level - 1, $expand_structure));
       }
       if ($this->author_id !== null) {
-        $arr = DbObject::merge_expand_lists($arr, $this->author->get_expand_list($level - 1, false));
+        DbObject::merge_expand_lists($arr, $this->author->get_expand_list($level - 1, false));
       }
       if ($this->current_difficulty_id !== null) {
-        $arr = DbObject::merge_expand_lists($arr, $this->current_difficulty->get_expand_list($level - 1, false));
+        DbObject::merge_expand_lists($arr, $this->current_difficulty->get_expand_list($level - 1, false));
       }
       if ($this->suggested_difficulty_id !== null) {
-        $arr = DbObject::merge_expand_lists($arr, $this->suggested_difficulty->get_expand_list($level - 1, false));
+        DbObject::merge_expand_lists($arr, $this->suggested_difficulty->get_expand_list($level - 1, false));
       }
       return $arr;
     }
@@ -138,13 +132,6 @@ class Suggestion extends DbObject
     return $arr;
   }
 
-  /**
-   * Applies the expanded data to the objects FKs, or forwards the call to the linked objects if the level is > 1.
-   * @param mixed $data the data list containing the expanded objects
-   * @param mixed $level the level in the hierarchy to apply the expand list for
-   * @param mixed $expand_structure whether the current expand is for structure expansion or regular expansion
-   * @return void
-   */
   protected function apply_expand_data($data, $level, $expand_structure)
   {
     if ($level > 1) {
@@ -201,6 +188,7 @@ class Suggestion extends DbObject
       $vote->find_submission($row, $this);
       $this->votes[] = $vote;
     }
+
     return true;
   }
 
@@ -304,13 +292,12 @@ class Suggestion extends DbObject
       $query .= " LIMIT " . $per_page . " OFFSET " . ($page - 1) * $per_page;
     }
 
-    $result = pg_query($DB, $query);
-    if (!$result) {
-      die_json(500, "Failed to query database");
-    }
+    profiler_step("Fetching suggestions from database...");
+    $result = pg_query_params_or_die($DB, $query, []);
+    profiler_step("Fetched suggestions from database!");
 
     $maxCount = 0;
-    $suggestions = array();
+    $suggestions = [];
     while ($row = pg_fetch_assoc($result)) {
       if ($maxCount === 0) {
         $maxCount = intval($row['total_count']);
@@ -318,10 +305,18 @@ class Suggestion extends DbObject
 
       $suggestion = new Suggestion();
       $suggestion->apply_db_data($row);
-      $suggestion->expand_foreign_keys($DB, 5, true);
-      $suggestion->fetch_associated_content($DB);
+      // $suggestion->expand_foreign_keys($DB, 5, true);
+      // $suggestion->fetch_associated_content($DB);
       $suggestions[] = $suggestion;
     }
+
+    DbObject::fetch_data_for_objects($DB, $suggestions, 5, true);
+    profiler_step("Fetched FK data.");
+    foreach ($suggestions as $suggestion) {
+      profiler_step("Fetching associated content for suggestion id {$suggestion->id}...");
+      $suggestion->fetch_associated_content($DB);
+    }
+    profiler_step("Done fetching associated content for suggestions.");
 
     return array(
       'suggestions' => $suggestions,
@@ -386,14 +381,17 @@ class Suggestion extends DbObject
   {
     if ($this->challenge_id !== null) {
       $this->challenge->fetch_submissions($DB, true);
+      profiler_step("Fetched submissions", 1);
       if ($this->challenge->map_id !== null) {
         $this->challenge->map->fetch_challenges($DB, true, false, true);
+        profiler_step("Fetched challenges", 1);
         //Remove the $this->challenge from the map's challenges
         $this->challenge->map->challenges = array_values(array_filter($this->challenge->map->challenges, function ($c) {
           return $c->id !== $this->challenge->id;
         }));
       } else if ($this->challenge->campaign_id !== null) {
         $this->challenge->campaign->fetch_challenges($DB, true, false, true);
+        profiler_step("Fetched campaign challenges", 1);
         //Remove the $this->challenge from the campaign's challenges.
         //Also remove challenges that dont have the same label. Thats how i'll just define "related challenges" for fgrs
         $this->challenge->campaign->challenges = array_values(array_filter($this->challenge->campaign->challenges, function ($c) {
@@ -401,6 +399,7 @@ class Suggestion extends DbObject
         }));
       }
     }
+    profiler_step("Fetching votes", 1);
     $this->fetch_votes($DB);
   }
 

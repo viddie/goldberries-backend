@@ -112,6 +112,15 @@ class Campaign extends DbObject
   {
   }
 
+  protected function get_expand_list($level, $expand_structure)
+  {
+    return [];
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+  }
+
   // === Find Functions ===
   function fetch_maps($DB, $with_challenges = false, $with_submissions = false, $include_archived = true, $include_arbitrary = true, $hide_rejected = false): bool
   {

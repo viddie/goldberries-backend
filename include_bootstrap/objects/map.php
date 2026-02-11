@@ -182,6 +182,53 @@ class Map extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->campaign_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->campaign->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($this->counts_for_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->counts_for->get_expand_list($level - 1, $expand_structure));
+      }
+      return $arr;
+    }
+
+
+    if ($expand_structure && $this->campaign_id !== null) {
+      DbObject::add_to_expand_list($arr, Campaign::class, $this->campaign_id);
+    }
+    if ($this->counts_for_id !== null) {
+      DbObject::add_to_expand_list($arr, Map::class, $this->counts_for_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->campaign_id !== null) {
+        $this->campaign->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($this->counts_for_id !== null) {
+        $this->counts_for->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->campaign_id !== null) {
+      $this->campaign = new Campaign();
+      $this->campaign->apply_db_data(DbObject::get_object_from_data_list($data, Campaign::class, $this->campaign_id));
+    }
+    if ($this->counts_for_id !== null) {
+      $this->counts_for = new Map();
+      $this->counts_for->apply_db_data(DbObject::get_object_from_data_list($data, Map::class, $this->counts_for_id));
+    }
+  }
+  #endregion
+
   static function get_view_fields(): array
   {
     return [

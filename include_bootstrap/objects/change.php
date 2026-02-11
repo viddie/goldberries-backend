@@ -102,6 +102,99 @@ class Change extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure) {
+        if ($this->campaign_id !== null) {
+          DbObject::merge_expand_lists($arr, $this->campaign->get_expand_list($level - 1, $expand_structure));
+        }
+        if ($this->map_id !== null) {
+          DbObject::merge_expand_lists($arr, $this->map->get_expand_list($level - 1, $expand_structure));
+        }
+        if ($this->challenge_id !== null) {
+          DbObject::merge_expand_lists($arr, $this->challenge->get_expand_list($level - 1, $expand_structure));
+        }
+        if ($this->player_id !== null) {
+          DbObject::merge_expand_lists($arr, $this->player->get_expand_list($level - 1, false));
+        }
+      }
+      if ($this->author_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->author->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure) {
+      if ($this->campaign_id !== null) {
+        DbObject::add_to_expand_list($arr, Campaign::class, $this->campaign_id);
+      }
+      if ($this->map_id !== null) {
+        DbObject::add_to_expand_list($arr, Map::class, $this->map_id);
+      }
+      if ($this->challenge_id !== null) {
+        DbObject::add_to_expand_list($arr, Challenge::class, $this->challenge_id);
+      }
+      if ($this->player_id !== null) {
+        DbObject::add_to_expand_list($arr, Player::class, $this->player_id);
+      }
+    }
+    if ($this->author_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->author_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure) {
+        if ($this->campaign_id !== null) {
+          $this->campaign->apply_expand_data($data, $level - 1, $expand_structure);
+        }
+        if ($this->map_id !== null) {
+          $this->map->apply_expand_data($data, $level - 1, $expand_structure);
+        }
+        if ($this->challenge_id !== null) {
+          $this->challenge->apply_expand_data($data, $level - 1, $expand_structure);
+        }
+        if ($this->player_id !== null) {
+          $this->player->apply_expand_data($data, $level - 1, false);
+        }
+      }
+      if ($this->author_id !== null) {
+        $this->author->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($expand_structure) {
+      if ($this->campaign_id !== null) {
+        $this->campaign = new Campaign();
+        $this->campaign->apply_db_data(DbObject::get_object_from_data_list($data, Campaign::class, $this->campaign_id));
+      }
+      if ($this->map_id !== null) {
+        $this->map = new Map();
+        $this->map->apply_db_data(DbObject::get_object_from_data_list($data, Map::class, $this->map_id));
+      }
+      if ($this->challenge_id !== null) {
+        $this->challenge = new Challenge();
+        $this->challenge->apply_db_data(DbObject::get_object_from_data_list($data, Challenge::class, $this->challenge_id));
+      }
+      if ($this->player_id !== null) {
+        $this->player = new Player();
+        $this->player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->player_id));
+      }
+    }
+    if ($this->author_id !== null) {
+      $this->author = new Player();
+      $this->author->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->author_id));
+    }
+  }
+  #endregion
+
   // === Find Functions ===
   static function get_all_for_object($DB, $type, $id)
   {

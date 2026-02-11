@@ -168,6 +168,91 @@ class Submission extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->challenge_id !== null && $this->challenge !== null) {
+        DbObject::merge_expand_lists($arr, $this->challenge->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($this->player_id !== null && $this->player !== null) {
+        DbObject::merge_expand_lists($arr, $this->player->get_expand_list($level - 1, false));
+      }
+      if ($this->verifier_id !== null && $this->verifier !== null) {
+        DbObject::merge_expand_lists($arr, $this->verifier->get_expand_list($level - 1, false));
+      }
+      if ($this->suggested_difficulty_id !== null && $this->suggested_difficulty !== null) {
+        DbObject::merge_expand_lists($arr, $this->suggested_difficulty->get_expand_list($level - 1, false));
+      }
+      if ($this->new_challenge_id !== null && $this->new_challenge !== null) {
+        DbObject::merge_expand_lists($arr, $this->new_challenge->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure && $this->challenge_id !== null) {
+      DbObject::add_to_expand_list($arr, Challenge::class, $this->challenge_id);
+    }
+    if ($this->player_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->player_id);
+    }
+    if ($this->verifier_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->verifier_id);
+    }
+    if ($this->suggested_difficulty_id !== null) {
+      DbObject::add_to_expand_list($arr, Difficulty::class, $this->suggested_difficulty_id);
+    }
+    if ($this->new_challenge_id !== null) {
+      DbObject::add_to_expand_list($arr, NewChallenge::class, $this->new_challenge_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->challenge_id !== null && $this->challenge !== null) {
+        $this->challenge->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($this->player_id !== null && $this->player !== null) {
+        $this->player->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->verifier_id !== null && $this->verifier !== null) {
+        $this->verifier->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->suggested_difficulty_id !== null && $this->suggested_difficulty !== null) {
+        $this->suggested_difficulty->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->new_challenge_id !== null && $this->new_challenge !== null) {
+        $this->new_challenge->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->challenge_id !== null) {
+      $this->challenge = new Challenge();
+      $this->challenge->apply_db_data(DbObject::get_object_from_data_list($data, Challenge::class, $this->challenge_id));
+    }
+    if ($this->player_id !== null) {
+      $this->player = new Player();
+      $this->player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->player_id));
+    }
+    if ($this->verifier_id !== null) {
+      $this->verifier = new Player();
+      $this->verifier->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->verifier_id));
+    }
+    if ($this->suggested_difficulty_id !== null) {
+      $this->suggested_difficulty = new Difficulty();
+      $this->suggested_difficulty->apply_db_data(DbObject::get_object_from_data_list($data, Difficulty::class, $this->suggested_difficulty_id));
+    }
+    if ($this->new_challenge_id !== null) {
+      $this->new_challenge = new NewChallenge();
+      $this->new_challenge->apply_db_data(DbObject::get_object_from_data_list($data, NewChallenge::class, $this->new_challenge_id));
+    }
+  }
+  #endregion
+
   // === Find Functions ===
   static function get_submission_queue($DB)
   {

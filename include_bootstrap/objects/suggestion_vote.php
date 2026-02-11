@@ -73,6 +73,52 @@ class SuggestionVote extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->suggestion_id !== null && $this->suggestion !== null) {
+        DbObject::merge_expand_lists($arr, $this->suggestion->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($this->player_id !== null && $this->player !== null) {
+        DbObject::merge_expand_lists($arr, $this->player->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure && $this->suggestion_id !== null) {
+      DbObject::add_to_expand_list($arr, Suggestion::class, $this->suggestion_id);
+    }
+    if ($this->player_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->player_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->suggestion_id !== null && $this->suggestion !== null) {
+        $this->suggestion->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($this->player_id !== null && $this->player !== null) {
+        $this->player->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->suggestion_id !== null) {
+      $this->suggestion = new Suggestion();
+      $this->suggestion->apply_db_data(DbObject::get_object_from_data_list($data, Suggestion::class, $this->suggestion_id));
+    }
+    if ($this->player_id !== null) {
+      $this->player = new Player();
+      $this->player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->player_id));
+    }
+  }
+  #endregion
+
   // === Find Functions ===
   static function has_voted_on_suggestion($DB, $player_id, $suggestion_id)
   {

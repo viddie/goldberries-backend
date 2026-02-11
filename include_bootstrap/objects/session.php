@@ -34,6 +34,39 @@ class Session extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($this->account_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->account->get_expand_list($level - 1, $expand_structure));
+      }
+      return $arr;
+    }
+
+    if ($this->account_id !== null) {
+      DbObject::add_to_expand_list($arr, Account::class, $this->account_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($this->account_id !== null) {
+        $this->account->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      return;
+    }
+
+    if ($this->account_id !== null) {
+      $this->account = new Account();
+      $this->account->apply_db_data(DbObject::get_object_from_data_list($data, Account::class, $this->account_id));
+    }
+  }
+  #endregion
+
   function get_field_set()
   {
     return array(

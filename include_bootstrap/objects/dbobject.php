@@ -14,6 +14,23 @@ abstract class DbObject
   abstract function apply_db_data($arr, $prefix = '');
   protected abstract function do_expand_foreign_keys($DB, $depth, $expand_structure);
 
+  /**
+   * Retrieves all FK relationships of the given level in the hierarchy. Level 1 is the current object, level 2 is directly linked objects, etc.
+   * @param int $level the level in the hierarchy to get the expand list for
+   * @param bool $expand_structure whether the current expand is for structure expansion or regular expansion
+   * @return array An array of `table_name => [ ids ]` pairs that should be requested from the DB
+   */
+  protected abstract function get_expand_list($level, $expand_structure);
+
+  /**
+   * Applies the expanded data to the objects FKs, or forwards the call to the linked objects if the level is > 1.
+   * @param array $data the data list containing the expanded objects
+   * @param int $level the level in the hierarchy to apply the expand list for
+   * @param bool $expand_structure whether the current expand is for structure expansion or regular expansion
+   * @return void
+   */
+  protected abstract function apply_expand_data($data, $level, $expand_structure);
+
   // $DB is either a database connection or an array containing a row of the results of a query
   function expand_foreign_keys($DB, $depth = 2, $expand_structure = true)
   {
@@ -196,6 +213,7 @@ abstract class DbObject
    * @param mixed $objects an array of DbObjects to fetch the data for
    * @return void
    */
+  static $dataCache = [];
   static function fetch_data_for_objects($DB, $objects, $depth, $expand_structure)
   {
     // Algorithm:
@@ -203,41 +221,59 @@ abstract class DbObject
     // - For each level, get the expand list from all objects and merge them together
     // - Fetch all data for each table simultaneously and store it in a data list
     // - Loop through each object and apply the data from the data list
-    $dataCache = [];
     for ($level = 1; $level <= $depth; $level++) {
       $expand_list = [];
       foreach ($objects as $obj) {
         $obj_expand_list = $obj->get_expand_list($level, $expand_structure);
-        $expand_list = self::merge_expand_lists($expand_list, $obj_expand_list);
+        self::merge_expand_lists($expand_list, $obj_expand_list);
       }
 
-      foreach ($expand_list as $table => $ids) {
-        $fetched_data = db_fetch_id_many($DB, $table, $ids);
-        if ($fetched_data === false) {
-          continue;
-        }
-        foreach ($fetched_data as $obj) {
-          if (!isset($dataCache[$table]))
-            $dataCache[$table] = [];
-          $dataCache[$table][$obj->id] = $obj;
-        }
-      }
+      self::fetch_expand_data($DB, $expand_list);
 
       foreach ($objects as $obj) {
-        $obj->apply_expand_data($dataCache, $level, $expand_structure);
+        $obj->apply_expand_data(self::$dataCache, $level, $expand_structure);
       }
     }
   }
 
-  static function add_to_expand_list($expand_list, $class, $id)
+  static function fetch_expand_data($DB, $expand_list)
+  {
+    foreach ($expand_list as $table => $ids) {
+      // Remove any already cached IDs from the list to fetch
+      if (isset(self::$dataCache[$table])) {
+        $cached_ids = array_keys(self::$dataCache[$table]);
+        $ids = array_diff($ids, $cached_ids);
+      }
+
+      $fetched_data = db_fetch_id_many($DB, $table, $ids);
+      if ($fetched_data === false) {
+        continue;
+      }
+      while ($row = pg_fetch_assoc($fetched_data)) {
+        if (!isset(self::$dataCache[$table]))
+          self::$dataCache[$table] = [];
+        self::$dataCache[$table][$row['id']] = $row;
+      }
+    }
+  }
+
+  static function add_to_expand_list(&$expand_list, $class, $id)
   {
     if (!isset($expand_list[$class::$table_name]))
       $expand_list[$class::$table_name] = [];
     if (!in_array($id, $expand_list[$class::$table_name]))
       $expand_list[$class::$table_name][] = $id;
   }
-  static function merge_expand_lists($expand_list1, $expand_list2)
+  static function merge_expand_lists(&$expand_list1, $expand_list2)
   {
+    if ($expand_list1 === null) {
+      $expand_list1 = $expand_list2;
+      return;
+    }
+    if ($expand_list2 === null) {
+      return;
+    }
+
     foreach ($expand_list2 as $table => $ids) {
       if (!isset($expand_list1[$table]))
         $expand_list1[$table] = [];
@@ -246,13 +282,16 @@ abstract class DbObject
           $expand_list1[$table][] = $id;
       }
     }
-    return $expand_list1;
   }
   static function get_object_from_data_list($data, $class, $id)
   {
-    if (!isset($data[$class::$table_name]) || !in_array($id, $data[$class::$table_name]))
+    $table = $class::$table_name;
+    $arr = $data[$table] ?? null;
+    if (!isset($arr) || !in_array($id, array_keys($arr))) {
       return null;
-    return $data[$class::$table_name][$id] ?? null;
+    }
+    $obj = $arr[$id] ?? null;
+    return $obj;
   }
   #endregion
 }

@@ -48,6 +48,39 @@ class Showcase extends DbObject implements JsonSerializable
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->submission_id !== null && $this->submission !== null) {
+        DbObject::merge_expand_lists($arr, $this->submission->get_expand_list($level - 1, $expand_structure));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure && $this->submission_id !== null) {
+      DbObject::add_to_expand_list($arr, Submission::class, $this->submission_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->submission_id !== null && $this->submission !== null) {
+        $this->submission->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->submission_id !== null) {
+      $this->submission = new Submission();
+      $this->submission->apply_db_data(DbObject::get_object_from_data_list($data, Submission::class, $this->submission_id));
+    }
+  }
+  #endregion
+
   // === Find Functions ===
   static function find_all_for_account_id($DB, $account_id)
   {

@@ -149,6 +149,70 @@ class Challenge extends DbObject
     }
   }
 
+  #region Expand Batching
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($expand_structure && $this->campaign_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->campaign->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($expand_structure && $this->map_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->map->get_expand_list($level - 1, $expand_structure));
+      }
+      if ($this->objective !== null) {
+        DbObject::merge_expand_lists($arr, $this->objective->get_expand_list($level - 1, false));
+      }
+      if ($this->difficulty !== null) {
+        DbObject::merge_expand_lists($arr, $this->difficulty->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($expand_structure && $this->campaign_id !== null) {
+      DbObject::add_to_expand_list($arr, Campaign::class, $this->campaign_id);
+    }
+    if ($expand_structure && $this->map_id !== null) {
+      DbObject::add_to_expand_list($arr, Map::class, $this->map_id);
+    }
+    DbObject::add_to_expand_list($arr, Objective::class, $this->objective_id);
+    DbObject::add_to_expand_list($arr, Difficulty::class, $this->difficulty_id);
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($expand_structure && $this->campaign_id !== null) {
+        $this->campaign->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($expand_structure && $this->map_id !== null) {
+        $this->map->apply_expand_data($data, $level - 1, $expand_structure);
+      }
+      if ($this->objective !== null) {
+        $this->objective->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->difficulty !== null) {
+        $this->difficulty->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($expand_structure && $this->campaign_id !== null) {
+      $this->campaign = new Campaign();
+      $this->campaign->apply_db_data(DbObject::get_object_from_data_list($data, Campaign::class, $this->campaign_id));
+    }
+    if ($expand_structure && $this->map_id !== null) {
+      $this->map = new Map();
+      $this->map->apply_db_data(DbObject::get_object_from_data_list($data, Map::class, $this->map_id));
+    }
+    $this->objective = new Objective();
+    $this->objective->apply_db_data(DbObject::get_object_from_data_list($data, Objective::class, $this->objective_id));
+    $this->difficulty = new Difficulty();
+    $this->difficulty->apply_db_data(DbObject::get_object_from_data_list($data, Difficulty::class, $this->difficulty_id));
+  }
+  #endregion
+
   // === Find Functions ===
   function fetch_submissions($DB, $filter_suspended = false): bool
   {

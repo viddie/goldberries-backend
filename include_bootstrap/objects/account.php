@@ -120,6 +120,50 @@ class Account extends DbObject
     }
   }
 
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      if ($this->player_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->player->get_expand_list($level - 1, false));
+      }
+      if ($this->claimed_player_id !== null) {
+        DbObject::merge_expand_lists($arr, $this->claimed_player->get_expand_list($level - 1, false));
+      }
+      return $arr;
+    }
+
+    if ($this->player_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->player_id);
+    }
+    if ($this->claimed_player_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->claimed_player_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      if ($this->player_id !== null) {
+        $this->player->apply_expand_data($data, $level - 1, false);
+      }
+      if ($this->claimed_player_id !== null) {
+        $this->claimed_player->apply_expand_data($data, $level - 1, false);
+      }
+      return;
+    }
+
+    if ($this->player_id !== null) {
+      $this->player = new Player();
+      $this->player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->player_id));
+    }
+    if ($this->claimed_player_id !== null) {
+      $this->claimed_player = new Player();
+      $this->claimed_player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->claimed_player_id));
+    }
+  }
+
   function get_field_set()
   {
     return array(

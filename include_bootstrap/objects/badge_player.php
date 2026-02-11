@@ -50,6 +50,38 @@ class BadgePlayer extends DbObject
     }
   }
 
+  protected function get_expand_list($level, $expand_structure)
+  {
+    $arr = [];
+    if ($level > 1) {
+      return $arr;
+    }
+
+    if ($this->player_id !== null) {
+      DbObject::add_to_expand_list($arr, Player::class, $this->player_id);
+    }
+    if ($this->badge_id !== null) {
+      DbObject::add_to_expand_list($arr, Badge::class, $this->badge_id);
+    }
+    return $arr;
+  }
+
+  protected function apply_expand_data($data, $level, $expand_structure)
+  {
+    if ($level > 1) {
+      return;
+    }
+
+    if ($this->player_id !== null) {
+      $this->player = new Player();
+      $this->player->apply_db_data(DbObject::get_object_from_data_list($data, Player::class, $this->player_id));
+    }
+    if ($this->badge_id !== null) {
+      $this->badge = new Badge();
+      $this->badge->apply_db_data(DbObject::get_object_from_data_list($data, Badge::class, $this->badge_id));
+    }
+  }
+
   // === Find Functions ===
   static function get_all_for_badge($DB, $badge_id)
   {
