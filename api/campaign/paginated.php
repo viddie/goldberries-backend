@@ -95,12 +95,12 @@ foreach ($campaigns as $campaign) {
 }
 
 api_write(
-  array(
+  [
     'campaigns' => $campaigns,
     'max_count' => $maxCount,
     'max_page' => ceil($maxCount / $per_page),
     'page' => $page,
     'per_page' => $per_page,
-  )
+  ],
 );
 #endregion

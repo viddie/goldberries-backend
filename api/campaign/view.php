@@ -33,10 +33,7 @@ WHERE
   AND objective_is_arbitrary = false 
   AND (challenge_is_arbitrary = false OR challenge_is_arbitrary IS NULL)
   AND (player_account_is_suspended IS NULL OR player_account_is_suspended = false)";
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
+$result = pg_query_params_or_die($DB, $query);
 
 $players = parse_campaign_view($result, $campaign);
 api_write([
@@ -48,7 +45,7 @@ api_write([
 #region Utility Functions
 function parse_campaign_view($result, $campaign)
 {
-  $players = array();
+  $players = [];
 
   //loop through result rows
   while ($row = pg_fetch_assoc($result)) {
@@ -84,16 +81,16 @@ function parse_campaign_view($result, $campaign)
     //Add submission to player
     $player_id = $submission->player_id;
     if (!array_key_exists($player_id, $players)) {
-      $players[$player_id] = array(
+      $players[$player_id] = [
         "player" => $submission->player,
-        "stats" => array(
+        "stats" => [
           "clears" => 0,
           "full_clears" => 0,
-          "major_sort_clears" => array(),
-        ),
-        "map_data" => array(),
+          "major_sort_clears" => [],
+        ],
+        "map_data" => [],
         "last_submission" => null,
-      );
+      ];
     }
     //Update last submission
     if ($players[$player_id]["last_submission"] === null || $submission->date_achieved > $players[$player_id]["last_submission"]) {
@@ -105,10 +102,10 @@ function parse_campaign_view($result, $campaign)
       $players[$player_id]["stats"]["clears"]++;
       if ($map->sort_major !== null) {
         if (!array_key_exists($map->sort_major, $players[$player_id]["stats"]["major_sort_clears"])) {
-          $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = array(
+          $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = [
             "clears" => 0,
             "full_clears" => 0
-          );
+          ];
         }
         $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major]["clears"]++;
       }
@@ -116,10 +113,10 @@ function parse_campaign_view($result, $campaign)
         $players[$player_id]["stats"]["full_clears"]++;
         if ($map->sort_major !== null) {
           if (!array_key_exists($map->sort_major, $players[$player_id]["stats"]["major_sort_clears"])) {
-            $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = array(
+            $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = [
               "clears" => 0,
               "full_clears" => 0
-            );
+            ];
           }
           $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major]["full_clears"]++;
         }
@@ -132,10 +129,10 @@ function parse_campaign_view($result, $campaign)
         $players[$player_id]["stats"]["full_clears"]++;
         if ($map->sort_major !== null) {
           if (!array_key_exists($map->sort_major, $players[$player_id]["stats"]["major_sort_clears"])) {
-            $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = array(
+            $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major] = [
               "clears" => 0,
               "full_clears" => 0
-            );
+            ];
           }
           $players[$player_id]["stats"]["major_sort_clears"][$map->sort_major]["full_clears"]++;
         }
@@ -149,7 +146,7 @@ function parse_campaign_view($result, $campaign)
   }
 
   //Find the maximum amount of clears for a major sort lobby
-  $max_major_sorts = array();
+  $max_major_sorts = [];
   if ($campaign->sort_major_name !== null) {
     foreach ($campaign->maps as $map) {
       if ($map->is_archived || $map->sort_major === null || $map->is_progress === false)

@@ -53,29 +53,30 @@ if ($per_page !== -1) {
 $result = pg_query_params_or_die($DB, $query);
 
 $maxCount = 0;
-$challenges = array();
+$challenges = [];
 while ($row = pg_fetch_assoc($result)) {
   $challenge = new Challenge();
   $challenge->apply_db_data($row, "challenge_");
   $challenge->expand_foreign_keys($row, $depth);
   $challenges[] = $challenge;
 
-  $challenge->data = array(
+  $challenge->data = [
     'count_submissions' => intval($row['count_submissions']),
-  );
+  ];
 
   if ($maxCount === 0) {
     $maxCount = intval($row['total_count']);
   }
+
 }
 
 api_write(
-  array(
+  [
     'challenges' => $challenges,
     'max_count' => $maxCount,
     'max_page' => ceil($maxCount / $per_page),
     'page' => $page,
     'per_page' => $per_page,
-  )
+  ],
 );
 #endregion
