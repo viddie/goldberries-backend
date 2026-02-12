@@ -16,7 +16,7 @@ class Post extends DbObject
   // Linked Objects
   public ?Player $author = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -64,6 +64,7 @@ class Post extends DbObject
       $this->author = Player::get_by_id($DB, $this->author_id, 3, false);
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -98,7 +99,7 @@ class Post extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_paginated($DB, $page, $per_page, $type, $search, $author_id)
   {
     $query = "SELECT * FROM post";
@@ -157,8 +158,9 @@ class Post extends DbObject
       'per_page' => $per_page,
     ];
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $authorStr = $this->author_id !== null ? $this->author_id : "<unknown>";
@@ -170,4 +172,5 @@ class Post extends DbObject
   {
     return constant("BASE_URL") . "/" . $this->type . "/" . $this->id;
   }
+  #endregion
 }

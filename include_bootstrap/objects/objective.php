@@ -11,7 +11,7 @@ class Objective extends DbObject
   public ?string $icon_url = null;
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -58,13 +58,16 @@ class Objective extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $arbitraryStr = $this->is_arbitrary ? 'true' : 'false';
     return "(Objective, id:{$this->id}, name:'{$this->name}', is_arbitrary:{$arbitraryStr})";
   }
+  #endregion
 }

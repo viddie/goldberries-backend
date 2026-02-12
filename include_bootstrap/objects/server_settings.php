@@ -9,7 +9,7 @@ class ServerSettings extends DbObject
   public ?StringList $global_notices = null;
   public bool $maintenance_mode = false;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -63,8 +63,9 @@ class ServerSettings extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_settings($DB)
   {
     $query = "SELECT * FROM " . static::$table_name . " WHERE id = 1";
@@ -85,11 +86,13 @@ class ServerSettings extends DbObject
 
     return $settings;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
 
   function __toString()
   {
     return "(ServerSettings, id:{$this->id}, registrations_enabled:{$this->registrations_enabled}, submissions_enabled:{$this->submissions_enabled}, maintenance_mode:{$this->maintenance_mode}, global_notices:{$this->global_notices})";
   }
+  #endregion
 }

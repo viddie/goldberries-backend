@@ -16,11 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     die_json(404, "Suggestion not found");
   }
   if (is_array($suggestion)) {
-    foreach ($suggestion as $s) {
-      $s->fetch_associated_content($DB);
-    }
+    Suggestion::fetch_associated_contents($DB, $suggestion);
   } else {
-    $suggestion->fetch_associated_content($DB);
+    Suggestion::fetch_associated_contents($DB, [$suggestion]);
   }
   api_write($suggestion);
   exit();

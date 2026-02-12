@@ -34,7 +34,7 @@ class Submission extends DbObject
 
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -167,6 +167,7 @@ class Submission extends DbObject
       }
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -253,7 +254,7 @@ class Submission extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_submission_queue($DB)
   {
     //Actually use date_created here, so that the oldest submissions are shown first, independent of when they were achieved
@@ -343,8 +344,9 @@ class Submission extends DbObject
     }
     return $submissions;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Submission, id:{$this->id}, player_id:{$this->player_id}, challenge_id:{$this->challenge_id})";
@@ -380,4 +382,5 @@ class Submission extends DbObject
   {
     return constant("BASE_URL") . "/submission/" . $this->id;
   }
+  #endregion
 }

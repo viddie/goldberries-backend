@@ -32,7 +32,7 @@ class Map extends DbObject
 
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     // Filter out collectibles with empty IDs before serializing
@@ -181,6 +181,7 @@ class Map extends DbObject
       }
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -251,7 +252,7 @@ class Map extends DbObject
     ];
   }
 
-  // === Find Functions ===
+  #region Find Functions
   function fetch_challenges($DB, $with_submissions = false, $include_arbitrary = true, $filter_suspended = false, $hide_rejected = false): bool
   {
     $whereAddition = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
@@ -266,35 +267,6 @@ class Map extends DbObject
       $challenge->expand_foreign_keys($DB, 3, false);
     }
     return true;
-  }
-
-  /**
-   * Batch-fetches challenges for multiple maps in a single query and distributes them.
-   * @param resource $DB
-   * @param Map[] $maps
-   * @param bool $include_arbitrary
-   * @param bool $hide_rejected
-   */
-  static function batch_fetch_challenges($DB, array $maps, $include_arbitrary = true, $hide_rejected = false)
-  {
-    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
-    $where = $hide_rejected ? ($where === null ? "is_rejected = false" : "$where AND is_rejected = false") : $where;
-    $grouped = DbObject::fetch_children_for_objects($DB, $maps, Challenge::class, 'map_id', $where, "ORDER BY sort ASC, requires_fc ASC, label ASC NULLS FIRST, id ASC");
-
-    foreach ($maps as $map) {
-      $map->challenges = $grouped[$map->id] ?? [];
-    }
-
-    // Collect all challenges for batch FK expansion
-    $all_challenges = [];
-    foreach ($maps as $map) {
-      foreach ($map->challenges as $challenge) {
-        $all_challenges[] = $challenge;
-      }
-    }
-    if (count($all_challenges) > 0) {
-      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
-    }
   }
 
   function fetch_other_maps($DB)
@@ -402,8 +374,9 @@ class Map extends DbObject
     }
     return $maps;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Map, id:{$this->id}, name:'{$this->name}')";
@@ -495,4 +468,36 @@ class Map extends DbObject
 
     return $item === '' || $item === null;
   }
+  #endregion
+
+  #region Batch Fetching
+  /**
+   * Batch-fetches challenges for multiple maps in a single query and distributes them.
+   * @param resource $DB
+   * @param Map[] $maps
+   * @param bool $include_arbitrary
+   * @param bool $hide_rejected
+   */
+  static function batch_fetch_challenges($DB, array $maps, $include_arbitrary = true, $hide_rejected = false)
+  {
+    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
+    $where = $hide_rejected ? ($where === null ? "is_rejected = false" : "$where AND is_rejected = false") : $where;
+    $grouped = DbObject::fetch_children_for_objects($DB, $maps, Challenge::class, 'map_id', $where, "ORDER BY sort ASC, requires_fc ASC, label ASC NULLS FIRST, id ASC");
+
+    foreach ($maps as $map) {
+      $map->challenges = $grouped[$map->id] ?? [];
+    }
+
+    // Collect all challenges for batch FK expansion
+    $all_challenges = [];
+    foreach ($maps as $map) {
+      foreach ($map->challenges as $challenge) {
+        $all_challenges[] = $challenge;
+      }
+    }
+    if (count($all_challenges) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
+    }
+  }
+  #endregion
 }

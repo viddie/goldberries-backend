@@ -20,7 +20,7 @@ class Like extends DbObject
 
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -76,6 +76,7 @@ class Like extends DbObject
       $this->player = Player::get_by_id($DB, $this->player_id, $depth, false);
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -123,7 +124,7 @@ class Like extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
 
   /**
    * Get all likes for a specific challenge
@@ -227,11 +228,12 @@ class Like extends DbObject
 
     return $likes;
   }
+  #endregion
 
-
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Like, id:{$this->id}, challenge_id:{$this->challenge_id}, player_id:{$this->player_id})";
   }
+  #endregion
 }

@@ -11,7 +11,7 @@ class Logging extends DbObject
   public $topic = null; /* string */
   public JsonDateTime $date;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -55,8 +55,9 @@ class Logging extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_all($DB, $time = "day", $level = null, $topic = null, $search = null)
   {
     $where = "date > date_trunc('day', NOW()) - interval '1 day'";
@@ -171,12 +172,14 @@ class Logging extends DbObject
       'per_page' => $per_page,
     );
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $topicStr = to_string_null_check($this->topic);
     $dateStr = date_to_long_string($this->date);
     return "(Logging, id: {$this->id}, message: '{$this->message}', level: '{$this->level}', topic: '{$topicStr}', date: '{$dateStr}')";
   }
+  #endregion
 }

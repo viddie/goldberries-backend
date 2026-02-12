@@ -16,7 +16,7 @@ class Session extends DbObject
   public ?Account $account = null;
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);
@@ -33,6 +33,7 @@ class Session extends DbObject
       $this->account = null;
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -84,16 +85,18 @@ class Session extends DbObject
     ];
   }
 
-  // === Find Functions ===
+  #region Find Functions
   static function find_by_token($DB, string $token)
   {
     global $session_expire_days;
     return find_in_db($DB, 'Session', "token = $1 AND created > NOW() - INTERVAL '$session_expire_days days'", array($token), new Session());
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Session, id: {$this->id}, account_id: {$this->account_id}, expires: {$this->created})";
   }
+  #endregion
 }

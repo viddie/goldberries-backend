@@ -36,7 +36,7 @@ class Challenge extends DbObject
 
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -148,6 +148,7 @@ class Challenge extends DbObject
       $this->difficulty = Difficulty::get_by_id($DB, $this->difficulty_id);
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -213,7 +214,7 @@ class Challenge extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   function fetch_submissions($DB, $filter_suspended = false): bool
   {
     $verified_cond = $this->is_rejected ? "1 = 1" : "submission_is_verified = true";
@@ -239,73 +240,6 @@ class Challenge extends DbObject
     }
     $this->submissions = $submissions;
     return true;
-  }
-
-  /**
-   * Batch-fetches submissions for multiple challenges from view_challenge_submissions in a single query.
-   * Submissions are expanded from the view row (player, verifier, difficulty, new_challenge).
-   * @param resource $DB
-   * @param Challenge[] $challenges
-   * @param bool $filter_suspended
-   */
-  static function batch_fetch_submissions($DB, array $challenges, $filter_suspended = false)
-  {
-    // Separate rejected and non-rejected challenges, since they have different verified conditions
-    $rejected_ids = [];
-    $normal_ids = [];
-    foreach ($challenges as $challenge) {
-      if ($challenge->is_rejected) {
-        $rejected_ids[] = $challenge->id;
-      } else {
-        $normal_ids[] = $challenge->id;
-      }
-    }
-
-    $all_rows = [];
-
-    // Fetch for normal (non-rejected) challenges: verified = true
-    if (count($normal_ids) > 0) {
-      $where = "submission_challenge_id = ANY ($1) AND submission_is_verified = true";
-      if ($filter_suspended) {
-        $where .= " AND (player_account_is_suspended = false OR player_account_is_suspended IS NULL)";
-      }
-      $id_list = "{" . implode(",", $normal_ids) . "}";
-      $result = pg_query_params_or_die($DB, "SELECT * FROM view_challenge_submissions WHERE $where", [$id_list]);
-      while ($row = pg_fetch_assoc($result)) {
-        $all_rows[] = $row;
-      }
-    }
-
-    // Fetch for rejected challenges: no verified filter
-    if (count($rejected_ids) > 0) {
-      $where = "submission_challenge_id = ANY ($1)";
-      if ($filter_suspended) {
-        $where .= " AND (player_account_is_suspended = false OR player_account_is_suspended IS NULL)";
-      }
-      $id_list = "{" . implode(",", $rejected_ids) . "}";
-      $result = pg_query_params_or_die($DB, "SELECT * FROM view_challenge_submissions WHERE $where", [$id_list]);
-      while ($row = pg_fetch_assoc($result)) {
-        $all_rows[] = $row;
-      }
-    }
-
-    // Group by challenge_id and build Submission objects
-    $grouped = [];
-    foreach ($all_rows as $row) {
-      $challenge_id = intval($row['submission_challenge_id']);
-      if (!isset($grouped[$challenge_id]))
-        $grouped[$challenge_id] = [];
-
-      $submission = new Submission();
-      $submission->apply_db_data($row, "submission_");
-      $submission->expand_foreign_keys($row, 2, false);
-      $grouped[$challenge_id][] = $submission;
-    }
-
-    // Distribute to challenges
-    foreach ($challenges as $challenge) {
-      $challenge->submissions = $grouped[$challenge->id] ?? [];
-    }
   }
 
   function fetch_all_submissions($DB): bool
@@ -391,8 +325,9 @@ class Challenge extends DbObject
 
     return $challenges;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function is_challenge_arbitrary(): bool
   {
     return $this->is_arbitrary || $this->objective->is_arbitrary;
@@ -527,4 +462,74 @@ class Challenge extends DbObject
   {
     return constant('BASE_URL') . "/challenge/{$this->id}";
   }
+  #endregion
+
+  #region Batch Fetching
+  /**
+   * Batch-fetches submissions for multiple challenges from view_challenge_submissions in a single query.
+   * Submissions are expanded from the view row (player, verifier, difficulty, new_challenge).
+   * @param resource $DB
+   * @param Challenge[] $challenges
+   * @param bool $filter_suspended
+   */
+  static function batch_fetch_submissions($DB, array $challenges, $filter_suspended = false)
+  {
+    // Separate rejected and non-rejected challenges, since they have different verified conditions
+    $rejected_ids = [];
+    $normal_ids = [];
+    foreach ($challenges as $challenge) {
+      if ($challenge->is_rejected) {
+        $rejected_ids[] = $challenge->id;
+      } else {
+        $normal_ids[] = $challenge->id;
+      }
+    }
+
+    $all_rows = [];
+
+    // Fetch for normal (non-rejected) challenges: verified = true
+    if (count($normal_ids) > 0) {
+      $where = "submission_challenge_id = ANY ($1) AND submission_is_verified = true";
+      if ($filter_suspended) {
+        $where .= " AND (player_account_is_suspended = false OR player_account_is_suspended IS NULL)";
+      }
+      $id_list = "{" . implode(",", $normal_ids) . "}";
+      $result = pg_query_params_or_die($DB, "SELECT * FROM view_challenge_submissions WHERE $where", [$id_list]);
+      while ($row = pg_fetch_assoc($result)) {
+        $all_rows[] = $row;
+      }
+    }
+
+    // Fetch for rejected challenges: no verified filter
+    if (count($rejected_ids) > 0) {
+      $where = "submission_challenge_id = ANY ($1)";
+      if ($filter_suspended) {
+        $where .= " AND (player_account_is_suspended = false OR player_account_is_suspended IS NULL)";
+      }
+      $id_list = "{" . implode(",", $rejected_ids) . "}";
+      $result = pg_query_params_or_die($DB, "SELECT * FROM view_challenge_submissions WHERE $where", [$id_list]);
+      while ($row = pg_fetch_assoc($result)) {
+        $all_rows[] = $row;
+      }
+    }
+
+    // Group by challenge_id and build Submission objects
+    $grouped = [];
+    foreach ($all_rows as $row) {
+      $challenge_id = intval($row['submission_challenge_id']);
+      if (!isset($grouped[$challenge_id]))
+        $grouped[$challenge_id] = [];
+
+      $submission = new Submission();
+      $submission->apply_db_data($row, "submission_");
+      $submission->expand_foreign_keys($row, 2, false);
+      $grouped[$challenge_id][] = $submission;
+    }
+
+    // Distribute to challenges
+    foreach ($challenges as $challenge) {
+      $challenge->submissions = $grouped[$challenge->id] ?? [];
+    }
+  }
+  #endregion
 }

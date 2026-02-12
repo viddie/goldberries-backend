@@ -45,7 +45,7 @@ class Badge extends DbObject
   // Associative Objects
   public ?array $data = []; // arbitrary data like badge_player.date_awarded field when fetching 1 specific players' badges
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -93,8 +93,9 @@ class Badge extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_all_for_player($DB, $player_id)
   {
     $query = "SELECT 
@@ -238,8 +239,9 @@ class Badge extends DbObject
     self::add_players_tier_badge($DB, $player_id, $hardest_sort, true);
     return true;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Badge, id:{$this->id}, title:{$this->title})";
@@ -249,4 +251,5 @@ class Badge extends DbObject
   {
     return has_flag($this->flags, self::$BADGE_SHINY);
   }
+  #endregion
 }

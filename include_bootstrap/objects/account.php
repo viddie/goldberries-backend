@@ -44,7 +44,7 @@ class Account extends DbObject
   public ?Player $player = null;
   public ?Player $claimed_player = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function apply_db_data($arr, $prefix = '')
   {
     $this->id = intval($arr[$prefix . 'id']);
@@ -212,8 +212,9 @@ class Account extends DbObject
       'api_key',
     ];
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function find_by_discord_id($DB, string $discord_id)
   {
     return find_in_db($DB, 'Account', "discord_id = $1", array($discord_id), new Account());
@@ -268,8 +269,9 @@ class Account extends DbObject
   {
     return find_in_db($DB, 'Account', "claimed_player_id IS NOT NULL", array(), new Account());
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $player_name = $this->player !== null ? "'{$this->player->name}'" : "<No Player>";
@@ -301,4 +303,5 @@ class Account extends DbObject
   {
     return ($this->notifications & $flag) === $flag;
   }
+  #endregion
 }

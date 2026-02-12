@@ -13,7 +13,7 @@ class BadgePlayer extends DbObject
   // public ?Player $player = null;
   // public ?Badge $badge = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -81,8 +81,9 @@ class BadgePlayer extends DbObject
       $this->badge->apply_db_data(DbObject::get_object_from_data_list($data, Badge::class, $this->badge_id));
     }
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_all_for_badge($DB, $badge_id)
   {
     $query = "SELECT * FROM badge_player WHERE badge_id = $1";
@@ -97,10 +98,12 @@ class BadgePlayer extends DbObject
     }
     return $badgePlayers;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(BadgePlayer, id:{$this->id}, player:{$this->player_id}, badge:{$this->badge_id})";
   }
+  #endregion
 }

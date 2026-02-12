@@ -24,7 +24,7 @@ class Campaign extends DbObject
   public ?array $challenges = null;
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -120,8 +120,9 @@ class Campaign extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   function fetch_maps($DB, $with_challenges = false, $with_submissions = false, $include_archived = true, $include_arbitrary = true, $hide_rejected = false): bool
   {
     $whereAddition = $include_archived ? null : "is_archived = false";
@@ -135,33 +136,6 @@ class Campaign extends DbObject
       $map->expand_foreign_keys($DB, 2, false);
     }
     return true;
-  }
-
-  /**
-   * Batch-fetches maps for multiple campaigns in a single query and distributes them.
-   * @param resource $DB
-   * @param Campaign[] $campaigns
-   * @param bool $include_archived
-   */
-  static function batch_fetch_maps($DB, array $campaigns, $include_archived = true)
-  {
-    $where = $include_archived ? null : "is_archived = false";
-    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Map::class, 'campaign_id', $where, "ORDER BY sort_major, sort_minor, sort_order, name");
-
-    foreach ($campaigns as $campaign) {
-      $campaign->maps = $grouped[$campaign->id] ?? [];
-    }
-
-    // Collect all maps for batch FK expansion
-    $all_maps = [];
-    foreach ($campaigns as $campaign) {
-      foreach ($campaign->maps as $map) {
-        $all_maps[] = $map;
-      }
-    }
-    if (count($all_maps) > 0) {
-      DbObject::fetch_data_for_objects($DB, $all_maps, 2, false);
-    }
   }
 
   function fetch_challenges($DB, $with_submissions = false, $include_arbitrary = true, $hide_rejected = false): bool
@@ -178,35 +152,6 @@ class Campaign extends DbObject
       $challenge->expand_foreign_keys($DB, 3, false);
     }
     return true;
-  }
-
-  /**
-   * Batch-fetches challenges for multiple campaigns in a single query and distributes them.
-   * @param resource $DB
-   * @param Campaign[] $campaigns
-   * @param bool $include_arbitrary
-   * @param bool $hide_rejected
-   */
-  static function batch_fetch_challenges($DB, array $campaigns, $include_arbitrary = true, $hide_rejected = false)
-  {
-    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
-    $where = $hide_rejected ? ($where ? "$where AND " : "") . "is_rejected = false" : $where;
-    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Challenge::class, 'campaign_id', $where, "ORDER BY sort ASC, id ASC");
-
-    foreach ($campaigns as $campaign) {
-      $campaign->challenges = $grouped[$campaign->id] ?? [];
-    }
-
-    // Collect all challenges for batch FK expansion
-    $all_challenges = [];
-    foreach ($campaigns as $campaign) {
-      foreach ($campaign->challenges as $challenge) {
-        $all_challenges[] = $challenge;
-      }
-    }
-    if (count($all_challenges) > 0) {
-      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
-    }
   }
 
   static function search_by_name($DB, string $search, string $raw_search, bool $is_exact_search)
@@ -324,8 +269,9 @@ class Campaign extends DbObject
     $campaign->apply_db_data($row);
     return $campaign;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Campaign, id:{$this->id}, name:'{$this->get_name()}')";
@@ -375,4 +321,63 @@ class Campaign extends DbObject
     $url = $this->get_url();
     return "[{$this->name} (by {$this->author_gb_name})](<$url>)";
   }
+  #endregion
+
+  #region Batch Fetching
+  /**
+   * Batch-fetches maps for multiple campaigns in a single query and distributes them.
+   * @param resource $DB
+   * @param Campaign[] $campaigns
+   * @param bool $include_archived
+   */
+  static function batch_fetch_maps($DB, array $campaigns, $include_archived = true)
+  {
+    $where = $include_archived ? null : "is_archived = false";
+    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Map::class, 'campaign_id', $where, "ORDER BY sort_major, sort_minor, sort_order, name");
+
+    foreach ($campaigns as $campaign) {
+      $campaign->maps = $grouped[$campaign->id] ?? [];
+    }
+
+    // Collect all maps for batch FK expansion
+    $all_maps = [];
+    foreach ($campaigns as $campaign) {
+      foreach ($campaign->maps as $map) {
+        $all_maps[] = $map;
+      }
+    }
+    if (count($all_maps) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_maps, 2, false);
+    }
+  }
+
+  /**
+   * Batch-fetches challenges for multiple campaigns in a single query and distributes them.
+   * @param resource $DB
+   * @param Campaign[] $campaigns
+   * @param bool $include_arbitrary
+   * @param bool $hide_rejected
+   */
+  static function batch_fetch_challenges($DB, array $campaigns, $include_arbitrary = true, $hide_rejected = false)
+  {
+    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
+    $where = $hide_rejected ? ($where ? "$where AND " : "") . "is_rejected = false" : $where;
+    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Challenge::class, 'campaign_id', $where, "ORDER BY sort ASC, id ASC");
+
+    foreach ($campaigns as $campaign) {
+      $campaign->challenges = $grouped[$campaign->id] ?? [];
+    }
+
+    // Collect all challenges for batch FK expansion
+    $all_challenges = [];
+    foreach ($campaigns as $campaign) {
+      foreach ($campaign->challenges as $challenge) {
+        $all_challenges[] = $challenge;
+      }
+    }
+    if (count($all_challenges) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
+    }
+  }
+  #endregion
 }

@@ -7,13 +7,13 @@ class Player extends DbObject
   public string $name;
 
 
-  // === Player Bonus Objects ===
+  // Player Bonus Objects
   public array $account = []; //role, is_suspended
 
   //Omitted by default, attach when needed
   // public array $data = []; //arbitrary data like badges, etc.
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -101,8 +101,9 @@ class Player extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   function fetch_badges($DB)
   {
     $badges = Badge::get_all_for_player($DB, $this->id);
@@ -210,9 +211,9 @@ class Player extends DbObject
     $account = $accounts[0];
     return $account;
   }
+  #endregion
 
-
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(Player, id:{$this->id}, name:'{$this->name}')";
@@ -240,4 +241,5 @@ class Player extends DbObject
     //Regex remove backticks from the name, then return
     return preg_replace('/`/', '', $this->name);
   }
+  #endregion
 }

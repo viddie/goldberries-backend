@@ -22,7 +22,7 @@ if (!$suggestion || $suggestion->is_verified !== true) {
 }
 
 $suggestion->expand_foreign_keys($DB, 5);
-$suggestion->fetch_associated_content($DB);
+Suggestion::fetch_associated_contents($DB, [$suggestion]);
 
 //Objects
 $challenge = $suggestion->challenge;

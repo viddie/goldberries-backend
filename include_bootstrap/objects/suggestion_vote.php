@@ -16,7 +16,7 @@ class SuggestionVote extends DbObject
   // Other Objects
   public ?Submission $submission = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -72,6 +72,7 @@ class SuggestionVote extends DbObject
       }
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -119,15 +120,16 @@ class SuggestionVote extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function has_voted_on_suggestion($DB, $player_id, $suggestion_id)
   {
     $query = "SELECT * FROM suggestion_vote WHERE player_id = $1 AND suggestion_id = $2";
     $result = pg_query_params($DB, $query, array($player_id, $suggestion_id));
     return pg_num_rows($result) > 0;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(SuggestionVote, id:{$this->id}, player:{$this->player->name}, vote:{$this->vote}, comment:{$this->comment})";
@@ -161,4 +163,5 @@ class SuggestionVote extends DbObject
       $this->submission->expand_foreign_keys($DB, 2, false);
     }
   }
+  #endregion
 }

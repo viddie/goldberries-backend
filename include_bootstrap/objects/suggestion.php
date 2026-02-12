@@ -171,27 +171,6 @@ class Suggestion extends DbObject
   #endregion
 
   #region Find Functions
-  function fetch_votes($DB): bool
-  {
-    $query = "SELECT * FROM view_suggestion_votes WHERE suggestion_vote_suggestion_id = $1";
-    $result = pg_query_params($DB, $query, [$this->id]);
-
-    $this->votes = [];
-    if (!$result) {
-      return false;
-    }
-
-    while ($row = pg_fetch_assoc($result)) {
-      $vote = new SuggestionVote();
-      $vote->apply_db_data($row, "suggestion_vote_");
-      $vote->expand_foreign_keys($row, 2, false);
-      $vote->find_submission($row, $this);
-      $this->votes[] = $vote;
-    }
-
-    return true;
-  }
-
   static function get_paginated($DB, $page, $per_page, $challenge = null, $expired = null, $account = null, $type = "all", $search = null)
   {
     $needs_join = $search !== null;
@@ -292,9 +271,7 @@ class Suggestion extends DbObject
       $query .= " LIMIT " . $per_page . " OFFSET " . ($page - 1) * $per_page;
     }
 
-    profiler_step("Fetching suggestions from database...");
     $result = pg_query_params_or_die($DB, $query, []);
-    profiler_step("Fetched suggestions from database!");
 
     $maxCount = 0;
     $suggestions = [];
@@ -305,15 +282,11 @@ class Suggestion extends DbObject
 
       $suggestion = new Suggestion();
       $suggestion->apply_db_data($row);
-      // $suggestion->expand_foreign_keys($DB, 5, true);
-      // $suggestion->fetch_associated_content($DB);
       $suggestions[] = $suggestion;
     }
 
     DbObject::fetch_data_for_objects($DB, $suggestions, 5, true);
-    profiler_step("Fetched FK data.");
     self::fetch_associated_contents($DB, $suggestions);
-    profiler_step("Done fetching associated content for suggestions.");
 
     return array(
       'suggestions' => $suggestions,
@@ -341,7 +314,7 @@ class Suggestion extends DbObject
     if ($row = pg_fetch_assoc($result)) {
       $suggestion->apply_db_data($row);
       $suggestion->expand_foreign_keys($DB, 5, true);
-      $suggestion->fetch_associated_content($DB);
+      self::fetch_associated_contents($DB, [$suggestion]);
     } else {
       $suggestion = null;
     }
@@ -373,37 +346,28 @@ class Suggestion extends DbObject
     return "(Suggestion, id:{$this->id}{$challengeStr}, author:{$authorStr}, date:{$dateStr})";
   }
 
-  //This function assumes a fully expanded structure
-  function fetch_associated_content($DB)
+  function is_closed()
   {
-    if ($this->challenge_id !== null) {
-      $this->challenge->fetch_submissions($DB, true);
-      profiler_step("Fetched submissions", 1);
-      if ($this->challenge->map_id !== null) {
-        $this->challenge->map->fetch_challenges($DB, true, false, true);
-        profiler_step("Fetched challenges", 1);
-        //Remove the $this->challenge from the map's challenges
-        $this->challenge->map->challenges = array_values(array_filter($this->challenge->map->challenges, function ($c) {
-          return $c->id !== $this->challenge->id;
-        }));
-      } else if ($this->challenge->campaign_id !== null) {
-        $this->challenge->campaign->fetch_challenges($DB, true, false, true);
-        profiler_step("Fetched campaign challenges", 1);
-        //Remove the $this->challenge from the campaign's challenges.
-        //Also remove challenges that dont have the same label. Thats how i'll just define "related challenges" for fgrs
-        $this->challenge->campaign->challenges = array_values(array_filter($this->challenge->campaign->challenges, function ($c) {
-          return $c->id !== $this->challenge->id && $c->label === $this->challenge->label;
-        }));
-      }
-    }
-    profiler_step("Fetching votes", 1);
-    $this->fetch_votes($DB);
+    return $this->is_accepted !== null || $this->has_expired() || $this->is_verified === false;
   }
 
+  function has_expired()
+  {
+    $now = new DateTime();
+    $diff = $now->diff($this->date_created);
+    return $diff->days > self::$expiration_days;
+  }
+
+  function get_url()
+  {
+    return constant("BASE_URL") . "/suggestions/" . $this->id;
+  }
+  #endregion
+
+  #region Batch Fetching
   /**
-   * Batch version of fetch_associated_content for multiple suggestions.
-   * Fetches all submissions, related challenges, and votes in batched queries instead of per-suggestion.
-   * Assumes all suggestions have been fully expanded (FKs resolved via fetch_data_for_objects).
+   * Fetches all submissions, related challenges, and votes for the given suggestions in batched queries.
+   * Assumes all suggestions have been fully expanded (FKs resolved via fetch_data_for_objects or expand_foreign_keys).
    * @param resource $DB
    * @param Suggestion[] $suggestions
    */
@@ -425,7 +389,6 @@ class Suggestion extends DbObject
     }
     if (count($representative_challenges) > 0) {
       Challenge::batch_fetch_submissions($DB, $representative_challenges, true);
-      profiler_step("Batch fetched submissions for suggestion challenges");
 
       // Distribute submissions to all challenge objects sharing the same ID
       foreach ($challenges_by_id as $challenge_id => $challenge_objects) {
@@ -460,7 +423,6 @@ class Suggestion extends DbObject
     }
     if (count($representative_maps) > 0) {
       Map::batch_fetch_challenges($DB, $representative_maps, false, true);
-      profiler_step("Batch fetched challenges for maps");
 
       // Distribute challenges to all map objects sharing the same ID
       foreach ($maps_by_id as $map_id => $map_objects) {
@@ -478,7 +440,6 @@ class Suggestion extends DbObject
     }
     if (count($representative_campaigns) > 0) {
       Campaign::batch_fetch_challenges($DB, $representative_campaigns, false, true);
-      profiler_step("Batch fetched challenges for campaigns");
 
       // Distribute challenges to all campaign objects sharing the same ID
       foreach ($campaigns_by_id as $campaign_id => $campaign_objects) {
@@ -507,7 +468,6 @@ class Suggestion extends DbObject
     }
     if (count($related_challenges) > 0) {
       Challenge::batch_fetch_submissions($DB, array_values($related_challenges), true);
-      profiler_step("Batch fetched submissions for related challenges");
     }
 
     // Step 4: Apply per-suggestion filtering (remove self, label matching for campaigns)
@@ -533,7 +493,6 @@ class Suggestion extends DbObject
 
     // Step 5: Batch-fetch votes for all suggestions
     self::batch_fetch_votes($DB, $suggestions);
-    profiler_step("Batch fetched votes for suggestions");
   }
 
   /**
@@ -570,23 +529,6 @@ class Suggestion extends DbObject
       $vote->find_submission($row, $suggestion);
       $suggestion->votes[] = $vote;
     }
-  }
-
-  function is_closed()
-  {
-    return $this->is_accepted !== null || $this->has_expired() || $this->is_verified === false;
-  }
-
-  function has_expired()
-  {
-    $now = new DateTime();
-    $diff = $now->diff($this->date_created);
-    return $diff->days > self::$expiration_days;
-  }
-
-  function get_url()
-  {
-    return constant("BASE_URL") . "/suggestions/" . $this->id;
   }
   #endregion
 }

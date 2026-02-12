@@ -19,7 +19,7 @@ class Change extends DbObject
   public ?Player $player = null;
   public ?Player $author = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -101,6 +101,7 @@ class Change extends DbObject
       }
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -195,7 +196,7 @@ class Change extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_all_for_object($DB, $type, $id)
   {
     $where = "{$type}_id = $1";
@@ -271,8 +272,9 @@ class Change extends DbObject
       'per_page' => $per_page,
     );
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $dateStr = date_to_long_string($this->date);
@@ -333,4 +335,5 @@ class Change extends DbObject
       return false;
     }
   }
+  #endregion
 }

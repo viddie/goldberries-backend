@@ -13,7 +13,7 @@ class Showcase extends DbObject implements JsonSerializable
   public ?Account $account = null;
   public ?Submission $submission = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -47,6 +47,7 @@ class Showcase extends DbObject implements JsonSerializable
       }
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -81,7 +82,7 @@ class Showcase extends DbObject implements JsonSerializable
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function find_all_for_account_id($DB, $account_id)
   {
     $query = "SELECT * FROM showcase WHERE account_id = $1 ORDER BY index ASC";
@@ -97,8 +98,9 @@ class Showcase extends DbObject implements JsonSerializable
 
     return $showcase_objs;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function jsonSerialize()
   {
     //Throw an error to prevent serialization
@@ -109,4 +111,5 @@ class Showcase extends DbObject implements JsonSerializable
   {
     return "(Showcase, id:{$this->id}, account_id:{$this->account_id}, index:{$this->index}, submission_id:{$this->submission_id})";
   }
+  #endregion
 }

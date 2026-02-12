@@ -11,7 +11,7 @@ class NewChallenge extends DbObject
   public ?string $golden_changes = null;
 
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -70,10 +70,12 @@ class NewChallenge extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     return "(NewChallenge, id:{$this->id}, url:'{$this->url}', name:'{$this->name}', description:'{$this->description}')";
@@ -94,4 +96,5 @@ class NewChallenge extends DbObject
     //Regex remove backticks from the name, then return
     return preg_replace('/`/', '', $this->name);
   }
+  #endregion
 }

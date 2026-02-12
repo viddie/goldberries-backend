@@ -8,7 +8,7 @@ class Difficulty extends DbObject
   public ?string $subtier = null;
   public int $sort;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -49,10 +49,12 @@ class Difficulty extends DbObject
   protected function apply_expand_data($data, $level, $expand_structure)
   {
   }
+  #endregion
 
-  // === Find Functions ===
+  #region Find Functions
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   function __toString()
   {
     $subtierStr = to_string_null_check($this->subtier);
@@ -68,4 +70,5 @@ class Difficulty extends DbObject
       return $this->name;
     }
   }
+  #endregion
 }

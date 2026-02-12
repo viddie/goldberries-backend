@@ -12,7 +12,7 @@ class VerificationNotice extends DbObject
   public ?Player $verifier = null;
   public ?Submission $submission = null;
 
-  // === Abstract Functions ===
+  #region Abstract Functions
   function get_field_set()
   {
     return array(
@@ -52,6 +52,7 @@ class VerificationNotice extends DbObject
       $this->verifier = Player::get_by_id($DB, $this->verifier_id, $depth - 1, $expand_structure);
     }
   }
+  #endregion
 
   #region Expand Batching
   protected function get_expand_list($level, $expand_structure)
@@ -99,7 +100,7 @@ class VerificationNotice extends DbObject
   }
   #endregion
 
-  // === Find Functions ===
+  #region Find Functions
   static function get_all($DB)
   {
     $query = "SELECT * FROM " . static::$table_name;
@@ -113,8 +114,9 @@ class VerificationNotice extends DbObject
     }
     return $notices;
   }
+  #endregion
 
-  // === Utility Functions ===
+  #region Utility Functions
   static function delete_for_submission_id($DB, $submission_id)
   {
     $query = "DELETE FROM " . static::$table_name . " WHERE submission_id = $1";
@@ -127,4 +129,5 @@ class VerificationNotice extends DbObject
     $verifierName = $this->verifier?->name ?? "null";
     return "(VerificationNotice, id:{$this->id}, verifier:{$verifierName}, submission_id:{$this->submission_id})";
   }
+  #endregion
 }
