@@ -294,4 +294,68 @@ abstract class DbObject
     return $obj;
   }
   #endregion
+
+  #region Fetch Children
+  /**
+   * Batch-fetches child objects for a list of parent objects ("down the hierarchy").
+   * Groups parent IDs, runs a single query, then distributes results back to parents.
+   * 
+   * @param resource $DB Database connection
+   * @param array $parents Array of parent DbObjects whose children should be fetched
+   * @param string $child_class The class name of the child objects to fetch (e.g. Map::class)
+   * @param string $fk_column The FK column on the child table that references the parent ID (e.g. 'campaign_id')
+   * @param string|null $where_addition Additional WHERE clause (e.g. "is_archived = false"). Do not include "AND" prefix.
+   * @param string $order_by ORDER BY clause (e.g. "ORDER BY sort ASC, id ASC")
+   * @param string|null $table_override Override the table/view to query from (e.g. 'view_challenge_submissions'). Defaults to child_class::$table_name.
+   * @param string|null $prefix Prefix used for apply_db_data when querying from a view (e.g. 'submission_'). Defaults to no prefix.
+   * @return array Associative array of parent_id => array of child DbObjects
+   */
+  static function fetch_children_for_objects($DB, $parents, $child_class, $fk_column, $where_addition = null, $order_by = "ORDER BY id", $table_override = null, $prefix = null)
+  {
+    // Collect all parent IDs
+    $parent_ids = [];
+    foreach ($parents as $parent) {
+      if (!in_array($parent->id, $parent_ids))
+        $parent_ids[] = $parent->id;
+    }
+
+    if (count($parent_ids) === 0)
+      return [];
+
+    // Build the query
+    $table = $table_override ?? $child_class::$table_name;
+    $table_escaped = pg_escape_identifier(strtolower($table));
+    $fk_escaped = pg_escape_identifier(strtolower($fk_column));
+
+    $id_list = "{" . implode(",", $parent_ids) . "}";
+    $where = "{$fk_escaped} = ANY ($1)";
+    if ($where_addition !== null) {
+      $where .= " AND {$where_addition}";
+    }
+
+    $query = "SELECT * FROM {$table_escaped} WHERE {$where} {$order_by}";
+    $result = pg_query_params_or_die($DB, $query, [$id_list]);
+
+    // Group results by FK column
+    $fk_col_with_prefix = ($prefix ?? '') . $fk_column;
+    $grouped = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $parent_id = intval($row[$fk_col_with_prefix]);
+      if (!isset($grouped[$parent_id]))
+        $grouped[$parent_id] = [];
+
+      $obj = new $child_class();
+      $obj->apply_db_data($row, $prefix ?? '');
+      $grouped[$parent_id][] = $obj;
+    }
+
+    // Ensure every requested parent has at least an empty array
+    foreach ($parent_ids as $pid) {
+      if (!isset($grouped[$pid]))
+        $grouped[$pid] = [];
+    }
+
+    return $grouped;
+  }
+  #endregion
 }

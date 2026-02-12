@@ -268,6 +268,35 @@ class Map extends DbObject
     return true;
   }
 
+  /**
+   * Batch-fetches challenges for multiple maps in a single query and distributes them.
+   * @param resource $DB
+   * @param Map[] $maps
+   * @param bool $include_arbitrary
+   * @param bool $hide_rejected
+   */
+  static function batch_fetch_challenges($DB, array $maps, $include_arbitrary = true, $hide_rejected = false)
+  {
+    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
+    $where = $hide_rejected ? ($where === null ? "is_rejected = false" : "$where AND is_rejected = false") : $where;
+    $grouped = DbObject::fetch_children_for_objects($DB, $maps, Challenge::class, 'map_id', $where, "ORDER BY sort ASC, requires_fc ASC, label ASC NULLS FIRST, id ASC");
+
+    foreach ($maps as $map) {
+      $map->challenges = $grouped[$map->id] ?? [];
+    }
+
+    // Collect all challenges for batch FK expansion
+    $all_challenges = [];
+    foreach ($maps as $map) {
+      foreach ($map->challenges as $challenge) {
+        $all_challenges[] = $challenge;
+      }
+    }
+    if (count($all_challenges) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
+    }
+  }
+
   function fetch_other_maps($DB)
   {
     $this->campaign->fetch_maps($DB, false, false, false, false, true);

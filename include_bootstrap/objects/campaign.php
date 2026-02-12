@@ -137,6 +137,33 @@ class Campaign extends DbObject
     return true;
   }
 
+  /**
+   * Batch-fetches maps for multiple campaigns in a single query and distributes them.
+   * @param resource $DB
+   * @param Campaign[] $campaigns
+   * @param bool $include_archived
+   */
+  static function batch_fetch_maps($DB, array $campaigns, $include_archived = true)
+  {
+    $where = $include_archived ? null : "is_archived = false";
+    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Map::class, 'campaign_id', $where, "ORDER BY sort_major, sort_minor, sort_order, name");
+
+    foreach ($campaigns as $campaign) {
+      $campaign->maps = $grouped[$campaign->id] ?? [];
+    }
+
+    // Collect all maps for batch FK expansion
+    $all_maps = [];
+    foreach ($campaigns as $campaign) {
+      foreach ($campaign->maps as $map) {
+        $all_maps[] = $map;
+      }
+    }
+    if (count($all_maps) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_maps, 2, false);
+    }
+  }
+
   function fetch_challenges($DB, $with_submissions = false, $include_arbitrary = true, $hide_rejected = false): bool
   {
     $whereAddition = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
@@ -151,6 +178,35 @@ class Campaign extends DbObject
       $challenge->expand_foreign_keys($DB, 3, false);
     }
     return true;
+  }
+
+  /**
+   * Batch-fetches challenges for multiple campaigns in a single query and distributes them.
+   * @param resource $DB
+   * @param Campaign[] $campaigns
+   * @param bool $include_arbitrary
+   * @param bool $hide_rejected
+   */
+  static function batch_fetch_challenges($DB, array $campaigns, $include_arbitrary = true, $hide_rejected = false)
+  {
+    $where = $include_arbitrary ? null : "(is_arbitrary = false OR is_arbitrary IS NULL)";
+    $where = $hide_rejected ? ($where ? "$where AND " : "") . "is_rejected = false" : $where;
+    $grouped = DbObject::fetch_children_for_objects($DB, $campaigns, Challenge::class, 'campaign_id', $where, "ORDER BY sort ASC, id ASC");
+
+    foreach ($campaigns as $campaign) {
+      $campaign->challenges = $grouped[$campaign->id] ?? [];
+    }
+
+    // Collect all challenges for batch FK expansion
+    $all_challenges = [];
+    foreach ($campaigns as $campaign) {
+      foreach ($campaign->challenges as $challenge) {
+        $all_challenges[] = $challenge;
+      }
+    }
+    if (count($all_challenges) > 0) {
+      DbObject::fetch_data_for_objects($DB, $all_challenges, 3, false);
+    }
   }
 
   static function search_by_name($DB, string $search, string $raw_search, bool $is_exact_search)
