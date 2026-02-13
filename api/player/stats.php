@@ -2,7 +2,6 @@
 
 require_once('../api_bootstrap.inc.php');
 
-#region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
 }
@@ -16,40 +15,55 @@ if ($id == 0) {
   die_json(400, "Invalid player id");
 }
 
+#region Count by Difficulty
 $query = "SELECT
     difficulty_id,
-    difficulty_sort, 
     COUNT(difficulty_id)
   FROM view_submissions 
   WHERE player_id = $id 
     AND submission_is_verified = true
     AND submission_is_obsolete = false
-  GROUP BY difficulty_id, difficulty_sort";
+  GROUP BY difficulty_id";
 
-$result = pg_query($DB, $query);
-if (!$result) {
-  die_json(500, "Could not query database");
-}
+$result = pg_query_params_or_die($DB, $query);
 
-$response = array(
-  "count_by_difficulty" => array(),
-  "count_total_hard_list" => 0,
-  "count_total_standard_list" => 0,
-);
+$response = [
+  "count_by_difficulty" => [],
+  "total_count" => 0,
+  "total_time" => 0,
+  "account" => []
+];
 
 while ($row = pg_fetch_assoc($result)) {
   $diff_id = intval($row["difficulty_id"]);
-  $diff_sort = intval($row["difficulty_sort"]);
   $count = intval($row["count"]);
-
   $response["count_by_difficulty"][$diff_id] = $count;
-
-  if ($diff_sort === 2) {
-    $response["count_total_standard_list"] += $count;
-  } else if ($diff_sort > 2) {
-    $response["count_total_hard_list"] += $count;
-  }
+  $response["total_count"] += $count;
 }
+#endregion
+
+#region Total Time
+$query = "SELECT
+    SUM(submission_time_taken) as total_time
+  FROM view_submissions 
+  WHERE player_id = $id 
+    AND submission_is_verified = true
+    AND submission_is_obsolete = false";
+$result = pg_query_params_or_die($DB, $query);
+if ($row = pg_fetch_assoc($result)) {
+  $response["total_time"] = intval($row["total_time"]);
+}
+#endregion
+
+#region Account Registered
+$query = "SELECT
+    date_created
+  FROM account JOIN player ON player.id = account.player_id
+  WHERE player.id = $id";
+$result = pg_query_params_or_die($DB, $query);
+if ($row = pg_fetch_assoc($result)) {
+  $response["account"] = ["date_created" => $row["date_created"]];
+}
+#endregion
 
 api_write($response);
-#endregion
