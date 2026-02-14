@@ -16,12 +16,14 @@ if ($player_id <= 0) {
   die_json(400, "Invalid player_id");
 }
 
+$wishlist_only = isset($_REQUEST['wishlist_only']) && $_REQUEST['wishlist_only'] === 'true';
+
 // Verify player exists
 $player = Player::get_by_id($DB, $player_id, 1, false);
 if ($player === false) {
   die_json(404, "Player not found");
 }
 
-$result = Like::getPlayerLikes($DB, $player_id);
+$result = Like::get_player_likes($DB, $player_id, $wishlist_only);
 api_write($result);
 #endregion

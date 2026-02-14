@@ -325,13 +325,15 @@ CREATE TABLE "like"
  progress       integer DEFAULT NULL,
  comment        varchar(1000) DEFAULT NULL,
  date_updated   timestamptz DEFAULT NULL,
+ time_taken     integer DEFAULT NULL,
  CONSTRAINT like_pkey PRIMARY KEY ( "id" ),
  CONSTRAINT like_challenge_id_fkey FOREIGN KEY ( challenge_id ) REFERENCES challenge ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT like_player_id_fkey FOREIGN KEY ( player_id ) REFERENCES player ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT like_challenge_player_unique UNIQUE ( challenge_id, player_id ),
  CONSTRAINT like_wishlist_fields CHECK (
-   (is_wishlist = true) OR (state IS NULL AND progress IS NULL AND comment IS NULL AND date_updated IS NULL)
+   (is_wishlist = true) OR (state IS NULL AND progress IS NULL AND comment IS NULL AND date_updated IS NULL AND time_taken IS NULL)
  ),
+ CONSTRAINT like_wishlist_state CHECK ((is_wishlist = false) OR (state IS NOT NULL)),
  CONSTRAINT like_progress_bounds CHECK (progress IS NULL OR (progress >= 0 AND progress <= 100)),
  CONSTRAINT like_state_value CHECK (state is NULL or state IN ('current', 'on_hold', 'soon', 'backlog'))
 );

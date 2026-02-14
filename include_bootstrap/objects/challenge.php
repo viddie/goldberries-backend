@@ -303,14 +303,10 @@ class Challenge extends DbObject
    */
   static function fetch_challenges_assoc($DB, array $challenge_ids): array
   {
-    $placeholders = [];
-    for ($i = 1; $i <= count($challenge_ids); $i++) {
-      $placeholders[] = '$' . $i;
-    }
-    $in_clause = implode(',', $placeholders);
+    $any_clause = "{" . implode(',', $challenge_ids) . "}";
 
-    $query = "SELECT * FROM view_challenges WHERE challenge_id IN ({$in_clause})";
-    $result = pg_query_params_or_die($DB, $query, $challenge_ids, "Failed to fetch challenges for likes");
+    $query = "SELECT * FROM view_challenges WHERE challenge_id = ANY ($1)";
+    $result = pg_query_params_or_die($DB, $query, [$any_clause], "Failed to fetch challenges for likes");
 
     $challenges = [];
     while ($row = pg_fetch_assoc($result)) {

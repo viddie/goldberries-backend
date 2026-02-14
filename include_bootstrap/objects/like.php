@@ -13,6 +13,7 @@ class Like extends DbObject
   public ?int $progress = null;
   public ?string $comment = null;
   public ?JsonDateTime $date_updated = null;
+  public ?int $time_taken = null;
 
   // Linked Objects
   public ?Challenge $challenge = null;
@@ -32,6 +33,7 @@ class Like extends DbObject
       'progress' => $this->progress,
       'comment' => $this->comment,
       'date_updated' => $this->date_updated,
+      'time_taken' => $this->time_taken,
     );
   }
 
@@ -46,6 +48,7 @@ class Like extends DbObject
       'progress',
       'comment',
       'date_updated',
+      'time_taken',
     ];
   }
 
@@ -65,6 +68,8 @@ class Like extends DbObject
       $this->comment = $arr[$prefix . 'comment'];
     if (isset($arr[$prefix . 'date_updated']))
       $this->date_updated = new JsonDateTime($arr[$prefix . 'date_updated']);
+    if (isset($arr[$prefix . 'time_taken']))
+      $this->time_taken = intval($arr[$prefix . 'time_taken']);
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
@@ -191,6 +196,11 @@ class Like extends DbObject
     return true;
   }
 
+  static function get_player_wishlist($DB, int $player_id): array
+  {
+    return self::get_player_likes($DB, $player_id, true);
+  }
+
   /**
    * Get all likes for a specific player, sorted by date_updated (or date_created if date_updated is null).
    * Returns an associative array with 'likes' (list of Like objects) and 'challenges' (challenge_id => Challenge).
@@ -198,10 +208,11 @@ class Like extends DbObject
    * @param int $player_id The player ID to get likes for
    * @return array { likes: Like[], challenges: array<int, Challenge> }
    */
-  static function getPlayerLikes($DB, int $player_id): array
+  static function get_player_likes($DB, int $player_id, bool $wishlist_only = false): array
   {
     // Step 1: Fetch all like objects for the player
-    $query = "SELECT * FROM \"like\" WHERE player_id = $1 ORDER BY COALESCE(date_updated, date_created) DESC";
+    $where_clause = $wishlist_only ? "AND is_wishlist = true" : "";
+    $query = "SELECT * FROM \"like\" WHERE player_id = $1 $where_clause ORDER BY COALESCE(date_updated, date_created) DESC";
     $result = pg_query_params_or_die($DB, $query, [$player_id], "Failed to get likes for player {$player_id}");
 
     $likes = [];

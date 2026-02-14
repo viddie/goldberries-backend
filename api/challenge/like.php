@@ -45,6 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($like->comment !== null) {
       die_json(400, "comment can only be set when is_wishlist is true");
     }
+    if ($like->time_taken !== null) {
+      die_json(400, "time_taken can only be set when is_wishlist is true");
+    }
   }
 
   // Validate state enum
@@ -109,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Ensure player_id matches own player
-    if ($old_like->player_id !== $account->player->id) {
+    if ($old_like->player_id !== $account->player->id && !is_verifier($account)) {
       die_json(403, "You can only update your own likes");
     }
 
@@ -119,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old_like->state = $like->state;
     $old_like->progress = $like->progress;
     $old_like->comment = $like->comment;
+    $old_like->time_taken = $like->time_taken;
 
     // If wishlist is turned off, clear all wishlist fields
     if (!$old_like->is_wishlist) {
@@ -126,6 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $old_like->progress = null;
       $old_like->comment = null;
       $old_like->date_updated = null;
+      $old_like->time_taken = null;
     } else {
       // Set date_updated to now on any update
       $old_like->date_updated = new JsonDateTime();
