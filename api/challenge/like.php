@@ -48,6 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($like->time_taken !== null) {
       die_json(400, "time_taken can only be set when is_wishlist is true");
     }
+    if ($like->low_death !== null) {
+      die_json(400, "low_death can only be set when is_wishlist is true");
+    }
   }
 
   // Validate state enum
@@ -63,6 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   // Validate comment length
   if ($like->comment !== null && mb_strlen($like->comment) > 1000) {
     die_json(400, "comment must be at most 1000 characters");
+  }
+
+  // Validate low_death bounds
+  if ($like->low_death !== null && $like->low_death < 0) {
+    die_json(400, "low_death must be >= 0");
   }
 
   // Creating a new like
@@ -123,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $old_like->progress = $like->progress;
     $old_like->comment = $like->comment;
     $old_like->time_taken = $like->time_taken;
+    $old_like->low_death = $like->low_death;
 
     // If wishlist is turned off, clear all wishlist fields
     if (!$old_like->is_wishlist) {
@@ -131,6 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $old_like->comment = null;
       $old_like->date_updated = null;
       $old_like->time_taken = null;
+      $old_like->low_death = null;
     } else {
       // Set date_updated to now on any update
       $old_like->date_updated = new JsonDateTime();

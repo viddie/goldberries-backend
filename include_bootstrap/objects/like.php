@@ -14,6 +14,7 @@ class Like extends DbObject
   public ?string $comment = null;
   public ?JsonDateTime $date_updated = null;
   public ?int $time_taken = null;
+  public ?int $low_death = null;
 
   // Linked Objects
   public ?Challenge $challenge = null;
@@ -34,6 +35,7 @@ class Like extends DbObject
       'comment' => $this->comment,
       'date_updated' => $this->date_updated,
       'time_taken' => $this->time_taken,
+      'low_death' => $this->low_death,
     );
   }
 
@@ -49,6 +51,7 @@ class Like extends DbObject
       'comment',
       'date_updated',
       'time_taken',
+      'low_death',
     ];
   }
 
@@ -70,6 +73,8 @@ class Like extends DbObject
       $this->date_updated = new JsonDateTime($arr[$prefix . 'date_updated']);
     if (isset($arr[$prefix . 'time_taken']))
       $this->time_taken = intval($arr[$prefix . 'time_taken']);
+    if (isset($arr[$prefix . 'low_death']))
+      $this->low_death = intval($arr[$prefix . 'low_death']);
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
