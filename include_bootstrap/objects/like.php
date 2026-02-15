@@ -165,7 +165,7 @@ class Like extends DbObject
    * @param int $player_id The player ID
    * @return Like|false The Like object or false if not found
    */
-  static function findByChallengeAndPlayer($DB, int $challenge_id, int $player_id)
+  static function find_by_challenge_and_player($DB, int $challenge_id, int $player_id)
   {
     $query = "SELECT * FROM \"like\" WHERE challenge_id = $1 AND player_id = $2";
     $result = pg_query_params_or_die($DB, $query, [$challenge_id, $player_id], "Failed to find like for challenge {$challenge_id} and player {$player_id}");
@@ -185,10 +185,10 @@ class Like extends DbObject
    * @param int $challenge_id The challenge ID to recalculate likes for
    * @return bool True on success, false on failure
    */
-  static function recalculateChallengeLikes($DB, int $challenge_id): bool
+  static function recalculate_challenge_likes($DB, int $challenge_id): bool
   {
-    // Count all likes for this challenge (excluding wishlists)
-    $query = "SELECT COUNT(*) as count FROM \"like\" WHERE challenge_id = $1 AND is_wishlist = false";
+    // Count all likes for this challenge
+    $query = "SELECT COUNT(*) as count FROM \"like\" WHERE challenge_id = $1";
     $result = pg_query_params_or_die($DB, $query, [$challenge_id], "Failed to count likes for challenge {$challenge_id}");
 
     $row = pg_fetch_assoc($result);
@@ -250,6 +250,22 @@ class Like extends DbObject
   function __toString()
   {
     return "(Like, id:{$this->id}, challenge_id:{$this->challenge_id}, player_id:{$this->player_id})";
+  }
+
+  static function like_challenge($DB, int $challenge_id, int $player_id): void
+  {
+    $existing_like = self::find_by_challenge_and_player($DB, $challenge_id, $player_id);
+    if ($existing_like !== false) {
+      // Like already exists, no need to insert
+      return;
+    }
+
+    $like = new Like();
+    $like->challenge_id = $challenge_id;
+    $like->player_id = $player_id;
+    $like->date_created = new JsonDateTime();
+    $like->insert($DB);
+    self::recalculate_challenge_likes($DB, $challenge_id);
   }
   #endregion
 }

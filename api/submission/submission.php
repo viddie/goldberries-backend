@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $submission = new Submission();
   $submission->apply_db_data(format_assoc_array_bools($data));
   $skip_webhook = isset($data['skip_webhook']) && $data['skip_webhook'] === true;
+  $like_challenge = isset($data['like_challenge']) && $data['like_challenge'] === true;
 
   if (!$submission->has_fields_set(['player_id', 'proof_url'])) {
     die_json(400, "player_id or proof_url is missing");
@@ -333,7 +334,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($new_submission->date_achieved === null) {
       $new_submission->date_achieved = $submission->date_created;
     }
-    $new_submission->insert($DB);
+    if ($new_submission->insert($DB) && $like_challenge) {
+      Like::like_challenge($DB, $new_submission->challenge_id, $account->player_id);
+    }
     $new_submission->expand_foreign_keys($DB, 5);
     api_write($new_submission);
   }

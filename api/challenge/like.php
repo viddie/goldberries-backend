@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Recalculate challenge likes count
-    Like::recalculateChallengeLikes($DB, $like->challenge_id);
+    Like::recalculate_challenge_likes($DB, $like->challenge_id);
 
     log_info("'{$account->player->name}' liked challenge {$like->challenge_id}", "Like");
 
@@ -151,7 +151,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Recalculate challenge likes count (in case is_wishlist changed)
-    Like::recalculateChallengeLikes($DB, $old_like->challenge_id);
+    Like::recalculate_challenge_likes($DB, $old_like->challenge_id);
 
     $old_like->expand_foreign_keys($DB, 2, false);
     api_write($old_like);
@@ -191,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   }
 
   // Recalculate challenge likes count
-  Like::recalculateChallengeLikes($DB, $challenge_id);
+  Like::recalculate_challenge_likes($DB, $challenge_id);
 
   log_info("'{$account->player->name}' removed like {$id} from challenge {$challenge_id}", "Like");
 
