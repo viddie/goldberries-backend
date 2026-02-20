@@ -68,23 +68,7 @@ class Player extends DbObject
 
     $accounts = Account::find_by_player_id($DB, $this->id);
     if ($accounts !== false && count($accounts) === 1) {
-      $account = $accounts[0];
-      $this->account['role'] = $account->role;
-      $this->account['is_suspended'] = $account->is_suspended;
-      $this->account['suspension_reason'] = $account->suspension_reason;
-
-      $this->account['name_color_start'] = $account->name_color_start;
-      $this->account['name_color_end'] = $account->name_color_end;
-
-      //For player, expand structure is for the profile customization that isn't needed for all pages
-      //extract the fields: links, input_method, about_me, name_color_start, name_color_end
-      if ($expand_structure === true) {
-        $this->account['links'] = $account->links;
-        $this->account['input_method'] = $account->input_method;
-        $this->account['about_me'] = $account->about_me;
-        $this->account['country'] = $account->country;
-
-      }
+      $this->apply_account_data($accounts[0], $expand_structure === true);
     }
 
     if ($expand_structure === true) {
@@ -93,6 +77,30 @@ class Player extends DbObject
     }
   }
 
+  /**
+   * Applies account data from an Account object to this Player's account array.
+   * @param Account $account the Account object to apply data from
+   * @param bool $customization whether to include profile customization fields (links, input_method, about_me, country)
+   */
+  function apply_account_data(Account $account, bool $customization = false)
+  {
+    $this->account['role'] = $account->role;
+    $this->account['is_suspended'] = $account->is_suspended;
+    $this->account['suspension_reason'] = $account->suspension_reason;
+
+    $this->account['name_color_start'] = $account->name_color_start;
+    $this->account['name_color_end'] = $account->name_color_end;
+
+    if ($customization) {
+      $this->account['links'] = $account->links;
+      $this->account['input_method'] = $account->input_method;
+      $this->account['about_me'] = $account->about_me;
+      $this->account['country'] = $account->country;
+    }
+  }
+  #endregion
+
+  #region Batch Fetching
   protected function get_expand_list($level, $expand_structure)
   {
     return [];
@@ -100,6 +108,29 @@ class Player extends DbObject
 
   protected function apply_expand_data($data, $level, $expand_structure)
   {
+  }
+
+  /**
+   * Batch-fetches accounts for multiple Player objects in a single query,
+   * then applies the account data to each Player's account array.
+   * Uses the reverse FK relationship (account.player_id -> player.id).
+   * @param resource $DB
+   * @param Player[] $players
+   * @param bool $customization whether to include profile customization fields (links, input_method, about_me, country)
+   */
+  static function batch_fetch_accounts($DB, array $players, bool $customization = false)
+  {
+    if (count($players) === 0)
+      return;
+
+    $grouped = DbObject::fetch_children_for_objects($DB, $players, Account::class, 'player_id');
+
+    foreach ($players as $player) {
+      $accounts = $grouped[$player->id] ?? [];
+      if (count($accounts) === 1) {
+        $player->apply_account_data($accounts[0], $customization);
+      }
+    }
   }
   #endregion
 

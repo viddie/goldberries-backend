@@ -288,13 +288,13 @@ class Suggestion extends DbObject
     DbObject::fetch_data_for_objects($DB, $suggestions, 5, true);
     self::fetch_associated_contents($DB, $suggestions);
 
-    return array(
+    return [
       'suggestions' => $suggestions,
       'max_count' => $maxCount,
       'max_page' => ceil($maxCount / $per_page),
       'page' => $page,
       'per_page' => $per_page,
-    );
+    ];
   }
 
   static function get_last_placement_suggestion($DB, $challenge_id, $placement = true)
@@ -305,10 +305,7 @@ class Suggestion extends DbObject
     }
     $query .= " ORDER BY date_created DESC LIMIT 1";
 
-    $result = pg_query($DB, $query);
-    if (!$result) {
-      die_json(500, "Failed to query database");
-    }
+    $result = pg_query_params_or_die($DB, $query);
 
     $suggestion = new Suggestion();
     if ($row = pg_fetch_assoc($result)) {
@@ -373,6 +370,17 @@ class Suggestion extends DbObject
    */
   static function fetch_associated_contents($DB, array $suggestions)
   {
+    // Step 0: Batch-fetch account data for all suggestion authors
+    $authors = [];
+    foreach ($suggestions as $suggestion) {
+      if ($suggestion->author !== null) {
+        $authors[] = $suggestion->author;
+      }
+    }
+    if (count($authors) > 0) {
+      Player::batch_fetch_accounts($DB, $authors);
+    }
+
     // Step 1: Batch-fetch submissions for all suggestion challenges
     // Multiple suggestions may reference the same challenge ID but have separate PHP objects,
     // so we track all of them and distribute results after fetching

@@ -95,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Check if like already exists
-    $existing = Like::findByChallengeAndPlayer($DB, $like->challenge_id, $like->player_id);
+    $existing = Like::find_by_challenge_and_player($DB, $like->challenge_id, $like->player_id);
     if ($existing !== false) {
       die_json(400, "You have already liked this challenge");
     }
