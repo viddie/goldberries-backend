@@ -26,9 +26,17 @@ function sel(selector) {
 }
 
 const DIFFICULTIES = {
+  26: {
+    color: "#bd60ff",
+    name: "Tier 22",
+    sort: 22,
+    old_name: "",
+    old_name_label_color: "#ffffff",
+    shares: 4,
+  },
   25: {
     color: "#d863ff",
-    name: "Tier 21+",
+    name: "Tier 21",
     sort: 21,
     old_name: "",
     old_name_label_color: "#ffffff",
@@ -246,6 +254,6 @@ function decodeBase64(base64) {
       .map(function (c) {
         return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
       })
-      .join("")
+      .join(""),
   );
 }
