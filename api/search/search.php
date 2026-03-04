@@ -34,11 +34,11 @@ if (mb_strlen($search) >= 3) {
 //query parameter 'in' is optional and is an arraya of what data to search in
 $in = $_REQUEST['in'] ?? null;
 if ($in == null) {
-  $in = array("players", "campaigns", "maps", "authors");
+  $in = ["players", "campaigns", "maps", "authors"];
 } else {
   //if 'in' is a string, convert it to an array
   if (!is_array($in)) {
-    $in = array($in);
+    $in = [$in];
   }
   if (count($in) == 0) {
     die_json(400, "Invalid 'in' parameter");
@@ -46,7 +46,7 @@ if ($in == null) {
 }
 
 
-$response = array();
+$response = [];
 $response['q'] = $unmodified_search;
 $response['in'] = $in;
 
@@ -71,34 +71,28 @@ if (in_array("authors", $in)) {
 
   $similar = $is_exact_search ? "" : " OR SIMILARITY(campaign.author_gb_name, '$unmodified_search') > 0.3";
   $query = "SELECT DISTINCT author_gb_name FROM campaign WHERE campaign.author_gb_name ILIKE '$search' $similar";
-  $result = pg_query($DB, $query);
-  if (!$result) {
-    die_json(500, "Could not query database");
-  }
-  $response['authors'] = array();
+  $result = pg_query_params_or_die($DB, $query);
+  $response['authors'] = [];
   while ($row = pg_fetch_assoc($result)) {
     $name = $row['author_gb_name'];
-    $response['authors'][$name] = array();
+    $response['authors'][$name] = [];
   }
 
   $similar = $is_exact_search ? "" : " OR SIMILARITY(map.author_gb_name, '$unmodified_search') > 0.3";
   $query = "SELECT DISTINCT author_gb_name FROM map WHERE map.author_gb_name ILIKE '$search' $similar";
-  $result = pg_query($DB, $query);
-  if (!$result) {
-    die_json(500, "Could not query database");
-  }
+  $result = pg_query_params_or_die($DB, $query);
   while ($row = pg_fetch_assoc($result)) {
     $name = $row['author_gb_name'];
     //Check for duplicates
     if (!in_array($name, $response['authors'])) {
-      $response['authors'][$name] = array();
+      $response['authors'][$name] = [];
     }
   }
 
 
   //Now, list all maps and campaigns for each author
   foreach ($response['authors'] as $name => $value) {
-    $response['authors'][$name]['name'] = $name;
+    $response['authors'][$name]['name'] = strval($name);
 
     $campaigns = Campaign::find_by_author($DB, $name);
     $response['authors'][$name]['campaigns'] = $campaigns;
