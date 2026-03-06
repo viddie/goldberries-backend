@@ -150,7 +150,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2078,
   ],
   [
-    "abbreviation" => ["sumber"],
+    "abbreviation" => ["sumber", "tsp"],
     "id" => 2513,
   ],
   [
@@ -178,15 +178,15 @@ $MAP_ABBREVIATIONS = [
     "id" => 2075,
   ],
   [
-    "abbreviation" => ["9bb"],
+    "abbreviation" => ["9bb", "efw"],
     "id" => 2095,
   ],
   [
-    "abbreviation" => ["fw^9"],
+    "abbreviation" => ["fw^9", "9^9"],
     "id" => 2101,
   ],
   [
-    "abbreviation" => ["strunter"],
+    "abbreviation" => ["strunter", "sh"],
     "id" => 2201,
   ],
   [
@@ -198,7 +198,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2040,
   ],
   [
-    "abbreviation" => ["aa"],
+    "abbreviation" => ["aa", "aaa"],
     "id" => 2056,
   ],
   [
@@ -514,7 +514,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2528,
   ],
   [
-    "abbreviation" => ["z1a"],
+    "abbreviation" => ["z1a", "mall"],
     "id" => 2632,
   ],
   [
@@ -542,7 +542,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2103,
   ],
   [
-    "abbreviation" => ["solex"],
+    "abbreviation" => ["solex", "tse"],
     "id" => 2362,
   ],
   [
@@ -894,15 +894,15 @@ $MAP_ABBREVIATIONS = [
     "id" => 631,
   ],
   [
-    "abbreviation" => ["mtb"],
+    "abbreviation" => ["mtb", "mteb"],
     "id" => 1232,
   ],
   [
-    "abbreviation" => ["mtc"],
+    "abbreviation" => ["mtc", "mtec"],
     "id" => 1230,
   ],
   [
-    "abbreviation" => ["mtd"],
+    "abbreviation" => ["mtd", "mted"],
     "id" => 2874,
   ],
   [
@@ -952,10 +952,6 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["7troll"],
     "id" => 3207,
-  ],
-  [
-    "abbreviation" => ["cts"],
-    "id" => 2998,
   ],
   [
     "abbreviation" => ["anachronism", "ancestor"],
@@ -1034,7 +1030,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 5809,
   ],
   [
-    "abbreviation" => ["ctsd"],
+    "abbreviation" => ["ctsd", "tedooettsn14ateoe"],
     "id" => 5810,
   ],
   [
@@ -1084,5 +1080,241 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["6e", "6ev2"],
     "id" => 4985,
+  ],
+  [
+    "abbreviation" => ["o9d", "9d"],
+    "id" => 6011,
+  ],
+  [
+    "abbreviation" => ["rfts"],
+    "id" => 5546,
+  ],
+  [
+    "abbreviation" => ["gddi"],
+    "id" => 4111,
+  ],
+  [
+    "abbreviation" => ["dountain"],
+    "id" => 4723,
+  ],
+  [
+    "abbreviation" => ["ctse"],
+    "id" => 6622,
+  ],
+  [
+    "abbreviation" => ["eots"],
+    "id" => 3436,
+  ],
+  [
+    "abbreviation" => ["tsaru"],
+    "id" => 3670,
+  ],
+  [
+    "abbreviation" => ["eotu"],
+    "id" => 4397,
+  ],
+  [
+    "abbreviation" => ["s2k3"],
+    "id" => 5581,
+  ],
+  [
+    "abbreviation" => ["mhs"],
+    "id" => 2150,
+  ],
+  [
+    "abbreviation" => ["frail"],
+    "id" => 6601,
+  ],
+  [
+    "abbreviation" => ["haolk"],
+    "id" => 6516,
+  ],
+  [
+    "abbreviation" => ["tgitcotlawr"],
+    "id" => 2224,
+  ], 
+  [
+    "abbreviation" => ["ttm"],
+    "id" => 2229,
+  ], 
+  [
+    "abbreviation" => ["astroline"],
+    "id" => 2055,
+  ], 
+  [
+    "abbreviation" => ["dumber"],
+    "id" => 3675,
+  ], 
+  [
+    "abbreviation" => ["mbo", "brorchestra"],
+    "id" => 6030,
+  ],
+  [
+    "abbreviation" => ["z1b3", "1b3"],
+    "id" => 4126,
+  ],
+  [
+    "abbreviation" => ["z1b4", "1b4"],
+    "id" => 6580,
+  ],
+  [
+    "abbreviation" => ["mm"],
+    "id" => 2157,
+  ],
+  [
+    "abbreviation" => ["tei"],
+    "id" => 6644,
+  ],
+  [
+    "abbreviation" => ["mg+"],
+    "id" => 1681,
+  ],
+  [
+    "abbreviation" => ["pinkle"],
+    "id" => 6003,
+  ],
+  [
+    "abbreviation" => ["gb9x", "pr13x"],
+    "id" => 4929,
+  ],
+  [
+    "abbreviation" => ["1krhd"],
+    "id" => 5117,
+  ],
+  [
+    "abbreviation" => ["1knrcb"],
+    "id" => 5073,
+  ],
+  [
+    "abbreviation" => ["dd"],
+    "id" => 5584,
+  ],
+  [
+    "abbreviation" => ["tae"],
+    "id" => 5904,
+  ],
+  [
+    "abbreviation" => ["2j"],
+    "id" => 6239,
+  ],
+  [
+    "abbreviation" => ["ff"],
+    "id" => 6566,
+  ],
+  [
+    "abbreviation" => ["grunning"],
+    "id" => 6473,
+  ],
+  [
+    "abbreviation" => ["glophen"],
+    "id" => 6132,
+  ],
+  [
+    "abbreviation" => ["aab"],
+    "id" => 6010,
+  ],
+  [
+    "abbreviation" => ["mte", "mtea"],
+    "id" => 1231,
+  ],
+  [
+    "abbreviation" => ["awwpd", "awwpdhs"],
+    "id" => 3718,
+  ],
+  [
+    "abbreviation" => ["sfm", "sfma"],
+    "id" => 6237,
+  ],
+  [
+    "abbreviation" => ["sfmb"],
+    "id" => 6238,
+  ],
+  [
+    "abbreviation" => ["mcwn"],
+    "id" => 5212,
+  ],
+  [
+    "abbreviation" => ["monderland", "miw"],
+    "id" => 6602,
+  ],
+  [
+    "abbreviation" => ["nts"],
+    "id" => 5890,
+  ],
+  [
+    "abbreviation" => ["mg"],
+    "id" => 3893,
+  ],
+  [
+    "abbreviation" => ["m!b!"],
+    "id" => 2767,
+  ],
+  [
+    "abbreviation" => ["cac"],
+    "id" => 2775,
+  ],
+  [
+    "abbreviation" => ["stafloat"],
+    "id" => 3911,
+  ],
+  [
+    "abbreviation" => ["niatnuow", "mw"],
+    "id" => 3892,
+  ],
+  [
+    "abbreviation" => ["rmd"],
+    "id" => 6643,
+  ],
+  [
+    "abbreviation" => ["ormd"],
+    "id" => 6646,
+  ],
+  [
+    "abbreviation" => ["hanitizer"],
+    "id" => 4201,
+  ],
+  [
+    "abbreviation" => ["ass"],
+    "id" => 5567,
+  ],
+  [
+    "abbreviation" => ["fnest"],
+    "id" => 5803,
+  ],
+  [
+    "abbreviation" => ["hmbl"],
+    "id" => 4587,
+  ],
+  [
+    "abbreviation" => ["ritr"],
+    "id" => 3782,
+  ],
+  [
+    "abbreviation" => ["dlmah"],
+    "id" => 5435,
+  ],
+  [
+    "abbreviation" => ["pv"],
+    "id" => 5187,
+  ],
+  [
+    "abbreviation" => ["vaviary"],
+    "id" => 3850,
+  ],
+  [
+    "abbreviation" => ["joabw", "jygonderer"],
+    "id" => 2585,
+  ],
+  [
+    "abbreviation" => ["lcg"],
+    "id" => 2596,
+  ],
+  [
+    "abbreviation" => ["stoutpost"],
+    "id" => 2613,
+  ],
+  [
+    "abbreviation" => ["itb"],
+    "id" => 4965,
   ]
 ];

@@ -140,5 +140,53 @@ $CAMPAIGN_ABBREVIATIONS = [
   [
     "abbreviation" => ["cts"],
     "id" => 1281,
+  ],
+  [
+    "abbreviation" => ["dden"],
+    "id" => 1230,
+  ],
+  [
+    "abbreviation" => ["crc"],
+    "id" => 2544,
+  ],
+  [
+    "abbreviation" => ["wc4"],
+    "id" => 1960,
+  ],
+  [
+    "abbreviation" => ["dollab"],
+    "id" => 243,
+  ],
+  [
+    "abbreviation" => ["bontest", "bc"],
+    "id" => 2315,
+  ],
+  [
+    "abbreviation" => ["pdbc24", "pdbc"],
+    "id" => 2147,
+  ],
+  [
+    "abbreviation" => ["sjs", "js"],
+    "id" => 2243,
+  ],
+  [
+    "abbreviation" => ["rjs", "js"],
+    "id" => 2133,
+  ],
+  [
+    "abbreviation" => ["sffc"],
+    "id" => 1685,
+  ],
+  [
+    "abbreviation" => ["ldss"],
+    "id" => 2270,
+  ],
+  [
+    "abbreviation" => ["zssc"],
+    "id" => 1715,
+  ],
+  [
+    "abbreviation" => ["vbc", "vbdc"],
+    "id" => 1433,
   ]
 ];
