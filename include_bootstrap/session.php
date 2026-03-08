@@ -1,9 +1,11 @@
 <?php
 
-session_start();
 
 function get_discord_url()
 {
+  if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+  }
   $state = generate_random_token(32);
   $_SESSION['state'] = $state;
   return constant('DISCORD_OAUTH_URL') . '&state=' . $state;
@@ -312,4 +314,9 @@ function reject_api_keys($account)
   if ($account->using_api_key) {
     die_json(403, "This action is not allowed when using an API key");
   }
+}
+
+function release_session_lock()
+{
+  session_write_close();
 }

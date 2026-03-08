@@ -2,6 +2,8 @@
 
 require_once('../api_bootstrap.inc.php');
 
+session_start();
+
 #region OAuth Flow
 if (isset($_REQUEST['code'])) {
   //Got code from discord oauth, now get access token

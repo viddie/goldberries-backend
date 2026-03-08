@@ -305,10 +305,6 @@ if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
       die_json(500, "Failed to delete account");
     }
     log_info("User self-deleted {$account}", "Account");
-
-    //Delete session server-side
-    $_SESSION['token'] = null;
-
     http_response_code(200);
     exit();
   }
