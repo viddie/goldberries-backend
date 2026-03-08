@@ -183,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           if (!$skip_webhook) {
             send_webhook_submission_verified($old_submission);
             webhook_check_challenge_sub_count($old_submission);
+            webhook_check_high_time_taken($old_submission);
           }
 
           // Check high tier badge if verified successfully

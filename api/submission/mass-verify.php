@@ -72,6 +72,7 @@ foreach ($submissions as $submission) {
 
     if ($is_verified) {
       webhook_check_challenge_sub_count($submission);
+      webhook_check_high_time_taken($submission);
 
       // Check high tier badge if verified successfully
       Badge::add_players_tier_badge($DB, $submission->player_id, $submission->challenge->difficulty->sort);

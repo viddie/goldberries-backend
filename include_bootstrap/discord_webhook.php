@@ -622,6 +622,27 @@ function send_simple_webhook_message($url, $message, $allowed_mentions = null)
   ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   send_webhook($url, $json_data);
 }
+
+function webhook_check_high_time_taken($submission)
+{
+  global $webhooks_enabled;
+  if (!$webhooks_enabled) {
+    return;
+  }
+  if ($submission->is_verified !== true) {
+    return;
+  }
+  if ($submission->time_taken === null || $submission->time_taken < 684000) {
+    return;
+  }
+
+  $webhook_url = constant('MOD_REPORT_WEBHOOK_URL');
+  $submission_url = $submission->get_url();
+  $discord_user_id = "281988032247234561";
+  $message = "<@{$discord_user_id}> New submission with high time taken was verified: <{$submission_url}>";
+  $allowed_mentions = ["users" => [$discord_user_id]];
+  send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+}
 function send_webhook($url, $data)
 {
   if ($url === false) { //env variable for webhook url is not set
