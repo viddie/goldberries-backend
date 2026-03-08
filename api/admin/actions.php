@@ -20,6 +20,7 @@ $actions = [
   'clean_traffic' => ['fn' => 'action_clean_traffic', 'min_role' => $ADMIN],
   'reject_challenge' => ['fn' => 'action_reject_challenge', 'min_role' => $HELPER],
   'swap_lobbies' => ['fn' => 'action_swap_lobbies', 'min_role' => $HELPER],
+  'merge_players' => ['fn' => 'action_merge_players', 'min_role' => $VERIFIER],
 ];
 #endregion
 
@@ -206,6 +207,77 @@ function action_swap_lobbies($DB)
       'count_a_to_b' => $count_a_to_b,
       'count_b_to_a' => $count_b_to_a,
       'campaign' => $campaign,
+    ],
+  ];
+}
+
+function action_merge_players($DB)
+{
+  if (!isset($_REQUEST['base_player_id'])) {
+    die_json(400, "Missing 'base_player_id' parameter");
+  }
+  if (!isset($_REQUEST['merge_player_id'])) {
+    die_json(400, "Missing 'merge_player_id' parameter");
+  }
+
+  $base_player_id = intval($_REQUEST['base_player_id']);
+  $merge_player_id = intval($_REQUEST['merge_player_id']);
+
+  if ($base_player_id <= 0) {
+    die_json(400, "Invalid 'base_player_id' parameter");
+  }
+  if ($merge_player_id <= 0) {
+    die_json(400, "Invalid 'merge_player_id' parameter");
+  }
+  if ($base_player_id === $merge_player_id) {
+    die_json(400, "base_player_id and merge_player_id must be different");
+  }
+
+  $base_player = Player::get_by_id($DB, $base_player_id, 1);
+  if ($base_player === false) {
+    die_json(404, "Base player with id {$base_player_id} not found");
+  }
+
+  $merge_player = Player::get_by_id($DB, $merge_player_id, 1);
+  if ($merge_player === false) {
+    die_json(404, "Merge player with id {$merge_player_id} not found");
+  }
+
+  // Move all submissions from merge player to base player
+  $result = pg_query_params_or_die(
+    $DB,
+    "UPDATE submission SET player_id = \$1 WHERE player_id = \$2",
+    [$base_player_id, $merge_player_id],
+    "Failed to move submissions from merge player to base player"
+  );
+  $moved_count = pg_affected_rows($result);
+
+  // Verify the merge player has no remaining submissions
+  $check = pg_query_params_or_die(
+    $DB,
+    "SELECT COUNT(*) AS cnt FROM submission WHERE player_id = \$1",
+    [$merge_player_id],
+    "Failed to verify merge player has no remaining submissions"
+  );
+  $remaining = intval(pg_fetch_assoc($check)['cnt']);
+  if ($remaining !== 0) {
+    die_json(500, "Merge failed: merge player still has {$remaining} submission(s) after transfer");
+  }
+
+  // Delete the merge player
+  if (!$merge_player->delete($DB)) {
+    die_json(500, "Failed to delete merge player (id: {$merge_player_id})");
+  }
+
+  log_info("Merged player '{$merge_player->name}' (id:{$merge_player_id}) into '{$base_player->name}' (id:{$base_player_id}), moved {$moved_count} submission(s)", "Player");
+
+  return [
+    'message' => "Merged player '{$merge_player->name}' into '{$base_player->name}', moved {$moved_count} submission(s)",
+    'data' => [
+      'deleted_merge_player_id' => $merge_player_id,
+      'deleted_merge_player_name' => $merge_player->name,
+      'submissions_moved' => $moved_count,
+      'base_player' => $base_player,
     ],
   ];
 }
