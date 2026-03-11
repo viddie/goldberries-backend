@@ -5,3 +5,6 @@ embed/img/submission/*
 !unknown.webp
 /embed/img/campaign-collage
 .github/copilot-instructions.md
+temp/*
+cache/*
+assets/bin_structure.json
