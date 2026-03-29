@@ -163,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $old_submission->time_taken = $submission->time_taken;
 
       // $old_submission->date_created = $submission->date_created; //Verifiers no longer need to be able to change this
+      check_date_achieved($submission->date_achieved);
       $old_submission->date_achieved = $submission->date_achieved;
       $old_submission->new_challenge_id = $submission->is_verified === true ? null : $submission->new_challenge_id;
 
@@ -331,6 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
 
+    check_date_achieved($new_submission->date_achieved);
     $new_submission->date_created = new JsonDateTime();
     if ($new_submission->date_achieved === null) {
       $new_submission->date_achieved = $submission->date_created;

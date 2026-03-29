@@ -75,6 +75,23 @@ function check_id($id)
   return $id;
 }
 
+function check_date_achieved(?JsonDateTime $date)
+{
+  if ($date === null)
+    return;
+
+  $year = intval($date->format('Y'));
+  // Celeste released January 25, 2018
+  if ($year < 2018) {
+    die_json(400, "Date achieved can't be before 2018");
+  }
+  $now = new DateTime('now');
+  $now->modify('+1 day');
+  if ($date > $now) {
+    die_json(400, "Date achieved can't be in the future");
+  }
+}
+
 ////// UNIFIED GET FUNCTION
 
 function api_unified_output($DB, string $table_noesc, $object_skel)
