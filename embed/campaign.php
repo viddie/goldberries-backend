@@ -42,13 +42,13 @@ if ($count_maps > 1 && $count_maps <= 5) {
   foreach ($campaign->maps as $map) {
     $map->expand_foreign_keys($DB, 5);
     $map_str = $map->get_name(true);
-    $hardest_challenge = null;
+    $easiest_challenge = null;
     foreach ($map->challenges as $challenge) {
-      if ($hardest_challenge === null || $challenge->difficulty->sort > $hardest_challenge->difficulty->sort) {
-        $hardest_challenge = $challenge;
+      if ($easiest_challenge === null || ($challenge->difficulty->sort < $easiest_challenge->difficulty->sort && !$challenge->is_challenge_arbitrary())) {
+        $easiest_challenge = $challenge;
       }
     }
-    $tier_name = $hardest_challenge->difficulty->to_tier_name();
+    $tier_name = $easiest_challenge->difficulty->to_tier_name();
     $description_str .= "  - {$map_str} ({$tier_name})\n";
   }
   //Remove last newline

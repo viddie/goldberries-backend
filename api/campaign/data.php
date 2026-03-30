@@ -8,16 +8,13 @@ if ($id === null || !is_numeric($id)) {
   die_json(400, "Missing or invalid 'id' parameter");
 }
 $id = intval($id);
-
-$is_mapping = isset($_REQUEST['mapping']) && $_REQUEST['mapping'] === 'true';
-$filename = $is_mapping ? 'mapping.json' : 'index.json';
 #endregion
 
 #region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-  $json_path = GB_ROOT_LOCAL . "/cache/campaign_data/{$id}/{$filename}";
+  $json_path = GB_ROOT_LOCAL . "/cache/campaign_data/{$id}/index.json";
   if (!file_exists($json_path)) {
-    die_json(404, $is_mapping ? "Mapping data not found" : "Campaign data not found");
+    die_json(404, "Campaign data not found");
   }
 
   $data = file_get_contents($json_path);
@@ -57,10 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     die_json(400, "Invalid JSON in request body");
   }
 
-  $dest = "{$cache_dir}/{$filename}";
+  $dest = "{$cache_dir}/index.json";
   file_put_contents($dest, $body);
 
-  api_write(['success' => true, 'campaign_id' => $id, 'file' => $filename]);
+  api_write(['success' => true, 'campaign_id' => $id, 'file' => 'index.json']);
 }
 #endregion
 

@@ -1,6 +1,7 @@
 <?php
 
 require_once('../api_bootstrap.inc.php');
+require_once(GB_ROOT_LOCAL . '/api/admin/process_functions.inc.php');
 
 #region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -102,6 +103,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($campaign->insert($DB)) {
       $campaign->generate_create_changelog($DB);
       log_info("'{$account->player->name}' created {$campaign}", "Campaign");
+
+      // If a GameBanana URL was provided, check for temp-processed data and copy it over
+      $mod_id = $campaign->get_gamebanana_mod_id();
+      if ($mod_id !== null) {
+        $temp_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$mod_id}";
+        if (is_dir($temp_cache_dir)) {
+          $campaign_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data/{$campaign->id}";
+          copy_directory_recursive($temp_cache_dir, $campaign_cache_dir);
+          log_info("Copied temp GB data for mod {$mod_id} to campaign {$campaign->id}", "Campaign");
+        }
+      }
+
       api_write($campaign);
     } else {
       die_json(500, "Failed to create campaign");
