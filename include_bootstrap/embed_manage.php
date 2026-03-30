@@ -66,11 +66,27 @@ function campaign_collage_embed_change($campaign_id)
 {
   log_debug("Deleted collage image for campaign id $campaign_id", "Campaign");
   $folder = dirname(__FILE__) . '/../embed/img/campaign-collage';
-  $file = $folder . "/" . $campaign_id . ".webp";
-  if (file_exists($file)) {
-    unlink($file);
-    return true;
+
+  // The collage images are in the format {campaign_id}_{scale}.webp, so we need to delete all files that match {campaign_id}_*.webp
+  $pattern = "/^" . $campaign_id . "_[0-9]+\.webp$/";
+  $arr = scandir($folder);
+  if ($arr === false) {
+    log_error("Failed to list files in $folder", "Embed");
+    return false;
   }
-  return false;
+
+  $found = false;
+  $files = array_diff($arr, ['.', '..']);
+  foreach ($files as $file) {
+    if (preg_match($pattern, $file)) {
+      unlink($folder . "/" . $file);
+      $found = true;
+    }
+  }
+
+  if ($found) {
+    log_info("Deleted collage image for campaign id $campaign_id", "Campaign");
+  }
+  return $found;
 }
 
