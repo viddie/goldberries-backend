@@ -182,7 +182,17 @@ function fetch_data($url)
   curl_setopt($ch, CURLOPT_URL, $url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
   curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+  curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+  curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36');
+
+  curl_setopt($ch, CURLOPT_HTTPHEADER, ['Expect:']);
+  curl_setopt($ch, CURLOPT_FORBID_REUSE, true);
+
   $data = curl_exec($ch);
+  if ($data === false) {
+    log_error("cURL error for {$url}: " . curl_error($ch), "fetch_data");
+  }
   curl_close($ch);
   return $data;
 }

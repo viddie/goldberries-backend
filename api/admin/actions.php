@@ -23,7 +23,6 @@ $actions = [
   'swap_lobbies' => ['fn' => 'action_swap_lobbies', 'min_role' => $HELPER],
   'merge_players' => ['fn' => 'action_merge_players', 'min_role' => $VERIFIER],
   'clean_campaign_data_errors' => ['fn' => 'action_clean_campaign_data_errors', 'min_role' => $ADMIN],
-  'process_campaigns' => ['fn' => 'action_process_campaigns', 'min_role' => $ADMIN],
 ];
 #endregion
 
@@ -342,72 +341,4 @@ function action_clean_campaign_data_errors($DB)
   ];
 }
 
-function action_process_campaigns($DB)
-{
-  $start_time = time();
-  $time_limit = 60 * 3; // in seconds
-
-  // Fetch all campaigns ordered by ID
-  $result = pg_query_params_or_die($DB, "SELECT id, name FROM campaign ORDER BY id ASC", [], "Failed to fetch campaigns");
-  $campaigns = [];
-  while ($row = pg_fetch_assoc($result)) {
-    $campaigns[] = $row;
-  }
-  $total_campaigns = count($campaigns);
-
-  $cache_base = GB_ROOT_LOCAL . '/cache/campaign_data';
-  $processed = [];
-
-  foreach ($campaigns as $campaign) {
-    $id = intval($campaign['id']);
-    $name = $campaign['name'];
-    $dir_path = "{$cache_base}/{$id}";
-
-    // Skip campaigns that already have a cache folder
-    if (is_dir($dir_path)) {
-      continue;
-    }
-
-    // Process this campaign
-    $camp_result = process_campaign($DB, $id);
-    $processed[] = [
-      'id' => $id,
-      'name' => $name,
-      'success' => $camp_result['success'],
-    ];
-
-    // Check time limit after each processing
-    if (time() - $start_time >= $time_limit) {
-      break;
-    }
-  }
-
-  // Count remaining unprocessed campaigns
-  $remaining = 0;
-  foreach ($campaigns as $campaign) {
-    $id = intval($campaign['id']);
-    if (!is_dir("{$cache_base}/{$id}")) {
-      $remaining++;
-    }
-  }
-
-  $processed_count = count($processed);
-  $elapsed = time() - $start_time;
-  $min_id = $processed_count > 0 ? $processed[0]['id'] : null;
-  $max_id = $processed_count > 0 ? $processed[$processed_count - 1]['id'] : null;
-  $campaign_names = array_map(fn($p) => $p['name'], $processed);
-
-  return [
-    'message' => "Processed {$processed_count} campaign(s) in {$elapsed}s",
-    'data' => [
-      'processed_count' => $processed_count,
-      'min_id' => $min_id,
-      'max_id' => $max_id,
-      'total_campaigns' => $total_campaigns,
-      'remaining' => $remaining,
-      'elapsed_seconds' => $elapsed,
-      'processed_campaign_names' => $campaign_names,
-    ],
-  ];
-}
 #endregion

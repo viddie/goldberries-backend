@@ -375,9 +375,17 @@ function download_large_file($url, $dest)
   curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
   curl_setopt($ch, CURLOPT_TIMEOUT, 600);
   curl_setopt($ch, CURLOPT_FAILONERROR, true);
+  curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+  curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36');
+
+  curl_setopt($ch, CURLOPT_HTTPHEADER, ['Expect:']);
+  curl_setopt($ch, CURLOPT_FORBID_REUSE, true);
 
   $success = curl_exec($ch);
   $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  if (!$success) {
+    log_error("download_large_file failed for {$url}: " . curl_error($ch) . " (HTTP {$http_code})", "download");
+  }
   curl_close($ch);
   fclose($fp);
 
@@ -515,10 +523,8 @@ function parse_english_txt($content)
  */
 function path_to_dialog_key($relative_path)
 {
-  // Remove .bin extension
   $key = preg_replace('/\.bin$/i', '', $relative_path);
-  // Replace / and - with _
-  $key = str_replace(['/', '-'], '_', $key);
+  $key = str_replace(['/', '-', ' '], '_', $key);
   return strtolower($key);
 }
 
@@ -537,6 +543,8 @@ function post_bin_to_json($bin_data)
   curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/octet-stream']);
   curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
   curl_setopt($ch, CURLOPT_TIMEOUT, 120);
+  curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+  curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36');
 
   $response = curl_exec($ch);
   $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -713,7 +721,10 @@ function process_campaign($DB, $id, $regenerate = false)
     }
 
     // Second pass: match by name for maps not yet matched via mapping.json
-    foreach ($campaign->maps as $map) {
+    // Sort so non-archived maps are matched first (preferred over archived duplicates)
+    $maps_sorted = $campaign->maps;
+    usort($maps_sorted, fn($a, $b) => $a->is_archived <=> $b->is_archived);
+    foreach ($maps_sorted as $map) {
       if (isset($used_map_ids[$map->id])) {
         continue;
       }
@@ -722,6 +733,7 @@ function process_campaign($DB, $id, $regenerate = false)
         $idx = $name_to_index[$map_name_lower];
         $matched_bins[$idx] = $map->id;
         $map_bins[$idx]['map_id'] = $map->id;
+        $used_map_ids[$map->id] = true;
       } else {
         $unmatched_maps[] = ['id' => $map->id, 'name' => $map->name];
       }
