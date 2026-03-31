@@ -274,6 +274,9 @@ class Submission extends DbObject
   static function get_recent_submissions($DB, $verified, $page, $per_page, $player = null)
   {
     $where = [];
+    $params = [];
+    $param_index = 1;
+
     if ($verified === null) {
       $where[] = "is_verified IS NULL";
     } else if ($verified === true) {
@@ -282,7 +285,9 @@ class Submission extends DbObject
       $where[] = "is_verified = false";
     }
     if ($player !== null) {
-      $where[] = "player_id = " . $player;
+      $where[] = "player_id = \${$param_index}";
+      $params[] = intval($player);
+      $param_index++;
     }
 
     $where_str = implode(" AND ", $where);
@@ -299,21 +304,33 @@ class Submission extends DbObject
     $order_by = "$order_by DESC";
 
     $count_query = "SELECT count(*) as total_count FROM submission WHERE $where_str";
-    $count_result = pg_query_params_or_die($DB, $count_query);
+    $count_result = pg_query_params_or_die($DB, $count_query, $params);
     $assoc = pg_fetch_assoc($count_result);
     $total_count = intval($assoc['total_count']);
 
-    $id_query = "SELECT id FROM submission WHERE $where_str ORDER BY $order_by LIMIT $per_page OFFSET " . ($page - 1) * $per_page;
-    $id_result = pg_query_params_or_die($DB, $id_query);
+    $limit_param = "\${$param_index}";
+    $param_index++;
+    $offset_param = "\${$param_index}";
+    $param_index++;
+    $id_query = "SELECT id FROM submission WHERE $where_str ORDER BY $order_by LIMIT $limit_param OFFSET $offset_param";
+    $id_params = array_merge($params, [intval($per_page), (intval($page) - 1) * intval($per_page)]);
+    $id_result = pg_query_params_or_die($DB, $id_query, $id_params);
     $ids = [];
     while ($row = pg_fetch_assoc($id_result)) {
-      $ids[] = $row['id'];
+      $ids[] = intval($row['id']);
     }
 
     $submissions = [];
     if (count($ids) !== 0) {
-      $query = "SELECT * FROM view_submissions WHERE submission_id IN (" . implode(",", $ids) . ") ORDER BY submission_$order_by, submission_date_created DESC";
-      $result = pg_query_params_or_die($DB, $query);
+      $placeholders = [];
+      $view_params = [];
+      for ($i = 0; $i < count($ids); $i++) {
+        $placeholders[] = '$' . ($i + 1);
+        $view_params[] = $ids[$i];
+      }
+      $in_clause = implode(',', $placeholders);
+      $query = "SELECT * FROM view_submissions WHERE submission_id IN ($in_clause) ORDER BY submission_$order_by, submission_date_created DESC";
+      $result = pg_query_params_or_die($DB, $query, $view_params);
       while ($row = pg_fetch_assoc($result)) {
         $submission = new Submission();
         $submission->apply_db_data($row, "submission_");

@@ -1,6 +1,7 @@
 <?php
 
 require_once('../api_bootstrap.inc.php');
+require_once(__DIR__ . '/process_functions.inc.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
@@ -21,6 +22,8 @@ $actions = [
   'reject_challenge' => ['fn' => 'action_reject_challenge', 'min_role' => $HELPER],
   'swap_lobbies' => ['fn' => 'action_swap_lobbies', 'min_role' => $HELPER],
   'merge_players' => ['fn' => 'action_merge_players', 'min_role' => $VERIFIER],
+  'clean_campaign_data_errors' => ['fn' => 'action_clean_campaign_data_errors', 'min_role' => $ADMIN],
+  'process_campaigns' => ['fn' => 'action_process_campaigns', 'min_role' => $ADMIN],
 ];
 #endregion
 
@@ -278,6 +281,132 @@ function action_merge_players($DB)
       'deleted_merge_player_name' => $merge_player->name,
       'submissions_moved' => $moved_count,
       'base_player' => $base_player,
+    ],
+  ];
+}
+
+function action_clean_campaign_data_errors($DB)
+{
+  $cache_base = GB_ROOT_LOCAL . '/cache/campaign_data';
+  $deleted_ids = [];
+
+  if (is_dir($cache_base)) {
+    $dirs = scandir($cache_base);
+    foreach ($dirs as $entry) {
+      if ($entry === '.' || $entry === '..')
+        continue;
+      $dir_path = "{$cache_base}/{$entry}";
+      if (!is_dir($dir_path))
+        continue;
+
+      $index_path = "{$dir_path}/index.json";
+      $should_delete = false;
+
+      if (!file_exists($index_path)) {
+        $should_delete = true;
+      } else {
+        $content = file_get_contents($index_path);
+        if ($content === false) {
+          $should_delete = true;
+        } else {
+          $index = json_decode($content, true);
+          if ($index === null || ($index['status'] ?? null) === 'error') {
+            $should_delete = true;
+          }
+        }
+      }
+
+      if ($should_delete) {
+        delete_directory_recursive($dir_path);
+        $deleted_ids[] = $entry;
+      }
+    }
+  }
+
+  // Delete the entire campaign_data_temp folder
+  $temp_dir = GB_ROOT_LOCAL . '/cache/campaign_data_temp';
+  $temp_deleted = false;
+  if (is_dir($temp_dir)) {
+    delete_directory_recursive($temp_dir);
+    $temp_deleted = true;
+  }
+
+  $count = count($deleted_ids);
+  return [
+    'message' => "Deleted {$count} error campaign data folder(s), temp folder " . ($temp_deleted ? 'deleted' : 'not present'),
+    'data' => [
+      'deleted_count' => $count,
+      'deleted_ids' => $deleted_ids,
+      'temp_deleted' => $temp_deleted,
+    ],
+  ];
+}
+
+function action_process_campaigns($DB)
+{
+  $start_time = time();
+  $time_limit = 60 * 3; // in seconds
+
+  // Fetch all campaigns ordered by ID
+  $result = pg_query_params_or_die($DB, "SELECT id, name FROM campaign ORDER BY id ASC", [], "Failed to fetch campaigns");
+  $campaigns = [];
+  while ($row = pg_fetch_assoc($result)) {
+    $campaigns[] = $row;
+  }
+  $total_campaigns = count($campaigns);
+
+  $cache_base = GB_ROOT_LOCAL . '/cache/campaign_data';
+  $processed = [];
+
+  foreach ($campaigns as $campaign) {
+    $id = intval($campaign['id']);
+    $name = $campaign['name'];
+    $dir_path = "{$cache_base}/{$id}";
+
+    // Skip campaigns that already have a cache folder
+    if (is_dir($dir_path)) {
+      continue;
+    }
+
+    // Process this campaign
+    $camp_result = process_campaign($DB, $id);
+    $processed[] = [
+      'id' => $id,
+      'name' => $name,
+      'success' => $camp_result['success'],
+    ];
+
+    // Check time limit after each processing
+    if (time() - $start_time >= $time_limit) {
+      break;
+    }
+  }
+
+  // Count remaining unprocessed campaigns
+  $remaining = 0;
+  foreach ($campaigns as $campaign) {
+    $id = intval($campaign['id']);
+    if (!is_dir("{$cache_base}/{$id}")) {
+      $remaining++;
+    }
+  }
+
+  $processed_count = count($processed);
+  $elapsed = time() - $start_time;
+  $min_id = $processed_count > 0 ? $processed[0]['id'] : null;
+  $max_id = $processed_count > 0 ? $processed[$processed_count - 1]['id'] : null;
+  $campaign_names = array_map(fn($p) => $p['name'], $processed);
+
+  return [
+    'message' => "Processed {$processed_count} campaign(s) in {$elapsed}s",
+    'data' => [
+      'processed_count' => $processed_count,
+      'min_id' => $min_id,
+      'max_id' => $max_id,
+      'total_campaigns' => $total_campaigns,
+      'remaining' => $remaining,
+      'elapsed_seconds' => $elapsed,
+      'processed_campaign_names' => $campaign_names,
     ],
   ];
 }

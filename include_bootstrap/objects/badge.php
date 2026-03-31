@@ -119,7 +119,9 @@ class Badge extends DbObject
   static function add_players_tier_badge($DB, $player_id, $sort, $silent = false)
   {
     if ($sort < 1 || $sort > count(self::$TIER_BADGES)) {
-      log_error("Invalid tier sort value: $sort", "Submission");
+      if ($sort > 1) {
+        log_error("Invalid tier sort value: $sort", "Submission");
+      }
       return false;
     }
 

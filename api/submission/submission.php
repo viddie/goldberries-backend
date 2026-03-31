@@ -268,8 +268,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     //new challenge stuff
     if (isset($data['new_challenge'])) {
+      $nc_data = $data['new_challenge'];
+      if (!isset($nc_data['url']) || !is_string($nc_data['url'])) {
+        die_json(400, "New challenge url is required");
+      }
+      check_url($nc_data['url'], 'new_challenge url');
+      if (isset($nc_data['description']) && is_string($nc_data['description']) && strlen($nc_data['description']) > 5000) {
+        die_json(400, "New challenge description can't be longer than 5000 characters");
+      }
+      if (isset($nc_data['name']) && is_string($nc_data['name']) && strlen($nc_data['name']) > 500) {
+        die_json(400, "New challenge name can't be longer than 500 characters");
+      }
+      if (isset($nc_data['golden_changes']) && is_string($nc_data['golden_changes']) && strlen($nc_data['golden_changes']) > 5000) {
+        die_json(400, "New challenge golden_changes can't be longer than 5000 characters");
+      }
+
       $new_challenge = new NewChallenge();
-      $new_challenge->apply_db_data($data['new_challenge']);
+      $new_challenge->apply_db_data($nc_data);
       if (!$new_challenge->insert($DB)) {
         die_json(400, "New Challenge could not be inserted");
       }
@@ -335,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     check_date_achieved($new_submission->date_achieved);
     $new_submission->date_created = new JsonDateTime();
     if ($new_submission->date_achieved === null) {
-      $new_submission->date_achieved = $submission->date_created;
+      $new_submission->date_achieved = $new_submission->date_created;
     }
     if ($new_submission->insert($DB) && $like_challenge) {
       Like::like_challenge($DB, $new_submission->challenge_id, $account->player_id);
