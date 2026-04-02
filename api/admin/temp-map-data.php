@@ -1,6 +1,7 @@
 <?php
 
 require_once('../api_bootstrap.inc.php');
+require_once(__DIR__ . '/process_functions.inc.php');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Method Not Allowed');
@@ -9,11 +10,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $account = get_user_data();
 check_role($account, $HELPER);
 
-$gamebanana_id = $_REQUEST['gamebanana_id'] ?? null;
-if ($gamebanana_id === null || !is_numeric($gamebanana_id)) {
-  die_json(400, "Missing or invalid 'gamebanana_id' parameter");
+$gamebanana_url = $_REQUEST['gamebanana_url'] ?? null;
+$gb_info = parse_gamebanana_url($gamebanana_url);
+if ($gb_info === null) {
+  die_json(400, "Missing or invalid 'gamebanana_url' parameter. Expected format: https://gamebanana.com/mods/<id> or https://gamebanana.com/wips/<id>");
 }
-$gamebanana_id = intval($gamebanana_id);
+
+$dir_key = gamebanana_dir_key($gb_info['category'], $gb_info['id']);
 
 $hash = $_REQUEST['hash'] ?? null;
 if ($hash === null || !preg_match('/^[a-f0-9]+$/i', $hash)) {
@@ -22,7 +25,7 @@ if ($hash === null || !preg_match('/^[a-f0-9]+$/i', $hash)) {
 
 $check_exists = ($_REQUEST['check_exists'] ?? 'false') === 'true';
 
-$json_path = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$gamebanana_id}/{$hash}.json";
+$json_path = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$dir_key}/{$hash}.json";
 if (!file_exists($json_path)) {
   die_json(404, "Temporary map data not found");
 }

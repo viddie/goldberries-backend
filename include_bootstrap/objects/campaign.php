@@ -252,14 +252,10 @@ class Campaign extends DbObject
     return $campaigns;
   }
 
-  static function get_by_gamebanana_id($DB, int $gamebanana_id)
+  static function get_by_gamebanana_id($DB, int $gamebanana_id, $category = 'mods')
   {
-    $url = "https://gamebanana.com/mods/$gamebanana_id";
-    $query = "SELECT * FROM campaign WHERE url LIKE '$url' ORDER BY name";
-    $result = pg_query($DB, $query);
-    if (!$result) {
-      die_json(500, "Could not query database");
-    }
+    $url = "https://gamebanana.com/{$category}/{$gamebanana_id}";
+    $result = pg_query_params_or_die($DB, "SELECT * FROM campaign WHERE url LIKE $1 ORDER BY name", [$url], "Failed to query campaign by gamebanana ID");
 
     if (pg_num_rows($result) === 0)
       return false;
@@ -297,14 +293,25 @@ class Campaign extends DbObject
     return true;
   }
 
-  function get_gamebanana_mod_id()
+  function get_gamebanana_info()
   {
-    //If url is not in the form of https://gamebanana.com/mods/123456, return null
-    if (!preg_match('/\/mods\/(\d+)/', $this->url, $matches))
+    if (!preg_match('#/(mods|wips)/(\d+)#', $this->url, $matches))
       return null;
 
-    preg_match('/\/mods\/(\d+)/', $this->url, $matches);
-    return $matches[1];
+    $category = $matches[1];
+    $item_type_map = ['mods' => 'Mod', 'wips' => 'Wip'];
+
+    return [
+      'category' => $category,
+      'item_type' => $item_type_map[$category],
+      'id' => intval($matches[2]),
+    ];
+  }
+
+  function get_gamebanana_mod_id()
+  {
+    $info = $this->get_gamebanana_info();
+    return $info !== null ? $info['id'] : null;
   }
 
   function get_url()

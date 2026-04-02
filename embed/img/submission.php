@@ -35,15 +35,17 @@ if ($map) {
 }
 $campaign = $challenge->get_campaign();
 
-//Url is in form of https://gamebanana.com/mods/123456
-$modId = $campaign->get_gamebanana_mod_id();
+//Url is in form of https://gamebanana.com/mods/123456 or https://gamebanana.com/wips/123456
+$gbInfo = $campaign->get_gamebanana_info();
 
 //Check if the modId is found as jpeg from the cache folder
-if ($modId !== null) {
-  $cacheFile = $cache_folder . "/" . $modId . ".jpg";
+if ($gbInfo !== null) {
+  $modId = $gbInfo['id'];
+  $gbCategory = $gbInfo['category'];
+  $cacheFile = $cache_folder . "/" . $gbCategory . "_" . $modId . ".jpg";
   if (!file_exists($cacheFile)) {
     //If not found, download the image from the internet
-    $img = imagecreatefromjpeg("https://gamebanana.com/mods/embeddables/" . $modId . "?type=sd_image");
+    $img = imagecreatefromjpeg("https://gamebanana.com/{$gbCategory}/embeddables/" . $modId . "?type=sd_image");
     //Crop the top 20 pixels
     $cropTop = 62;
     $img = imagecrop($img, ['x' => 0, 'y' => $cropTop, 'width' => imagesx($img), 'height' => imagesy($img) - $cropTop]);

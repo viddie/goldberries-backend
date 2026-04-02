@@ -18,19 +18,22 @@ if (!$campaign) {
   die();
 }
 
-//Url is in form of https://gamebanana.com/mods/123456
-$modId = $campaign->get_gamebanana_mod_id();
+//Url is in form of https://gamebanana.com/mods/123456 or https://gamebanana.com/wips/123456
+$gbInfo = $campaign->get_gamebanana_info();
 
-if ($modId === null) {
+if ($gbInfo === null) {
   http_response_code(404);
   die();
 }
 
+$modId = $gbInfo['id'];
+$gbCategory = $gbInfo['category'];
+
 //Check if the modId is found as jpg from the cache folder
-$cacheFile = $cache_folder . "/" . $modId . ".jpg";
+$cacheFile = $cache_folder . "/" . $gbCategory . "_" . $modId . ".jpg";
 if (!file_exists($cacheFile)) {
   //If not found, download the image from the internet
-  $img = imagecreatefromjpeg("https://gamebanana.com/mods/embeddables/" . $modId . "?type=sd_image");
+  $img = imagecreatefromjpeg("https://gamebanana.com/{$gbCategory}/embeddables/" . $modId . "?type=sd_image");
   //Crop the top 20 pixels
   $cropTop = 62;
   $img = imagecrop($img, ['x' => 0, 'y' => $cropTop, 'width' => imagesx($img), 'height' => imagesy($img) - $cropTop]);

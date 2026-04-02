@@ -5,18 +5,58 @@
  * Used by both process-campaign.php and process-gamebanana.php.
  */
 
+#region Parse GameBanana URL
+/**
+ * Parses a full GameBanana URL into its components.
+ * Supports both mods and wips categories.
+ *
+ * @param string $url Full GameBanana URL (e.g. https://gamebanana.com/mods/12345 or https://gamebanana.com/wips/83276)
+ * @return array{category: string, item_type: string, id: int}|null Parsed components, or null if invalid
+ */
+function parse_gamebanana_url($url)
+{
+  if (!is_string($url))
+    return null;
+  if (!preg_match('#^https://gamebanana\.com/(mods|wips)/(\d+)#', $url, $matches))
+    return null;
+
+  $category = $matches[1];
+  $item_type_map = ['mods' => 'Mod', 'wips' => 'Wip'];
+
+  return [
+    'category' => $category,
+    'item_type' => $item_type_map[$category],
+    'id' => intval($matches[2]),
+  ];
+}
+
+/**
+ * Builds the directory key for a GameBanana item (used in temp/cache directory paths).
+ * Format: "{category}_{id}" to avoid ID collisions between mods and wips.
+ *
+ * @param string $category 'mods' or 'wips'
+ * @param int $id GameBanana item ID
+ * @return string Directory key (e.g. "mods_12345", "wips_83276")
+ */
+function gamebanana_dir_key($category, $id)
+{
+  return "{$category}_{$id}";
+}
+#endregion
+
 #region Download and Scan Mod
 /**
  * Downloads mod files from GameBanana and scans them for .bin map files and English.txt.
  * This is the shared pipeline used by both campaign processing and standalone GameBanana processing.
  *
- * @param int $mod_id GameBanana mod ID
+ * @param int $mod_id GameBanana item ID
+ * @param string $item_type GameBanana API item type ('Mod' or 'Wip')
  * @param string $temp_dir Directory to cache downloaded ZIP files
  * @param string $cache_dir Directory for error index output
  * @param bool $regenerate If true, forces re-download of ZIP files
  * @return array{success: bool, error?: string, gb_files?: array, bin_files?: array, map_bins?: array, dialog_map?: array, english_txt_found?: bool}
  */
-function download_and_scan_mod($mod_id, $temp_dir, $cache_dir, $regenerate = false)
+function download_and_scan_mod($mod_id, $item_type, $temp_dir, $cache_dir, $regenerate = false)
 {
   // If regenerate is requested, wipe the temp dir (downloaded ZIPs) to force re-download
   if ($regenerate && is_dir($temp_dir))
@@ -25,7 +65,7 @@ function download_and_scan_mod($mod_id, $temp_dir, $cache_dir, $regenerate = fal
     mkdir($temp_dir, 0755, true);
 
   // Fetch file list from GameBanana API
-  $api_url = "https://gamebanana.com/apiv11/Mod/{$mod_id}?_csvProperties=_aFiles";
+  $api_url = "https://gamebanana.com/apiv11/{$item_type}/{$mod_id}?_csvProperties=_aFiles";
   $api_response = fetch_data($api_url);
   if ($api_response === false || $api_response === '') {
     delete_directory_recursive($temp_dir);
@@ -620,13 +660,13 @@ function get_directory_size($dir)
 }
 
 /**
- * Deletes temporary cached data for a GameBanana mod ID.
- * @param int $mod_id GameBanana mod ID
+ * Deletes temporary cached data for a GameBanana item.
+ * @param string $dir_key Directory key from gamebanana_dir_key()
  * @return void
  */
-function delete_temp_cache($mod_id)
+function delete_temp_cache($dir_key)
 {
-  $temp_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$mod_id}";
+  $temp_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$dir_key}";
   if (is_dir($temp_cache_dir)) {
     delete_directory_recursive($temp_cache_dir);
   }
@@ -653,19 +693,23 @@ function process_campaign($DB, $id, $regenerate = false)
     return ['id' => $id, 'success' => false, 'error' => "Campaign not found"];
   }
 
-  $mod_id = $campaign->get_gamebanana_mod_id();
+  $gb_info = $campaign->get_gamebanana_info();
   $cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data/{$id}";
-  if ($mod_id === null) {
+  if ($gb_info === null) {
     $error = "No valid GameBanana URL";
     write_error_index($cache_dir, $error);
     return ['id' => $id, 'success' => false, 'error' => $error];
   }
 
-  // Temp dir uses GameBanana mod ID so it's shared with process-gamebanana.php
-  $temp_dir = GB_ROOT_LOCAL . "/temp/campaign_data/{$mod_id}";
+  $mod_id = $gb_info['id'];
+  $item_type = $gb_info['item_type'];
+  $dir_key = gamebanana_dir_key($gb_info['category'], $mod_id);
+
+  // Temp dir uses GameBanana dir key so it's shared with process-gb-campaign.php
+  $temp_dir = GB_ROOT_LOCAL . "/temp/campaign_data/{$dir_key}";
 
   // Download and scan mod files (shared pipeline)
-  $scan = download_and_scan_mod($mod_id, $temp_dir, $cache_dir, $regenerate);
+  $scan = download_and_scan_mod($mod_id, $item_type, $temp_dir, $cache_dir, $regenerate);
   if (!$scan['success']) {
     return ['id' => $id, 'success' => false, 'error' => $scan['error']];
   }

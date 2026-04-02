@@ -14,8 +14,8 @@ if (!isset($url)) {
 }
 
 // Validate GameBanana URL
-if (!preg_match('/^https:\/\/gamebanana.com\/mods\/[0-9]+/', $url)) {
-  die_json(400, "Invalid Gamebanana URL");
+if (!preg_match('/^https:\/\/gamebanana.com\/(mods|wips)\/[0-9]+/', $url)) {
+  die_json(400, "Invalid Gamebanana URL. Expected format: https://gamebanana.com/mods/<id> or https://gamebanana.com/wips/<id>");
 }
 
 $params = getGamebananaParameters($url);
@@ -82,13 +82,15 @@ function getFileId($item_type, $item_id)
 
 function getGamebananaParameters($url)
 {
-  // URLs look like: https://gamebanana.com/mods/424541
+  // URLs look like: https://gamebanana.com/mods/424541 or https://gamebanana.com/wips/83276
   $url = explode("/", $url);
   $itemtypeRaw = $url[3];
   $itemtype = "";
 
   if ($itemtypeRaw === "mods") {
     $itemtype = "Mod";
+  } else if ($itemtypeRaw === "wips") {
+    $itemtype = "Wip";
   }
 
   $itemid = $url[4];

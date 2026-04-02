@@ -53,7 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
   } else if ($gb_id !== null) {
     $gb_id = intval($gb_id);
-    $campaign = Campaign::get_by_gamebanana_id($DB, $gb_id);
+    $gb_category = $_REQUEST['gamebanana_category'] ?? 'mods';
+    if (!in_array($gb_category, ['mods', 'wips'], true)) {
+      die_json(400, "Invalid gamebanana_category. Must be 'mods' or 'wips'");
+    }
+    $campaign = Campaign::get_by_gamebanana_id($DB, $gb_id, $gb_category);
     if (!$campaign) {
       die_json(404, "Campaign not found");
     }
@@ -105,13 +109,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       log_info("'{$account->player->name}' created {$campaign}", "Campaign");
 
       // If a GameBanana URL was provided, check for temp-processed data and copy it over
-      $mod_id = $campaign->get_gamebanana_mod_id();
-      if ($mod_id !== null) {
-        $temp_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$mod_id}";
+      $gb_info = $campaign->get_gamebanana_info();
+      if ($gb_info !== null) {
+        $dir_key = $gb_info['category'] . '_' . $gb_info['id'];
+        $temp_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$dir_key}";
         if (is_dir($temp_cache_dir)) {
           $campaign_cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data/{$campaign->id}";
           copy_directory_recursive($temp_cache_dir, $campaign_cache_dir);
-          log_info("Copied temp GB data for mod {$mod_id} to campaign {$campaign->id}", "Campaign");
+          log_info("Copied temp GB data for {$dir_key} to campaign {$campaign->id}", "Campaign");
         }
       }
 

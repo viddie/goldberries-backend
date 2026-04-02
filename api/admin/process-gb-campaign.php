@@ -10,35 +10,39 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $account = get_user_data();
 check_role($account, $HELPER);
 
-$gamebanana_id = $_REQUEST['gamebanana_id'] ?? null;
-if ($gamebanana_id === null || !is_numeric($gamebanana_id)) {
-  die_json(400, "Missing or invalid 'gamebanana_id' parameter");
+$gamebanana_url = $_REQUEST['gamebanana_url'] ?? null;
+$gb_info = parse_gamebanana_url($gamebanana_url);
+if ($gb_info === null) {
+  die_json(400, "Missing or invalid 'gamebanana_url' parameter. Expected format: https://gamebanana.com/mods/<id> or https://gamebanana.com/wips/<id>");
 }
-$gamebanana_id = intval($gamebanana_id);
 
 $regenerate = ($_REQUEST['regenerate'] ?? 'false') === 'true';
 
-$result = process_gb_campaign($gamebanana_id, $regenerate);
+$result = process_gb_campaign($gb_info, $regenerate);
 
 api_write($result);
 
 
 #region Process GameBanana Mod
 /**
- * Processes the data for a GameBanana mod without requiring a database campaign.
+ * Processes the data for a GameBanana mod/wip without requiring a database campaign.
  * Used during campaign creation workflow to preview/prepare map data.
  * All bins are hash-keyed (no map matching — that happens after campaign creation).
  *
- * @param int $mod_id GameBanana mod ID
+ * @param array $gb_info Parsed GameBanana URL info from parse_gamebanana_url()
  * @param bool $regenerate If true, forces re-download and wipes previous temp cache
- * @return array Result with 'gamebanana_id', 'success', and processing details
+ * @return array Result with 'gamebanana_url', 'success', and processing details
  */
-function process_gb_campaign($mod_id, $regenerate = false)
+function process_gb_campaign($gb_info, $regenerate = false)
 {
   global $MAX_TEMP_MODS_FOLDER_SIZE;
 
-  $temp_dir = GB_ROOT_LOCAL . "/temp/campaign_data/{$mod_id}";
-  $cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$mod_id}";
+  $mod_id = $gb_info['id'];
+  $item_type = $gb_info['item_type'];
+  $dir_key = gamebanana_dir_key($gb_info['category'], $mod_id);
+
+  $temp_dir = GB_ROOT_LOCAL . "/temp/campaign_data/{$dir_key}";
+  $cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data_temp/{$dir_key}";
 
   // If regenerate is requested, wipe the temp cache (processed JSONs) to force full reprocessing
   if ($regenerate && is_dir($cache_dir)) {
@@ -46,9 +50,9 @@ function process_gb_campaign($mod_id, $regenerate = false)
   }
 
   // Download and scan mod files (shared pipeline)
-  $scan = download_and_scan_mod($mod_id, $temp_dir, $cache_dir, $regenerate);
+  $scan = download_and_scan_mod($mod_id, $item_type, $temp_dir, $cache_dir, $regenerate);
   if (!$scan['success']) {
-    return ['gamebanana_id' => $mod_id, 'success' => false, 'error' => $scan['error']];
+    return ['gamebanana_url' => "https://gamebanana.com/{$gb_info['category']}/{$mod_id}", 'success' => false, 'error' => $scan['error']];
   }
 
   $bin_files = $scan['bin_files'];
@@ -79,7 +83,7 @@ function process_gb_campaign($mod_id, $regenerate = false)
   cleanup_temp_folder(GB_ROOT_LOCAL . '/temp/campaign_data', $MAX_TEMP_MODS_FOLDER_SIZE);
 
   $result = [
-    'gamebanana_id' => $mod_id,
+    'gamebanana_url' => "https://gamebanana.com/{$gb_info['category']}/{$mod_id}",
     'success' => true,
     'english_txt_found' => $scan['english_txt_found'],
     'bin_count' => count($bin_files),
