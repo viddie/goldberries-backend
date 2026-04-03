@@ -61,6 +61,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 #endregion
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+#region DELETE Request
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+  $account = get_user_data();
+  check_role($account, $HELPER);
+
+  $cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data/{$id}";
+  if (!is_dir($cache_dir)) {
+    die_json(404, "Campaign data not found");
+  }
+
+  // Delete all files in the campaign data directory
+  $files = scandir($cache_dir);
+  foreach ($files as $file) {
+    if ($file === '.' || $file === '..') {
+      continue;
+    }
+    $file_path = "{$cache_dir}/{$file}";
+    if (is_file($file_path)) {
+      unlink($file_path);
+    }
+  }
+
+  // Write a new index.json with an error status
+  $index = CampaignDataIndex::create_error($cache_dir, 'Campaign data has been removed by a team member');
+  $index->save();
+
+  api_write(['success' => true, 'campaign_id' => $id]);
+}
+#endregion
+
+if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') {
   die_json(405, 'Method Not Allowed');
 }

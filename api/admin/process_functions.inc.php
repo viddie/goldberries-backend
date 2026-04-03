@@ -304,36 +304,8 @@ function delete_old_indexed_files($cache_dir)
  */
 function write_index_json($cache_dir, $map_bins, $matched_count, $unmatched_map_count, $conversion_errors)
 {
-  if (!is_dir($cache_dir)) {
-    mkdir($cache_dir, 0755, true);
-  }
-
-  // For bins with conversion errors, replace hash with conversion_error flag in index
-  $conversion_error_set = array_flip($conversion_errors);
-  foreach ($map_bins as $i => &$entry) {
-    if (isset($conversion_error_set[$i]) && isset($entry['hash'])) {
-      unset($entry['hash']);
-      $entry['conversion_error'] = true;
-    }
-  }
-  unset($entry);
-
-  $unmatched_bin_count = count($map_bins) - $matched_count;
-  $has_errors = count($conversion_errors) > 0;
-
-  $index_wrapper = [
-    'status' => $has_errors ? 'error' : 'ok',
-    'message' => $has_errors ? count($conversion_errors) . ' bin(s) failed to convert' : null,
-    'bin_count' => count($map_bins),
-    'unmatched_bin_count' => $unmatched_bin_count,
-    'unmatched_map_count' => $unmatched_map_count,
-    'data' => $map_bins,
-  ];
-
-  file_put_contents(
-    "{$cache_dir}/index.json",
-    json_encode($index_wrapper, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-  );
+  $index = CampaignDataIndex::create_from_processing($cache_dir, $map_bins, $matched_count, $unmatched_map_count, $conversion_errors);
+  $index->save();
 }
 #endregion
 
@@ -378,21 +350,8 @@ function copy_directory_recursive($src, $dst)
  */
 function write_error_index($cache_dir, $message)
 {
-  if (!is_dir($cache_dir)) {
-    mkdir($cache_dir, 0755, true);
-  }
-  $index = [
-    'status' => 'error',
-    'message' => $message,
-    'bin_count' => 0,
-    'unmatched_bin_count' => 0,
-    'unmatched_map_count' => 0,
-    'data' => [],
-  ];
-  file_put_contents(
-    "{$cache_dir}/index.json",
-    json_encode($index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
-  );
+  $index = CampaignDataIndex::create_error($cache_dir, $message);
+  $index->save();
 }
 
 /**
