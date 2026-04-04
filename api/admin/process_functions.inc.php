@@ -278,14 +278,19 @@ function delete_old_indexed_files($cache_dir)
   }
 
   foreach ($existing_bins as $entry) {
-    $old_file = null;
+    if (isset($entry['path']) && !isset($entry['conversion_error'])) {
+      $hash = substr(md5($entry['path']), 0, 12);
+      $old_file = "{$cache_dir}/{$hash}.json";
+      if (file_exists($old_file)) {
+        unlink($old_file);
+      }
+    }
+    // Clean up legacy {map_id}.json files from pre-migration index entries
     if (isset($entry['map_id'])) {
       $old_file = "{$cache_dir}/{$entry['map_id']}.json";
-    } elseif (isset($entry['hash'])) {
-      $old_file = "{$cache_dir}/{$entry['hash']}.json";
-    }
-    if ($old_file !== null && file_exists($old_file)) {
-      unlink($old_file);
+      if (file_exists($old_file)) {
+        unlink($old_file);
+      }
     }
   }
 }
@@ -297,14 +302,12 @@ function delete_old_indexed_files($cache_dir)
  *
  * @param string $cache_dir
  * @param array $map_bins
- * @param int $matched_count
- * @param int $unmatched_map_count
  * @param int[] $conversion_errors
  * @return void
  */
-function write_index_json($cache_dir, $map_bins, $matched_count, $unmatched_map_count, $conversion_errors)
+function write_index_json($cache_dir, $map_bins, $conversion_errors)
 {
-  $index = CampaignDataIndex::create_from_processing($cache_dir, $map_bins, $matched_count, $unmatched_map_count, $conversion_errors);
+  $index = CampaignDataIndex::create_from_processing($cache_dir, $map_bins, $conversion_errors);
   $index->save();
 }
 #endregion
@@ -676,39 +679,31 @@ function process_campaign($DB, $id, $regenerate = false)
   $bin_files = $scan['bin_files'];
   $map_bins = $scan['map_bins'];
 
-  // Read mapping.json from cache dir before wiping (maps bin paths to database map IDs)
-  $path_mapping = [];
-  $mapping_path = "{$cache_dir}/mapping.json";
-  if (file_exists($mapping_path)) {
-    $mapping_content = file_get_contents($mapping_path);
-    if ($mapping_content !== false) {
-      $mapping_json = json_decode($mapping_content, true) ?? [];
-      $path_mapping = $mapping_json['data'] ?? [];
-    }
-  }
-
   // Fetch all maps in the campaign from the database
   $campaign->fetch_maps($DB);
   $unmatched_maps = [];
 
   // Match bin files to database map IDs.
-  // Priority 1: mapping.json (explicit bin path => map ID mapping)
+  // Priority 1: map.bin column in DB (explicit bin path stored on map)
   // Priority 2: name matching via English.txt dialog names
   $matched_bins = []; // index => map_id
 
   if ($campaign->maps !== null) {
-    // Build a set of map IDs in this campaign for validation
+    // Build bin path => map ID lookup from maps that already have a bin assigned
+    $path_mapping = [];
     $campaign_map_ids = [];
     foreach ($campaign->maps as $map) {
       $campaign_map_ids[$map->id] = true;
+      if ($map->bin !== null) {
+        $path_mapping[$map->bin] = $map->id;
+      }
     }
 
-    // First pass: apply mapping.json matches
+    // First pass: match by existing map.bin column in DB
     foreach ($map_bins as $i => $entry) {
       $rel_path = $entry['path'];
-      if (isset($path_mapping[$rel_path]) && isset($campaign_map_ids[$path_mapping[$rel_path]])) {
-        $matched_bins[$i] = intval($path_mapping[$rel_path]);
-        $map_bins[$i]['map_id'] = $matched_bins[$i];
+      if (isset($path_mapping[$rel_path])) {
+        $matched_bins[$i] = $path_mapping[$rel_path];
       }
     }
 
@@ -723,7 +718,7 @@ function process_campaign($DB, $id, $regenerate = false)
       }
     }
 
-    // Second pass: match by name for maps not yet matched via mapping.json
+    // Second pass: match by name for maps not yet matched via DB bin column
     // Sort so non-archived maps are matched first (preferred over archived duplicates)
     $maps_sorted = $campaign->maps;
     usort($maps_sorted, fn($a, $b) => $a->is_archived <=> $b->is_archived);
@@ -735,32 +730,30 @@ function process_campaign($DB, $id, $regenerate = false)
       if (isset($name_to_index[$map_name_lower])) {
         $idx = $name_to_index[$map_name_lower];
         $matched_bins[$idx] = $map->id;
-        $map_bins[$idx]['map_id'] = $map->id;
         $used_map_ids[$map->id] = true;
       } else {
         $unmatched_maps[] = ['id' => $map->id, 'name' => $map->name];
       }
     }
+
+    // Write bin paths to database for all matched maps
+    foreach ($matched_bins as $bin_idx => $map_id) {
+      $bin_path = $map_bins[$bin_idx]['path'];
+      pg_query_params_or_die(
+        $DB,
+        "UPDATE map SET bin = $1 WHERE id = $2",
+        [$bin_path, $map_id],
+        "Failed to update map bin path"
+      );
+    }
   }
 
   $matched_count = count($matched_bins);
 
-  // Generate hashes for unmatched bins and store in index
-  foreach ($map_bins as $i => &$entry) {
-    if (!isset($matched_bins[$i])) {
-      $entry['hash'] = substr(md5($entry['path']), 0, 12);
-    }
-  }
-  unset($entry);
-
-  // Build file keys map for bin conversion
+  // All file keys are hashes based on bin path
   $file_keys = [];
   foreach ($map_bins as $bin_idx => $entry) {
-    if (isset($matched_bins[$bin_idx])) {
-      $file_keys[$bin_idx] = strval($matched_bins[$bin_idx]);
-    } else {
-      $file_keys[$bin_idx] = $entry['hash'];
-    }
+    $file_keys[$bin_idx] = substr(md5($entry['path']), 0, 12);
   }
 
   // Delete previously indexed files before writing new ones
@@ -769,9 +762,8 @@ function process_campaign($DB, $id, $regenerate = false)
   // Convert ALL .bin files to JSON and write to cache
   $conversion_errors = convert_bins_to_json($map_bins, $bin_files, $cache_dir, $file_keys);
 
-  // Write index.json with metadata
-  $unmatched_map_count = count($unmatched_maps);
-  write_index_json($cache_dir, $map_bins, $matched_count, $unmatched_map_count, $conversion_errors);
+  // Write index.json with metadata (entries only contain path and name)
+  write_index_json($cache_dir, $map_bins, $conversion_errors);
 
   // Clean up temp folder if total size exceeds the limit
   cleanup_temp_folder(GB_ROOT_LOCAL . '/temp/campaign_data', $MAX_TEMP_MODS_FOLDER_SIZE);

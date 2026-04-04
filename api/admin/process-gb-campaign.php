@@ -59,15 +59,9 @@ function process_gb_campaign($gb_info, $regenerate = false)
   $map_bins = $scan['map_bins'];
 
   // No map matching — all bins get hash-based file keys
-  foreach ($map_bins as $i => &$entry) {
-    $entry['hash'] = substr(md5($entry['path']), 0, 12);
-  }
-  unset($entry);
-
-  // Build file keys map
   $file_keys = [];
   foreach ($map_bins as $bin_idx => $entry) {
-    $file_keys[$bin_idx] = $entry['hash'];
+    $file_keys[$bin_idx] = substr(md5($entry['path']), 0, 12);
   }
 
   // Delete previously indexed files before writing new ones
@@ -76,8 +70,8 @@ function process_gb_campaign($gb_info, $regenerate = false)
   // Convert ALL .bin files to JSON and write to temp cache
   $conversion_errors = convert_bins_to_json($map_bins, $bin_files, $cache_dir, $file_keys);
 
-  // Write index.json (no matched maps, no unmatched maps — no campaign context)
-  write_index_json($cache_dir, $map_bins, 0, 0, $conversion_errors);
+  // Write index.json (no campaign context — standalone GameBanana processing)
+  write_index_json($cache_dir, $map_bins, $conversion_errors);
 
   // Clean up temp folder if total size exceeds the limit
   cleanup_temp_folder(GB_ROOT_LOCAL . '/temp/campaign_data', $MAX_TEMP_MODS_FOLDER_SIZE);

@@ -181,6 +181,7 @@ CREATE TABLE "map"
  golden_changes   text NULL,
  counts_for_id    integer NULL,
  is_progress      boolean NOT NULL DEFAULT true,
+ bin              varchar(128) NULL,
  CONSTRAINT map_pkey PRIMARY KEY ( "id" ),
  CONSTRAINT map_counts_for_id_fkey FOREIGN KEY ( counts_for_id ) REFERENCES "map" ( "id" ) ON DELETE SET NULL ON UPDATE CASCADE,
  CONSTRAINT map_campaign_id_fkey FOREIGN KEY ( campaign_id ) REFERENCES campaign ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE
@@ -457,6 +458,7 @@ CREATE VIEW "view_submissions" AS SELECT
   map.golden_changes AS map_golden_changes,
   map.counts_for_id AS map_counts_for_id,
   map.is_progress AS map_is_progress,
+  map.bin AS map_bin,
 
   for_map.id AS for_map_id,
   for_map.campaign_id AS for_map_campaign_id,
@@ -474,6 +476,7 @@ CREATE VIEW "view_submissions" AS SELECT
   for_map.golden_changes AS for_map_golden_changes,
   for_map.counts_for_id AS for_map_counts_for_id,
   for_map.is_progress AS for_map_is_progress,
+  for_map.bin AS for_map_bin,
 
   challenge.id AS challenge_id,
   challenge.campaign_id AS challenge_campaign_id,
@@ -605,6 +608,7 @@ CREATE VIEW "view_challenges" AS SELECT
   map.golden_changes AS map_golden_changes,
   map.counts_for_id AS map_counts_for_id,
   map.is_progress AS map_is_progress,
+  map.bin AS map_bin,
 
   for_map.id AS for_map_id,
   for_map.campaign_id AS for_map_campaign_id,
@@ -622,6 +626,7 @@ CREATE VIEW "view_challenges" AS SELECT
   for_map.golden_changes AS for_map_golden_changes,
   for_map.counts_for_id AS for_map_counts_for_id,
   for_map.is_progress AS for_map_is_progress,
+  for_map.bin AS for_map_bin,
 
   challenge.id AS challenge_id,
   challenge.campaign_id AS challenge_campaign_id,
@@ -701,6 +706,7 @@ CREATE VIEW "view_challenge_changes" AS SELECT
   map.golden_changes AS map_golden_changes,
   map.counts_for_id AS map_counts_for_id,
   map.is_progress AS map_is_progress,
+  map.bin AS map_bin,
 
   for_map.id AS for_map_id,
   for_map.campaign_id AS for_map_campaign_id,
@@ -718,6 +724,7 @@ CREATE VIEW "view_challenge_changes" AS SELECT
   for_map.golden_changes AS for_map_golden_changes,
   for_map.counts_for_id AS for_map_counts_for_id,
   for_map.is_progress AS for_map_is_progress,
+  for_map.bin AS for_map_bin,
 
   challenge.id AS challenge_id,
   challenge.campaign_id AS challenge_campaign_id,
@@ -985,6 +992,7 @@ CREATE VIEW "view_campaigns" AS SELECT
   map.golden_changes AS map_golden_changes,
   map.counts_for_id AS map_counts_for_id,
   map.is_progress AS map_is_progress,
+  map.bin AS map_bin,
 
   for_map.id AS for_map_id,
   for_map.campaign_id AS for_map_campaign_id,
@@ -1002,6 +1010,7 @@ CREATE VIEW "view_campaigns" AS SELECT
   for_map.golden_changes AS for_map_golden_changes,
   for_map.counts_for_id AS for_map_counts_for_id,
   for_map.is_progress AS for_map_is_progress,
+  for_map.bin AS for_map_bin,
 
   challenge.id AS challenge_id,
   challenge.campaign_id AS challenge_campaign_id,

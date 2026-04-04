@@ -18,6 +18,7 @@ class Map extends DbObject
   public ?StringList $collectibles = null;
   public ?string $golden_changes = null;
   public bool $is_progress = true;
+  public ?string $bin = null;
 
   // Foreign Keys
   public ?int $campaign_id = null;
@@ -65,6 +66,7 @@ class Map extends DbObject
       'golden_changes' => $this->golden_changes,
       'counts_for_id' => $this->counts_for_id,
       'is_progress' => $this->is_progress,
+      'bin' => $this->bin,
     );
   }
   static function static_field_set()
@@ -85,6 +87,7 @@ class Map extends DbObject
       'golden_changes',
       'counts_for_id',
       'is_progress',
+      'bin',
     ];
   }
 
@@ -155,6 +158,8 @@ class Map extends DbObject
 
     if (isset($arr[$prefix . 'counts_for_id']))
       $this->counts_for_id = intval($arr[$prefix . 'counts_for_id']);
+    if (isset($arr[$prefix . 'bin']))
+      $this->bin = $arr[$prefix . 'bin'];
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)

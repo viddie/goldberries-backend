@@ -18,10 +18,11 @@ if ($gb_info === null) {
 
 $dir_key = gamebanana_dir_key($gb_info['category'], $gb_info['id']);
 
-$hash = $_REQUEST['hash'] ?? null;
-if ($hash === null || !preg_match('/^[a-f0-9]+$/i', $hash)) {
-  die_json(400, "Missing or invalid 'hash' parameter");
+$bin_path = $_REQUEST['bin_path'] ?? null;
+if ($bin_path === null || $bin_path === '') {
+  die_json(400, "Missing or invalid 'bin_path' parameter");
 }
+$hash = substr(md5($bin_path), 0, 12);
 
 $check_exists = ($_REQUEST['check_exists'] ?? 'false') === 'true';
 
