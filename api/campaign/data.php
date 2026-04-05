@@ -87,6 +87,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $index = CampaignDataIndex::create_error($cache_dir, 'Campaign data has been removed by a team member');
   $index->save();
 
+  // Unset map.bin for all maps in this campaign
+  pg_query_params_or_die(
+    $DB,
+    "UPDATE map SET bin = NULL WHERE campaign_id = $1",
+    [$id],
+    "Failed to unset map.bin for campaign"
+  );
+
   api_write(['success' => true, 'campaign_id' => $id]);
 }
 #endregion

@@ -255,6 +255,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $index->save();
   }
 
+  // Unset map.bin for maps matching this bin path in this campaign
+  pg_query_params_or_die(
+    $DB,
+    "UPDATE map SET bin = NULL WHERE bin = $1 AND campaign_id = $2",
+    [$bin_path, $campaign_id],
+    "Failed to unset map.bin"
+  );
+
   api_write(['success' => true, 'file_key' => $file_key, 'campaign_id' => $campaign_id]);
 }
 #endregion
