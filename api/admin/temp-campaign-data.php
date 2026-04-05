@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $account = get_user_data();
-check_role($account, $HELPER);
+check_access($account, true);
 
 $gamebanana_url = $_REQUEST['gamebanana_url'] ?? null;
 $gb_info = parse_gamebanana_url($gamebanana_url);

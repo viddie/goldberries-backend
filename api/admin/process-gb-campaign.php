@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $account = get_user_data();
-check_role($account, $HELPER);
+check_access($account, true);
 
 $gamebanana_url = $_REQUEST['gamebanana_url'] ?? null;
 $gb_info = parse_gamebanana_url($gamebanana_url);
@@ -17,6 +17,11 @@ if ($gb_info === null) {
 }
 
 $regenerate = ($_REQUEST['regenerate'] ?? 'false') === 'true';
+if ($regenerate && !is_helper($account)) {
+  die_json(403, "Only helpers and above can use the 'regenerate' parameter");
+}
+
+log_info("'{$account->player->name}' processed GameBanana campaign: {$gamebanana_url}", "Campaign");
 
 $result = process_gb_campaign($gb_info, $regenerate);
 
