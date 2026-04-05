@@ -12,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $rejected = isset($_REQUEST['rejected']) && $_REQUEST['rejected'] === 'true';
 
   $id = isset($_REQUEST['id']) ? $_REQUEST['id'] : null;
-  $gb_id = isset($_REQUEST['gamebanana_id']) ? $_REQUEST['gamebanana_id'] : null;
 
   if ($id === "all" && $submissions === false) {
     //Special handling for this case
@@ -51,26 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     api_write($campaigns);
 
-  } else if ($gb_id !== null) {
-    $gb_id = intval($gb_id);
-    $gb_category = $_REQUEST['gamebanana_category'] ?? 'mods';
-    if (!in_array($gb_category, ['mods', 'wips'], true)) {
-      die_json(400, "Invalid gamebanana_category. Must be 'mods' or 'wips'");
-    }
-    $campaign = Campaign::get_by_gamebanana_id($DB, $gb_id, $gb_category);
-    if (!$campaign) {
-      die_json(404, "Campaign not found");
-    }
-    if ($maps) {
-      $campaign->fetch_maps($DB, $challenges, $submissions);
-    }
-    if ($challenges) {
-      $campaign->fetch_challenges($DB, $submissions);
-    }
-    api_write($campaign);
-
   } else {
-    die_json(400, "Missing id or gamebanana_id");
+    die_json(400, "Missing id");
   }
 }
 #endregion
