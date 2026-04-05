@@ -225,3 +225,37 @@ function has_flag(int $flags, int $flag): bool
 {
   return ($flags & $flag) === $flag;
 }
+
+
+#region Processing Slot Lock
+$PROCESSING_SLOT_COUNT = 3;
+
+/**
+ * Tries to acquire an exclusive flock on one of the available processing slot files.
+ * Returns ['handle' => resource, 'slot' => int] on success, or null if all slots are busy.
+ * The lock auto-releases if the script dies or the handle is closed.
+ */
+function acquire_processing_slot()
+{
+  global $PROCESSING_SLOT_COUNT;
+
+  $lock_dir = GB_ROOT_LOCAL . '/temp/processing_locks';
+  if (!is_dir($lock_dir)) {
+    mkdir($lock_dir, 0755, true);
+  }
+
+  for ($i = 0; $i < $PROCESSING_SLOT_COUNT; $i++) {
+    $lock_path = "{$lock_dir}/slot_{$i}.lock";
+    $handle = fopen($lock_path, 'c');
+    if ($handle === false) {
+      continue;
+    }
+    if (flock($handle, LOCK_EX | LOCK_NB)) {
+      return ['handle' => $handle, 'slot' => $i];
+    }
+    fclose($handle);
+  }
+
+  return null;
+}
+#endregion

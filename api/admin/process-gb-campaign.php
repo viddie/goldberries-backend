@@ -21,9 +21,18 @@ if ($regenerate && !is_helper($account)) {
   die_json(403, "Only helpers and above can use the 'regenerate' parameter");
 }
 
+// Acquire a processing slot (flock auto-releases on script exit/crash)
+$lock = acquire_processing_slot();
+if ($lock === null) {
+  die_json(503, "All processing slots are currently in use. Please try again shortly.");
+}
+
 log_info("'{$account->player->name}' processed GameBanana campaign: {$gamebanana_url}", "Campaign");
 
 $result = process_gb_campaign($gb_info, $regenerate);
+
+flock($lock['handle'], LOCK_UN);
+fclose($lock['handle']);
 
 api_write($result);
 
