@@ -175,26 +175,47 @@ function get_tier_index($difficulty)
   return $MAX_SORT - $difficulty->sort;
 }
 
+function fetch_data_response($url, $connect_timeout = 5, $timeout = null, $headers = null)
+{
+  $headers = $headers ?? ['Expect:'];
+
+  $options = [
+    CURLOPT_URL => $url,
+    CURLOPT_RETURNTRANSFER => 1,
+    CURLOPT_CONNECTTIMEOUT => $connect_timeout,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
+    CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36',
+    CURLOPT_HTTPHEADER => $headers,
+    CURLOPT_FORBID_REUSE => true,
+  ];
+
+  if ($timeout !== null) {
+    $options[CURLOPT_TIMEOUT] = $timeout;
+  }
+
+  $ch = curl_init();
+  curl_setopt_array($ch, $options);
+
+  $body = curl_exec($ch);
+  $http_code = intval(curl_getinfo($ch, CURLINFO_HTTP_CODE));
+  $error = $body === false ? curl_error($ch) : '';
+  curl_close($ch);
+
+  return [
+    'body' => $body,
+    'http_code' => $http_code,
+    'error' => $error,
+  ];
+}
+
 function fetch_data($url)
 {
-  $ch = curl_init();
-  $timeout = 5;
-  curl_setopt($ch, CURLOPT_URL, $url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-  curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
-  curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-  curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-  curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36');
-
-  curl_setopt($ch, CURLOPT_HTTPHEADER, ['Expect:']);
-  curl_setopt($ch, CURLOPT_FORBID_REUSE, true);
-
-  $data = curl_exec($ch);
-  if ($data === false) {
-    log_error("cURL error for {$url}: " . curl_error($ch), "fetch_data");
+  $response = fetch_data_response($url);
+  if ($response['body'] === false) {
+    log_error("cURL error for {$url}: " . $response['error'], "fetch_data");
   }
-  curl_close($ch);
-  return $data;
+  return $response['body'];
 }
 
 function input_method_to_string($input_method)

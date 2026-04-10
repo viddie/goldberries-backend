@@ -24,6 +24,7 @@ function task_aggregate_traffic($DB)
 
   if ($old_count === 0) {
     echo "No traffic entries older than {$cutoff_days} days. Nothing to do.\n";
+    log_info("Cleaned '{$cleaned}' NULL user agents, no traffic rows older than '{$cutoff_days}' days to aggregate (cutoff: '{$cutoff_date}')", "Maintenance");
     return;
   }
 
@@ -122,5 +123,5 @@ function task_aggregate_traffic($DB)
 
   echo "Deleted {$deleted} raw rows\n";
 
-  log_info("Cleaned {$cleaned} NULL UA rows, aggregated {$total_aggregated} agg rows from {$deleted} raw rows (cutoff: {$cutoff_date})", "Maintenance");
+  log_info("Cleaned '{$cleaned}' NULL user agents, aggregated '{$total_aggregated}' rows from '{$deleted}' raw rows (cutoff: '{$cutoff_date}')", "Maintenance");
 }

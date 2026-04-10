@@ -3,9 +3,12 @@
 require_once('../api_bootstrap.inc.php');
 
 $is_debug = getenv('DEBUG') === 'true';
+$is_cli = php_sapi_name() === 'cli';
 
-if (!$is_debug) {
-  if (php_sapi_name() !== 'cli') {
+if (!$is_cli) {
+  if ($is_debug) {
+    header('Content-Type: text/plain; charset=UTF-8');
+  } else {
     die_json(405, 'Method Not Allowed');
   }
 }
@@ -14,6 +17,7 @@ if (!$is_debug) {
 // Each task: 'name' => ['fn' => 'function_name', 'type' => 'hourly|daily|weekly', 'file' => 'tasks/filename.php']
 $tasks = [
   'aggregate_traffic' => ['fn' => 'task_aggregate_traffic', 'type' => 'weekly', 'file' => 'tasks/aggregate_traffic.php'],
+  'report_gamebanana_urls' => ['fn' => 'task_report_gamebanana_urls', 'type' => 'weekly', 'file' => 'tasks/report_gamebanana_urls.php'],
 ];
 #endregion
 
