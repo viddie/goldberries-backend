@@ -26,38 +26,30 @@ api_write($modData);
 
 function getModData($url)
 {
-  $apiBaseUrl = "https://api.gamebanana.com/Core/Item/Data?fields=name,Owner().name,userid";
   $params = getGamebananaParameters($url);
-  $apiUrl = $apiBaseUrl . "&itemtype=" . $params["itemtype"] . "&itemid=" . $params["itemid"];
+  $api_url = gamebanana_api_url($params['itemtype'], $params['itemid'], '_sName,_aSubmitter');
+  $response = fetch_data_response($api_url, 5, 15);
 
-  $curl = curl_init();
-  curl_setopt_array($curl, [
-    CURLOPT_URL => $apiUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => "",
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => "GET",
-    CURLOPT_HTTPHEADER => [
-      "Authorization: Bearer " . $_ENV['GB_TOKEN'],
-      "Content-Type: application/json"
-    ],
-  ]);
+  if ($response['body'] === false) {
+    die_json(502, "Failed to reach GameBanana API");
+  }
+  if ($response['http_code'] === 404) {
+    die_json(404, "Mod not found on GameBanana");
+  }
+  if ($response['http_code'] >= 400) {
+    die_json(502, "GameBanana returned HTTP {$response['http_code']}");
+  }
 
-  $gbResponse = curl_exec($curl);
-  curl_close($curl);
+  $json = json_decode($response['body'], true);
+  if (!isset($json['_sName']) || !isset($json['_aSubmitter'])) {
+    die_json(500, "Unexpected response from GameBanana API");
+  }
 
-  //parse as json
-  $json = json_decode($gbResponse, true);
-  $response = array(
-    "name" => $json[0],
-    "author" => $json[1],
-    "authorId" => $json[2]
+  return array(
+    "name" => $json['_sName'],
+    "author" => $json['_aSubmitter']['_sName'] ?? null,
+    "authorId" => $json['_aSubmitter']['_idRow'] ?? null
   );
-
-  return $response;
 }
 
 function getGamebananaParameters($url)

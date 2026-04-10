@@ -30,44 +30,27 @@ api_write(array("download_url" => $downloadLink));
 
 function getFileId($item_type, $item_id)
 {
-  $apiUrl = "https://api.gamebanana.com/Core/Item/Data"
-    . "?itemtype=" . $item_type
-    . "&itemid=" . $item_id
-    . "&fields=Files().aFiles()";
+  $api_url = gamebanana_api_url($item_type, $item_id, '_aFiles');
+  $response = fetch_data_response($api_url, 5, 15);
 
-  $curl = curl_init();
-  curl_setopt_array($curl, [
-    CURLOPT_URL => $apiUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_ENCODING => "",
-    CURLOPT_MAXREDIRS => 10,
-    CURLOPT_TIMEOUT => 0,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    CURLOPT_CUSTOMREQUEST => "GET",
-    CURLOPT_HTTPHEADER => [
-      "Authorization: Bearer " . $_ENV['GB_TOKEN'],
-      "Content-Type: application/json"
-    ],
-  ]);
-
-  $gbResponse = curl_exec($curl);
-  curl_close($curl);
-
-  $json = json_decode($gbResponse, true);
-
-  if (!isset($json[0]) || !is_array($json[0])) {
-    die_json(500, "Unexpected response from GameBanana API");
+  if ($response['body'] === false) {
+    die_json(502, "Failed to reach GameBanana API");
+  }
+  if ($response['http_code'] === 404) {
+    die_json(404, "Mod not found on GameBanana");
+  }
+  if ($response['http_code'] >= 400) {
+    die_json(502, "GameBanana returned HTTP {$response['http_code']}");
   }
 
-  $filesAssoc = $json[0];
-  if (count($filesAssoc) === 0) {
+  $json = json_decode($response['body'], true);
+  if (!isset($json['_aFiles']) || !is_array($json['_aFiles']) || count($json['_aFiles']) === 0) {
     die_json(404, "No files found for this mod");
   }
 
   // Find the most recent file by _tsDateAdded
   $latestFile = null;
-  foreach ($filesAssoc as $fileId => $fileData) {
+  foreach ($json['_aFiles'] as $fileData) {
     if ($latestFile === null || $fileData['_tsDateAdded'] > $latestFile['_tsDateAdded']) {
       $latestFile = $fileData;
     }

@@ -65,7 +65,7 @@ function download_and_scan_mod($mod_id, $item_type, $temp_dir, $cache_dir, $rege
     mkdir($temp_dir, 0755, true);
 
   // Fetch file list from GameBanana API
-  $api_url = "https://gamebanana.com/apiv11/{$item_type}/{$mod_id}?_csvProperties=_aFiles";
+  $api_url = gamebanana_api_url($item_type, $mod_id, '_aFiles');
   $api_response = fetch_data($api_url);
   if ($api_response === false || $api_response === '') {
     delete_directory_recursive($temp_dir);

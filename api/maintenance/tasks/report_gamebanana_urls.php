@@ -137,9 +137,7 @@ function report_gamebanana_urls_format_duration($seconds)
 
 function report_gamebanana_urls_probe_item($item_type, $item_id)
 {
-  $api_url = 'https://api.gamebanana.com/Core/Item/Data?itemtype=' . rawurlencode($item_type)
-    . '&itemid=' . rawurlencode(strval($item_id))
-    . '&fields=' . rawurlencode('Files().aFiles()');
+  $api_url = gamebanana_api_url($item_type, $item_id, '_idRow');
 
   $response = fetch_data_response($api_url, 5, 15);
   $body = $response['body'];
@@ -153,26 +151,10 @@ function report_gamebanana_urls_probe_item($item_type, $item_id)
     ];
   }
 
-  $decoded = json_decode($body, true);
-  if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+  if ($http_code === 404) {
     return [
-      'status' => 'error',
-      'message' => 'Failed to decode GameBanana response: ' . json_last_error_msg(),
-    ];
-  }
-
-  if (is_array($decoded) && isset($decoded['error_code'])) {
-    $error_message = $decoded['error'] ?? 'Unknown GameBanana API error';
-    if ($decoded['error_code'] === 'INVALID_PARAMS' && strpos($error_message, "doesn't exist") !== false) {
-      return [
-        'status' => 'unavailable',
-        'message' => $error_message,
-      ];
-    }
-
-    return [
-      'status' => 'error',
-      'message' => $error_message,
+      'status' => 'unavailable',
+      'message' => 'Item not found on GameBanana',
     ];
   }
 
@@ -183,7 +165,15 @@ function report_gamebanana_urls_probe_item($item_type, $item_id)
     ];
   }
 
-  if (is_array($decoded)) {
+  $decoded = json_decode($body, true);
+  if ($decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+    return [
+      'status' => 'error',
+      'message' => 'Failed to decode GameBanana response: ' . json_last_error_msg(),
+    ];
+  }
+
+  if (is_array($decoded) && isset($decoded['_idRow'])) {
     return [
       'status' => 'available',
       'message' => 'OK',
