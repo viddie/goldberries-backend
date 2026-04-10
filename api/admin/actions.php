@@ -18,7 +18,6 @@ $action = $_REQUEST['action'];
 
 #region Action Registry
 $actions = [
-  'clean_traffic' => ['fn' => 'action_clean_traffic', 'min_role' => $ADMIN],
   'reject_challenge' => ['fn' => 'action_reject_challenge', 'min_role' => $HELPER],
   'swap_lobbies' => ['fn' => 'action_swap_lobbies', 'min_role' => $HELPER],
   'merge_players' => ['fn' => 'action_merge_players', 'min_role' => $VERIFIER],
@@ -37,18 +36,6 @@ $result = $action_entry['fn']($DB);
 api_write($result);
 
 #region Action Functions
-function action_clean_traffic($DB)
-{
-  $result = pg_query_params_or_die($DB, "DELETE FROM traffic WHERE user_agent IS NULL", [], "Failed to delete traffic entries");
-  $count = pg_affected_rows($result);
-  return [
-    'message' => "Deleted {$count} traffic entries with NULL user_agent",
-    'data' => [
-      'deleted' => $count
-    ],
-  ];
-}
-
 function action_reject_challenge($DB)
 {
   if (!isset($_REQUEST['id'])) {
