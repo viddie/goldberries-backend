@@ -14,6 +14,32 @@ if ($group_by !== null && !in_array($group_by, $valid_group_by)) {
   die_json(400, "Invalid group_by parameter. Valid values: " . implode(', ', $valid_group_by));
 }
 
+$date_start = isset($_REQUEST['date_start']) ? $_REQUEST['date_start'] : null;
+$date_end = isset($_REQUEST['date_end']) ? $_REQUEST['date_end'] : null;
+
+$submission_filters = [
+  "submission.is_verified = TRUE",
+  "challenge.is_rejected = FALSE",
+  "submission.is_obsolete = FALSE",
+];
+
+if ($date_start !== null) {
+  // Validate date to be in format: 2024-10-19
+  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_start)) {
+    die_json(400, "Invalid date_start format. Expected yyyy-mm-dd");
+  }
+  $submission_filters[] = "(submission.date_achieved AT TIME ZONE 'UTC')::date >= '$date_start'";
+}
+
+if ($date_end !== null) {
+  if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_end)) {
+    die_json(400, "Invalid date_end format. Expected yyyy-mm-dd");
+  }
+  $submission_filters[] = "(submission.date_achieved AT TIME ZONE 'UTC')::date <= '$date_end'";
+}
+
+$submission_filter_string = implode(' AND ', $submission_filters);
+
 //Fetch all difficulties first
 $query = "SELECT * FROM difficulty WHERE id NOT IN ($TRIVIAL_ID, $UNDETERMINED_ID) ORDER BY sort DESC";
 $result = pg_query_params_or_die($DB, $query);
@@ -52,7 +78,7 @@ if ($group_by === null) {
     LEFT JOIN difficulty ON challenge.difficulty_id = difficulty.id
     LEFT JOIN map ON challenge.map_id = map.id
     WHERE (submission.id IS NULL OR 
-      (submission.is_verified = TRUE AND challenge.is_rejected = FALSE AND submission.is_obsolete = FALSE))
+      ($submission_filter_string))
       AND (account.is_suspended = FALSE OR account.is_suspended IS NULL)
     GROUP BY player.id, account.id
     ORDER BY total DESC";
@@ -92,7 +118,7 @@ if ($group_by === null) {
     LEFT JOIN difficulty ON challenge.difficulty_id = difficulty.id
     LEFT JOIN map ON challenge.map_id = map.id
     WHERE (submission.id IS NULL OR 
-      (submission.is_verified = TRUE AND challenge.is_rejected = FALSE AND submission.is_obsolete = FALSE))
+      ($submission_filter_string))
       AND (account.is_suspended = FALSE OR account.is_suspended IS NULL)
     GROUP BY $group_column
     ORDER BY total DESC";
