@@ -226,7 +226,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2210,
   ],
   [
-    "abbreviation" => ["2kahc", "ahc"],
+    "abbreviation" => ["2kahc", "ahc", "t2ahc"],
     "id" => 98,
   ],
   [
@@ -290,7 +290,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2355,
   ],
   [
-    "abbreviation" => ["ff"],
+    "abbreviation" => ["ff", "frake", "frakes"],
     "id" => 1986,
   ],
   [
@@ -314,7 +314,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2351,
   ],
   [
-    "abbreviation" => ["cm"],
+    "abbreviation" => ["cm", "cma"],
     "id" => 2441,
   ],
   [
@@ -370,7 +370,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2339,
   ],
   [
-    "abbreviation" => ["sds"],
+    "abbreviation" => ["sds", "7down"],
     "id" => 2343,
   ],
   [
@@ -456,10 +456,6 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["o6d", "6d"],
     "id" => 2550,
-  ],
-  [
-    "abbreviation" => ["9^9"],
-    "id" => 2101,
   ],
   [
     "abbreviation" => ["9e"],
@@ -550,35 +546,35 @@ $MAP_ABBREVIATIONS = [
     "id" => 8,
   ],
   [
-    "abbreviation" => ["1c+", "1ce"],
+    "abbreviation" => ["1c+", "1ce", "e1c", "1cdog", "c1c"],
     "id" => 300,
   ],
   [
-    "abbreviation" => ["2c+", "2ce"],
+    "abbreviation" => ["2c+", "2ce", "e2c", "2cdog", "c2c"],
     "id" => 301,
   ],
   [
-    "abbreviation" => ["3c+", "3ce"],
+    "abbreviation" => ["3c+", "3ce", "e3c", "3cdog", "c3c"],
     "id" => 302,
   ],
   [
-    "abbreviation" => ["4c+", "4ce"],
+    "abbreviation" => ["4c+", "4ce", "e4c", "4cdog", "c4c"],
     "id" => 303,
   ],
   [
-    "abbreviation" => ["5c+", "5ce"],
+    "abbreviation" => ["5c+", "5ce", "e5c", "5cdog", "c5c"],
     "id" => 304,
   ],
   [
-    "abbreviation" => ["6c+", "6ce"],
+    "abbreviation" => ["6c+", "6ce", "e6c", "6cdog", "c6c"],
     "id" => 305,
   ],
   [
-    "abbreviation" => ["7c+", "7ce"],
+    "abbreviation" => ["7c+", "7ce", "e7c", "7cdog", "c7c"],
     "id" => 306,
   ],
   [
-    "abbreviation" => ["8c+", "8ce"],
+    "abbreviation" => ["8c+", "8ce", "e8c", "8cdog", "c8c"],
     "id" => 307,
   ],
   [
@@ -595,7 +591,7 @@ $MAP_ABBREVIATIONS = [
   ],
   [
     "abbreviation" => ["2e"],
-    "id" => 632,
+    "id" => 1341,
   ],
   [
     "abbreviation" => ["1e"],
@@ -612,10 +608,6 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["hv"],
     "id" => 2122,
-  ],
-  [
-    "abbreviation" => ["t2ahc"],
-    "id" => 98,
   ],
   [
     "abbreviation" => ["dw", "dasteland"],
@@ -678,10 +670,6 @@ $MAP_ABBREVIATIONS = [
     "id" => 1897,
   ],
   [
-    "abbreviation" => ["cma"],
-    "id" => 2441,
-  ],
-  [
     "abbreviation" => ["9c+"],
     "id" => 2100,
   ],
@@ -692,10 +680,6 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["hsc"],
     "id" => 887,
-  ],
-  [
-    "abbreviation" => ["rue", "aarboretum", "arboretum"],
-    "id" => 3251,
   ],
   [
     "abbreviation" => ["lehearsal"],
@@ -724,10 +708,6 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["jetro"],
     "id" => 2129,
-  ],
-  [
-    "abbreviation" => ["7down"],
-    "id" => 2343,
   ],
   [
     "abbreviation" => ["movel"],
@@ -1010,7 +990,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2041,
   ],
   [
-    "abbreviation" => ["z1e", "z1ea", "z1i", "z1ia"],
+    "abbreviation" => ["z1e", "z1ea", "z1i", "z1ia", "rue", "aarboretum", "arboretum"],
     "id" => 3251,
   ],
   [
@@ -1316,5 +1296,165 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["itb"],
     "id" => 4965,
+  ],
+  [
+    "abbreviation" => ["juazz"],
+    "id" => 4904,
+  ],
+  [
+    "abbreviation" => ["nova"],
+    "id" => 5990,
+  ],
+  [
+    "abbreviation" => ["2tas"],
+    "id" => 3639,
+  ],
+  [
+    "abbreviation" => ["1tas"],
+    "id" => 3638,
+  ],
+  [
+    "abbreviation" => ["3tas"],
+    "id" => 3640,
+  ],
+  [
+    "abbreviation" => ["ahit", "a hat in time"],
+    "id" => 6014,
+  ],
+  [
+    "abbreviation" => ["ahit", "ahitb", "a hat in time"],
+    "id" => 6043,
+  ],
+  [
+    "abbreviation" => ["dadish"],
+    "id" => 6013,
+  ],
+  [
+    "abbreviation" => ["catbird"],
+    "id" => 6045,
+  ],
+  [
+    "abbreviation" => ["dadish", "catbird"],
+    "id" => 6012,
+  ],
+  [
+    "abbreviation" => ["deltarune", "dr"],
+    "id" => 6015,
+  ],
+  [
+    "abbreviation" => ["portal"],
+    "id" => 6016,
+  ],
+  [
+    "abbreviation" => ["tetris"],
+    "id" => 6017,
+  ],
+  [
+    "abbreviation" => ["king of thieves"],
+    "id" => 6019,
+  ],
+  [
+    "abbreviation" => ["omori"],
+    "id" => 6021,
+  ],
+  [
+    "abbreviation" => ["vvvvvv", "6v"],
+    "id" => 6022,
+  ],
+  [
+    "abbreviation" => ["minecraft"],
+    "id" => 6024,
+  ],
+  [
+    "abbreviation" => ["spm", "super paper mario", "paper mario", "super paper"],
+    "id" => 6023,
+  ],
+  [
+    "abbreviation" => ["terraria"],
+    "id" => 6025,
+  ],
+  [
+    "abbreviation" => ["terraria", "minecraft"],
+    "id" => 6053,
+  ],
+  [
+    "abbreviation" => ["hollow knight", "hk"],
+    "id" => 6026,
+  ],
+  [
+    "abbreviation" => ["it steals"],
+    "id" => 6027,
+  ],
+  [
+    "abbreviation" => ["earthblade"],
+    "id" => 6028,
+  ],
+  [
+    "abbreviation" => ["subnautica"],
+    "id" => 6018,
+  ],
+  [
+    "abbreviation" => ["subnautica", "subnautica b"],
+    "id" => 6044,
+  ],
+  [
+    "abbreviation" => ["geometry dash", "gd"],
+    "id" => 6029,
+  ],
+  [
+    "abbreviation" => ["portal", "tetris"],
+    "id" => 6052,
+  ],
+  [
+    "abbreviation" => ["5bfv"],
+    "id" => 4428,
+  ],
+  [
+    "abbreviation" => ["5bfierv"],
+    "id" => 4429,
+  ],
+  [
+    "abbreviation" => ["sca"],
+    "id" => 5156,
+  ],
+  [
+    "abbreviation" => ["2e"],
+    "id" => 6747,
+  ],
+  [
+    "abbreviation" => ["1e++"],
+    "id" => 3410,
+  ],
+  [
+    "abbreviation" => ["0eq"],
+    "id" => 6311,
+  ],
+  [
+    "abbreviation" => ["1eq"],
+    "id" => 6304,
+  ],
+  [
+    "abbreviation" => ["2eq"],
+    "id" => 6305,
+  ],
+  [
+    "abbreviation" => ["3eq"],
+    "id" => 6306,
+  ],
+  [
+    "abbreviation" => ["4eq"],
+    "id" => 6307,
+  ],
+  [
+    "abbreviation" => ["5eq"],
+    "id" => 6308,
+  ],
+  [
+    "abbreviation" => ["6eq"],
+    "id" => 6309,
+  ],
+  [
+    "abbreviation" => ["7eq"],
+    "id" => 6310,
   ]
 ];
