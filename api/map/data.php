@@ -172,20 +172,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   $dest = "{$cache_dir}/{$file_key}.json";
-  $is_new = !file_exists($dest);
   file_put_contents($dest, $body);
 
-  // If this is a new file, add an entry to index.json
-  if ($is_new) {
-    $index = CampaignDataIndex::load($cache_dir);
-    if ($index !== null) {
-      $entry = ['path' => $bin_path];
-      if ($id !== null) {
-        $entry['name'] = $map->name;
-      }
-      $index->add_entry($entry);
-      $index->save();
+  // Update index
+  $index = CampaignDataIndex::load($cache_dir);
+  if ($index !== null) {
+    $entry = ['path' => $bin_path];
+    if ($id !== null) {
+      $entry['name'] = $map->name;
     }
+    $index->add_entry($entry);
+    $index->save();
   }
 
   api_write(['success' => true, 'file_key' => $file_key, 'campaign_id' => $campaign_id]);

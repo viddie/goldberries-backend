@@ -117,6 +117,7 @@ class CampaignDataIndex
     if (isset($entry['path'])) {
       foreach ($this->data as $existing) {
         if (isset($existing['path']) && $existing['path'] === $entry['path']) {
+          $this->recalculate_counts();
           return false;
         }
       }
@@ -130,6 +131,21 @@ class CampaignDataIndex
   private function recalculate_counts(): void
   {
     $this->bin_count = count($this->data);
+
+    $conversion_error_count = 0;
+    foreach ($this->data as $entry) {
+      if (!empty($entry['conversion_error'])) {
+        $conversion_error_count++;
+      }
+    }
+
+    if ($conversion_error_count > 0) {
+      $this->status = 'error';
+      $this->message = $conversion_error_count . ' bin(s) failed to convert';
+    } else {
+      $this->status = 'ok';
+      $this->message = null;
+    }
   }
   #endregion
 
