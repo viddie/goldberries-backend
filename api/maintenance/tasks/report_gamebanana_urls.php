@@ -3,7 +3,7 @@
 function task_report_gamebanana_urls($DB)
 {
   $batch_size = 5;
-  $max_consecutive_failures = 10;
+  $max_consecutive_failures = 15;
   $request_delay_microseconds = 1500000;
   $topic = 'Maintenance';
 
@@ -27,7 +27,8 @@ function task_report_gamebanana_urls($DB)
   }
 
   $total_campaigns = count($campaigns);
-  $projected_processing_seconds = intval(ceil(($request_delay_microseconds / 1000000) * $total_campaigns * 1.05));
+  $counter_width = strlen(strval($total_campaigns));
+  $projected_processing_seconds = intval(ceil(($request_delay_microseconds / 1000000) * $total_campaigns * 1.2));
   $projected_processing_time = report_gamebanana_urls_format_duration($projected_processing_seconds);
   $start_message = "Starting weekly GameBanana URL report for {$total_campaigns} campaign(s). Projected processing time: {$projected_processing_time}.";
   echo $start_message . "\n";
@@ -51,6 +52,7 @@ function task_report_gamebanana_urls($DB)
       break;
     }
     $checked_count++;
+    $counter = str_pad($checked_count, $counter_width, ' ', STR_PAD_LEFT);
     $gb_info = $campaign->get_gamebanana_info();
     $probe = report_gamebanana_urls_probe_item($gb_info['item_type'], $gb_info['id']);
 
@@ -62,7 +64,7 @@ function task_report_gamebanana_urls($DB)
       $consecutive_failure_count = 0;
       $pending_unavailable[] = report_gamebanana_urls_format_unavailable_line($campaign);
 
-      echo "[{$checked_count}/{$total_campaigns}] Missing: {$campaign->name} ({$campaign->url})\n";
+      echo "[{$counter}/{$total_campaigns}] MISSING {$campaign->name} ({$campaign->url})\n";
 
       if (count($pending_unavailable) >= $batch_size) {
         $batch_count++;
@@ -72,7 +74,7 @@ function task_report_gamebanana_urls($DB)
     } else {
       $error_count++;
       $consecutive_failure_count++;
-      echo "[{$checked_count}/{$total_campaigns}] Error: {$campaign->name} ({$probe['message']})\n";
+      echo "[{$counter}/{$total_campaigns}] ERROR   {$campaign->name} ({$probe['message']})\n";
       log_error("GameBanana check failed for campaign '{$campaign->name}' ({$campaign->url}): {$probe['message']}", $topic);
 
       if ($consecutive_failure_count >= $max_consecutive_failures) {
@@ -84,7 +86,7 @@ function task_report_gamebanana_urls($DB)
     }
 
     if ($checked_count % 25 === 0 || $checked_count === $total_campaigns) {
-      echo "Progress: {$checked_count}/{$total_campaigns} checked, {$unavailable_count} unavailable, {$error_count} errors\n";
+      echo "[{$counter}/{$total_campaigns}]         {$unavailable_count} unavailable, {$error_count} errors\n";
     }
 
     if ($checked_count < $total_campaigns) {
@@ -137,7 +139,7 @@ function report_gamebanana_urls_format_duration($seconds)
 
 function report_gamebanana_urls_probe_item($item_type, $item_id)
 {
-  $api_url = gamebanana_api_url($item_type, $item_id, '_idRow');
+  $api_url = gamebanana_api_url($item_type, $item_id, '_idRow,_bIsTrashed,_bIsWithheld,_bIsPrivate');
 
   $response = fetch_data_response($api_url, 5, 15);
   $body = $response['body'];
@@ -173,15 +175,36 @@ function report_gamebanana_urls_probe_item($item_type, $item_id)
     ];
   }
 
-  if (is_array($decoded) && isset($decoded['_idRow'])) {
+  if (!is_array($decoded) || !isset($decoded['_idRow'])) {
     return [
-      'status' => 'available',
-      'message' => 'OK',
+      'status' => 'error',
+      'message' => 'Unexpected GameBanana response shape',
+    ];
+  }
+
+  if (!empty($decoded['_bIsTrashed'])) {
+    return [
+      'status' => 'unavailable',
+      'message' => 'Item is trashed on GameBanana',
+    ];
+  }
+
+  if (!empty($decoded['_bIsPrivate'])) {
+    return [
+      'status' => 'unavailable',
+      'message' => 'Item is private on GameBanana',
+    ];
+  }
+
+  if (!empty($decoded['_bIsWithheld'])) {
+    return [
+      'status' => 'unavailable',
+      'message' => 'Item is withheld on GameBanana',
     ];
   }
 
   return [
-    'status' => 'error',
-    'message' => 'Unexpected GameBanana response shape',
+    'status' => 'available',
+    'message' => 'OK',
   ];
 }
