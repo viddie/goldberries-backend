@@ -160,7 +160,8 @@ class Campaign extends DbObject
 
     $campaigns = array();
     $raw_search_lower = strtolower($raw_search);
-    $similar = $is_exact_search ? "" : " OR SIMILARITY(campaign.name, '$raw_search_lower') > 0.4";
+    $raw_search_lower_escaped = pg_escape_string($raw_search_lower);
+    $similar = $is_exact_search ? "" : " OR SIMILARITY(campaign.name, '$raw_search_lower_escaped') > 0.4";
 
     $query = "SELECT * FROM campaign WHERE campaign.name ILIKE '$search' $similar ORDER BY name";
     $result = pg_query($DB, $query);
@@ -237,11 +238,8 @@ class Campaign extends DbObject
 
   static function find_by_author($DB, $author)
   {
-    $query = "SELECT * FROM campaign WHERE campaign.author_gb_name = '" . $author . "' ORDER BY name";
-    $result = pg_query($DB, $query);
-    if (!$result) {
-      die_json(500, "Could not query database");
-    }
+    $query = "SELECT * FROM campaign WHERE campaign.author_gb_name = $1 ORDER BY name";
+    $result = pg_query_params_or_die($DB, $query, [$author], "Failed to query campaigns by author");
     $campaigns = array();
     while ($row = pg_fetch_assoc($result)) {
       $campaign = new Campaign();

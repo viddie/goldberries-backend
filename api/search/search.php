@@ -18,16 +18,17 @@ if ($search == "") {
   die_json(400, "Search parameter cannot be empty");
 }
 
-$search = pg_escape_string($search);
+//Keep the raw search for exact-match sorting; use escaped variants for SQL.
+$safe_search = pg_escape_string($search);
+$wildcard_search = $safe_search;
 $is_exact_search = true;
-$unmodified_search = $search;
 //Replace % with \% and _ with \_
-$search = str_replace("%", "\%", $search);
-$search = str_replace("_", "\_", $search);
+$wildcard_search = str_replace("%", "\%", $wildcard_search);
+$wildcard_search = str_replace("_", "\_", $wildcard_search);
 
 if (mb_strlen($search) >= 3) {
   //When the search string is too short, we will only search for exact matches
-  $search = "%" . $search . "%";
+  $wildcard_search = "%" . $wildcard_search . "%";
   $is_exact_search = false;
 }
 
@@ -47,21 +48,21 @@ if ($in == null) {
 
 
 $response = [];
-$response['q'] = $unmodified_search;
+$response['q'] = $search;
 $response['in'] = $in;
 
 if (in_array("players", $in)) {
-  $players = Player::search_by_name($DB, $search, $unmodified_search, $is_exact_search);
+  $players = Player::search_by_name($DB, $wildcard_search, $search, $is_exact_search);
   $response['players'] = $players;
 }
 
 if (in_array("campaigns", $in)) {
-  $campaigns = Campaign::search_by_name($DB, $search, $unmodified_search, $is_exact_search);
+  $campaigns = Campaign::search_by_name($DB, $wildcard_search, $search, $is_exact_search);
   $response['campaigns'] = $campaigns;
 }
 
 if (in_array("maps", $in)) {
-  $maps = Map::search_by_name($DB, $search, $unmodified_search, $is_exact_search);
+  $maps = Map::search_by_name($DB, $wildcard_search, $search, $is_exact_search);
   $response['maps'] = $maps;
 }
 
@@ -69,8 +70,8 @@ if (in_array("authors", $in)) {
   //Authors are searched for in campaigns and maps
   //Fields: campaign.author_gb_name and map.author_gb_name
 
-  $similar = $is_exact_search ? "" : " OR SIMILARITY(campaign.author_gb_name, '$unmodified_search') > 0.3";
-  $query = "SELECT DISTINCT author_gb_name FROM campaign WHERE campaign.author_gb_name ILIKE '$search' $similar";
+  $similar = $is_exact_search ? "" : " OR SIMILARITY(campaign.author_gb_name, '$safe_search') > 0.3";
+  $query = "SELECT DISTINCT author_gb_name FROM campaign WHERE campaign.author_gb_name ILIKE '$wildcard_search' $similar";
   $result = pg_query_params_or_die($DB, $query);
   $response['authors'] = [];
   while ($row = pg_fetch_assoc($result)) {
@@ -78,8 +79,8 @@ if (in_array("authors", $in)) {
     $response['authors'][$name] = [];
   }
 
-  $similar = $is_exact_search ? "" : " OR SIMILARITY(map.author_gb_name, '$unmodified_search') > 0.3";
-  $query = "SELECT DISTINCT author_gb_name FROM map WHERE map.author_gb_name ILIKE '$search' $similar";
+  $similar = $is_exact_search ? "" : " OR SIMILARITY(map.author_gb_name, '$safe_search') > 0.3";
+  $query = "SELECT DISTINCT author_gb_name FROM map WHERE map.author_gb_name ILIKE '$wildcard_search' $similar";
   $result = pg_query_params_or_die($DB, $query);
   while ($row = pg_fetch_assoc($result)) {
     $name = $row['author_gb_name'];
@@ -110,7 +111,7 @@ if (in_array("authors", $in)) {
   });
 }
 
-$response["str_len"] = strlen($unmodified_search);
+$response["str_len"] = strlen($search);
 
 api_write($response);
 #endregion

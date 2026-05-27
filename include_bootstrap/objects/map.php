@@ -288,7 +288,8 @@ class Map extends DbObject
   {
     global $MAP_ABBREVIATIONS;
     $raw_search_lower = strtolower($raw_search);
-    $similar = $is_exact_search ? "" : " OR SIMILARITY(map.name, '$raw_search_lower') > 0.4";
+    $raw_search_lower_escaped = pg_escape_string($raw_search_lower);
+    $similar = $is_exact_search ? "" : " OR SIMILARITY(map.name, '$raw_search_lower_escaped') > 0.4";
 
     $query = "SELECT * FROM map WHERE map.name ILIKE '$search' $similar ORDER BY name";
     $result = pg_query($DB, $query);
@@ -365,11 +366,8 @@ class Map extends DbObject
 
   static function find_by_author($DB, $author)
   {
-    $query = "SELECT * FROM map WHERE map.author_gb_name ILIKE '%" . $author . "%' ORDER BY name";
-    $result = pg_query($DB, $query);
-    if (!$result) {
-      die_json(500, "Could not query database");
-    }
+    $query = "SELECT * FROM map WHERE map.author_gb_name ILIKE $1 ORDER BY name";
+    $result = pg_query_params_or_die($DB, $query, ["%$author%"], "Failed to query maps by author");
     $maps = array();
     while ($row = pg_fetch_assoc($result)) {
       $map = new Map();
