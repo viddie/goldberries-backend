@@ -29,6 +29,7 @@ $requireObjects = array(
   "post",
   "badge",
   "badge_player",
+  "stamp_submission",
 );
 
 foreach ($requireObjects as $obj) {
