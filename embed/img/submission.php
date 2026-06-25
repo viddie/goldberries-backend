@@ -39,6 +39,7 @@ $campaign = $challenge->get_campaign();
 $gbInfo = $campaign->get_gamebanana_info();
 
 //Check if the modId is found as jpeg from the cache folder
+$gbCategory = null;
 if ($gbInfo !== null) {
   $modId = $gbInfo['id'];
   $gbCategory = $gbInfo['category'];
@@ -132,6 +133,7 @@ $data = array(
   "submission_is_fc" => $submission->is_fc,
   "submission_date_achieved" => $date_achieved,
   "mod_id" => $modId,
+  "gb_category" => $gbCategory,
   "player_name" => $player->name,
   "player_name_color_start" => $player->account['name_color_start'],
   "player_name_color_end" => $player->account['name_color_end'],
@@ -143,7 +145,7 @@ $data = array(
   "wkhtmltoimage_path" => $wkhtmltoimage_path,
   "file_name" => $img_name . "",
   "folder_name" => "submission",
-  "fields" => ["submission_id", "submission_is_verified", "submission_is_fc", "submission_date_achieved", "mod_id", "player_name", "player_name_color_start", "player_name_color_end", "campaign_name", "campaign_author", "challenge_label", "objective_icon_url", "difficulty_id"],
+  "fields" => ["submission_id", "submission_is_verified", "submission_is_fc", "submission_date_achieved", "mod_id", "gb_category", "player_name", "player_name_color_start", "player_name_color_end", "campaign_name", "campaign_author", "challenge_label", "objective_icon_url", "difficulty_id"],
 );
 if ($map !== null) {
   $data["map_name"] = $map->name;

@@ -1,16 +1,17 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
     <title>Submission</title>
     <style>
-      html, body {
+      html,
+      body {
         width: 1000px;
         height: 500px;
         overflow: hidden;
         color: white;
         margin: 0;
-        font-family: 'Renogare', "Roboto", "Helvetica", "Arial", sans-serif;
+        font-family: "Renogare", "Roboto", "Helvetica", "Arial", sans-serif;
       }
       * {
         box-sizing: border-box;
@@ -61,7 +62,7 @@
 
         font-size: 30px;
         font-weight: bold;
-      
+
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -129,19 +130,27 @@
         font-size: 100%;
       }
       .outlined-big {
-        filter: drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px);
+        filter: drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px)
+          drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px) drop-shadow(black 0 0 5px);
       }
       .outlined-small {
-        filter: drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px);
+        filter: drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px)
+          drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px) drop-shadow(black 0 0 4px)
+          drop-shadow(black 0 0 4px);
       }
       .outlined-small-white {
-        filter: drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px);
+        filter: drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px)
+          drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px) drop-shadow(white 0 0 4px);
       }
       .outlined-tiny {
-        filter: drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 4px);
+        filter: drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px)
+          drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px) drop-shadow(black 0 0 2px)
+          drop-shadow(black 0 0 4px);
       }
       .outlined-tiny-white {
-        filter: drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(black 0 0 4px);
+        filter: drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px)
+          drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px) drop-shadow(white 0 0 2px)
+          drop-shadow(black 0 0 4px);
       }
 
       #test {
@@ -150,87 +159,90 @@
     </style>
     <script src="common.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const submissionId = getCookie('submission_id');
-          const submissionIsVerified = getCookie('submission_is_verified');
-          const submissionIsFc = getCookie('submission_is_fc');
-          const submissionDateAchieved = getCookie('submission_date_achieved');
-          const modId = getCookie('mod_id');
-          let playerName = escapeHtml(getCookie('player_name'));
-          let playerNameColorStart = getCookie('player_name_color_start');
-          let playerNameColorEnd = getCookie('player_name_color_end');
-          let mapName = escapeHtml(getCookie('map_name'));
-          const campaignName = escapeHtml(getCookie('campaign_name'));
-          let sameNames = mapName === campaignName;
-          const isFullGame = mapName === null;
-          const campaignAuthor = escapeHtml(getCookie('campaign_author'));
-          const challengeLabel = escapeHtml(getCookie('challenge_label'));
-          let objectiveIconUrl = getCookie('objective_icon_url');
-          const difficultyId = getCookie('difficulty_id');
+      document.addEventListener("DOMContentLoaded", function () {
+        const submissionId = getCookie("submission_id");
+        const submissionIsVerified = getCookie("submission_is_verified");
+        const submissionIsFc = getCookie("submission_is_fc");
+        const submissionDateAchieved = getCookie("submission_date_achieved");
+        const modId = getCookie("mod_id");
+        const gbCategory = getCookie("gb_category");
+        let playerName = escapeHtml(getCookie("player_name"));
+        let playerNameColorStart = getCookie("player_name_color_start");
+        let playerNameColorEnd = getCookie("player_name_color_end");
+        let mapName = escapeHtml(getCookie("map_name"));
+        const campaignName = escapeHtml(getCookie("campaign_name"));
+        let sameNames = mapName === campaignName;
+        const isFullGame = mapName === null;
+        const campaignAuthor = escapeHtml(getCookie("campaign_author"));
+        const challengeLabel = escapeHtml(getCookie("challenge_label"));
+        let objectiveIconUrl = getCookie("objective_icon_url");
+        const difficultyId = getCookie("difficulty_id");
 
-          let mapImageUrl = escapeHtml(getCookie('map_image_url'));
-          if(mapImageUrl !== "None" && mapImageUrl !== null){
-            sel("#background").style.backgroundImage = "url('"+mapImageUrl+"')";
-          } else {
-            sel("#background").style.backgroundImage = "url('cache/"+modId+".jpg')";
+        let mapImageUrl = escapeHtml(getCookie("map_image_url"));
+        if (mapImageUrl !== "None" && mapImageUrl !== null) {
+          sel("#background").style.backgroundImage = "url('" + mapImageUrl + "')";
+        } else {
+          sel("#background").style.backgroundImage = "url('cache/" + gbCategory + "_" + modId + ".jpg')";
+        }
+
+        sel("#submissionDate").innerHTML = submissionDateAchieved;
+
+        if (submissionIsFc === "True") {
+          sel("#fcIcon").src = "../../icons/fullclear.png";
+        } else {
+          sel("#fcIcon").src = "../../icons/clear.png";
+        }
+
+        sel("#playerName").innerHTML = playerName;
+        if (playerNameColorStart === "None") playerNameColorStart = "rgb(255, 255, 255)";
+        if (playerNameColorEnd === "None") playerNameColorEnd = playerNameColorStart;
+        sel("#playerName").style.backgroundImage =
+          "linear-gradient(90deg, " + playerNameColorStart + " 0%, " + playerNameColorEnd + " 100%)";
+
+        if (mapName !== null) {
+          if (mapName.endsWith("-Side") && mapName.length <= 8) {
+            mapName = campaignName + " [" + mapName + "]";
+            sameNames = true;
           }
-
-          sel("#submissionDate").innerHTML = submissionDateAchieved;
-
-          if (submissionIsFc === "True") {
-            sel("#fcIcon").src = "../../icons/fullclear.png";
-          } else {
-            sel("#fcIcon").src = "../../icons/clear.png";
+          let mapIsArchived = getCookie("map_is_archived") === "True";
+          if (mapIsArchived) {
+            mapName = "[Old] " + mapName;
           }
+        }
+        sel("#mapName").innerHTML = isFullGame ? campaignName : mapName;
+        sel("#mapSuffix").innerHTML = challengeLabel === "None" ? "" : " [" + challengeLabel + "]";
+        sel("#campaign").innerHTML =
+          sameNames || isFullGame ? "by " + campaignAuthor : campaignName + " (by " + campaignAuthor + ")";
 
-          sel("#playerName").innerHTML = playerName;
-          if(playerNameColorStart === "None") playerNameColorStart = "rgb(255, 255, 255)";
-          if(playerNameColorEnd === "None") playerNameColorEnd = playerNameColorStart;
-          sel("#playerName").style.backgroundImage = "linear-gradient(90deg, "+playerNameColorStart+" 0%, "+playerNameColorEnd+" 100%)";
+        const diff = DIFFICULTIES[difficultyId];
+        sel("#diffChip").style.backgroundColor = diff.color;
 
+        sel("#diffLabel").innerHTML = diff.name;
+        sel("#diffLabel").style.color = "#000000";
 
-          if(mapName !== null) {
-            if(mapName.endsWith("-Side") && mapName.length <= 8){
-              mapName = campaignName + " [" + mapName + "]";
-              sameNames = true;
-            }
-            let mapIsArchived = getCookie('map_is_archived') === "True";
-            if(mapIsArchived){
-              mapName = "[Old] " + mapName;
-            }
-          }
-          sel("#mapName").innerHTML = isFullGame ? campaignName : mapName;
-          sel("#mapSuffix").innerHTML = challengeLabel === "None" ? "" : " ["+challengeLabel+"]";
-          sel("#campaign").innerHTML = sameNames || isFullGame ? "by "+campaignAuthor : campaignName + " (by "+campaignAuthor+")";
+        sel("#test").innerHTML =
+          submissionIsVerified + " - is true? " + (submissionIsVerified === "true" ? "yes" : "no");
+        if (submissionIsVerified === "True") {
+          sel("#verifiedChip").style.backgroundColor = "#66bb6a";
+          sel("#verifiedLabel").innerHTML = "Verified";
+          sel("#verifiedLabel").style.color = "black";
+        } else if (submissionIsVerified === "False") {
+          sel("#verifiedChip").style.backgroundColor = "#f44336";
+          sel("#verifiedLabel").innerHTML = "Rejected";
+          sel("#verifiedLabel").style.color = "black";
+        } else {
+          sel("#verifiedChip").style.backgroundColor = "#ffa726";
+          sel("#verifiedLabel").innerHTML = "Pending";
+          sel("#verifiedLabel").style.color = "white";
+        }
 
-          const diff = DIFFICULTIES[difficultyId];
-          sel("#diffChip").style.backgroundColor = diff.color;
-
-          sel("#diffLabel").innerHTML = diff.name;
-          sel("#diffLabel").style.color = "#000000";
-
-          sel("#test").innerHTML = submissionIsVerified + " - is true? " + (submissionIsVerified === "true" ? "yes" : "no");
-          if(submissionIsVerified === "True"){
-            sel("#verifiedChip").style.backgroundColor = "#66bb6a";
-            sel("#verifiedLabel").innerHTML = "Verified";
-            sel("#verifiedLabel").style.color = "black";
-          } else if (submissionIsVerified === "False") {
-            sel("#verifiedChip").style.backgroundColor = "#f44336";
-            sel("#verifiedLabel").innerHTML = "Rejected";
-            sel("#verifiedLabel").style.color = "black";
-          } else {
-            sel("#verifiedChip").style.backgroundColor = "#ffa726";
-            sel("#verifiedLabel").innerHTML = "Pending";
-            sel("#verifiedLabel").style.color = "white";
-          }
-
-          if (objectiveIconUrl === "None") objectiveIconUrl = "/icons/goldenberry-8x.png";
-          if(objectiveIconUrl.startsWith("/")){
-            sel("#objectiveIcon").src = "../../"+objectiveIconUrl;
-          } else {
-            sel("#objectiveIcon").src = objectiveIconUrl;
-          }
-        });
+        if (objectiveIconUrl === "None") objectiveIconUrl = "/icons/goldenberry-8x.png";
+        if (objectiveIconUrl.startsWith("/")) {
+          sel("#objectiveIcon").src = "../../" + objectiveIconUrl;
+        } else {
+          sel("#objectiveIcon").src = objectiveIconUrl;
+        }
+      });
     </script>
   </head>
   <body>
@@ -239,32 +251,28 @@
       <img id="fcIcon" class="outlined-small-white" style="height: 64px" />
       <span id="submissionDate" class="outlined-tiny">Date</span>
       <div>
-        <div class="horizontal-stack" style="justify-content: space-around;">
+        <div class="horizontal-stack" style="justify-content: space-around">
           <h1 id="playerName-h1">
             <span id="playerName" class="outlined-big">Player</span>
           </h1>
         </div>
-        
-        <p class="detail-small outlined-small" style="margin-top: 20px; margin-bottom: 4px;">
-          <span id="mapName">
-            Map Name
-          </span>
-          <span id="mapSuffix">
-            [Label]
-          </span>
+
+        <p class="detail-small outlined-small" style="margin-top: 20px; margin-bottom: 4px">
+          <span id="mapName"> Map Name </span>
+          <span id="mapSuffix"> [Label] </span>
         </p>
-        <p id="campaign" class="detail-small outlined-small" style="max-width: 750px;">Campaign</p>
+        <p id="campaign" class="detail-small outlined-small" style="max-width: 750px">Campaign</p>
       </div>
       <span id="test"></span>
-      <div class="horizontal-stack" style="justify-content: space-between;">
-        <div class="vertical-stack" style="align-self: flex-end;">
-          <div class="horizontal-stack" style="align-self: flex-start;">
-            <div id="verifiedChip" class="chip" style="align-self: flex-start;">
+      <div class="horizontal-stack" style="justify-content: space-between">
+        <div class="vertical-stack" style="align-self: flex-end">
+          <div class="horizontal-stack" style="align-self: flex-start">
+            <div id="verifiedChip" class="chip" style="align-self: flex-start">
               <span id="verifiedLabel" class="label">别吵菌 - Verified</span>
             </div>
           </div>
-          <div class="horizontal-stack" style="align-self: flex-start;">
-            <div id="diffChip" class="chip" style="align-self: flex-start;">
+          <div class="horizontal-stack" style="align-self: flex-start">
+            <div id="diffChip" class="chip" style="align-self: flex-start">
               <span id="diffLabel" class="label">Difficulty Name</span>
             </div>
           </div>
