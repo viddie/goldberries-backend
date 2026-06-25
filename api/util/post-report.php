@@ -14,7 +14,10 @@ check_access($account);
 $data = format_assoc_array_bools(parse_post_body_as_json());
 $topic = trim($data['topic'] ?? null);
 $message = trim($data['message'] ?? null);
-$url = trim($data['url'] ?? null);
+$url = isset($data['url']) && is_string($data['url']) ? trim($data['url']) : null;
+if ($url === '') {
+  $url = null;
+}
 if ($topic === null || $message === null) {
   die_json(400, 'Missing parameters');
 }
