@@ -1,5 +1,8 @@
 <?php
 
+$requestId = bin2hex(random_bytes(4));
+header("X-Request-ID: $requestId");
+
 define("GB_ROOT_LOCAL", dirname(__FILE__));
 
 require_once(GB_ROOT_LOCAL . "/include_bootstrap/config.php");
@@ -47,13 +50,15 @@ require_once(GB_ROOT_LOCAL . "/include_bootstrap/campaign_data_index.php");
 
 
 
-// /**
-//  * Error handler, passes flow over the exception logger with new ErrorException.
-//  */
+/**
+ * Error handler, passes flow over the exception logger with new ErrorException.
+ */
 // function log_error_state($num, $str, $file, $line, $context = null)
 // {
 //   log_exception(new ErrorException($str, 0, $num, $file, $line));
 // }
+
+error_log("[START][$requestId] " . $_SERVER['REQUEST_URI']);
 
 /**
  * Uncaught exception handler.
@@ -65,27 +70,39 @@ function log_exception($e)
 
   if ($e instanceof Error) {
     $message = "Type: " . get_class($e) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
-    log_error("[Error] " . $message, "Server Error");
+    $message = "[Error] " . $message;
+    error_log($message);
+    log_error($message, "Server Error");
     http_response_code(500);
     exit();
   } else if ($e instanceof Exception) {
     $message = "Type: " . get_class($e) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
-    log_error("[Exception] " . $message, "Server Error");
+    $message = "[Exception] " . $message;
+    error_log($message);
+    log_error($message, "Server Error");
     http_response_code(500);
     exit();
   }
 }
 
-// /**
-//  * Checks for a fatal error, work around for set_error_handler not working on fatal errors.
-//  */
-// // function check_for_fatal()
-// // {
-// //   $error = error_get_last();
-// //   if ($error["type"] == E_ERROR)
-// //     log_error($error["type"], $error["message"], $error["file"], $error["line"]);
-// // }
-
-// // register_shutdown_function( "check_for_fatal" );
 // set_error_handler("log_error_state");
 set_exception_handler("log_exception");
+
+/**
+ * Checks for a fatal error, work around for set_error_handler not working on fatal errors.
+ */
+register_shutdown_function(function () {
+  global $requestId;
+  error_log(
+    "[STATUS][$requestId] " . http_response_code()
+  );
+  error_log(
+    "[HEADERS][$requestId] " .
+    json_encode(headers_list())
+  );
+  $error = error_get_last();
+  if ($error !== null) {
+    error_log("[LAST_ERROR][$requestId] " . json_encode($error));
+  }
+  error_log("[END][$requestId]");
+});
