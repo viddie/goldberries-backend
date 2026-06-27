@@ -259,6 +259,7 @@ CREATE TABLE suggestion
  comment                 text NULL,
  is_verified             boolean NULL,
  date_created            timestamptz NOT NULL,
+ date_verified           timestamptz NULL,
  is_accepted             boolean NULL,
  date_accepted           timestamptz NULL,
  CONSTRAINT suggestion_pkey PRIMARY KEY ( "id" ),

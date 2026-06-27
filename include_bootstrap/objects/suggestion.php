@@ -13,6 +13,7 @@ class Suggestion extends DbObject
   public ?string $comment = null;
   public ?bool $is_verified = null;
   public JsonDateTime $date_created;
+  public ?JsonDateTime $date_verified = null;
   public ?bool $is_accepted = null;
   public ?JsonDateTime $date_accepted = null;
 
@@ -36,6 +37,7 @@ class Suggestion extends DbObject
       'comment' => $this->comment,
       'is_verified' => $this->is_verified,
       'date_created' => $this->date_created,
+      'date_verified' => $this->date_verified,
       'is_accepted' => $this->is_accepted,
       'date_accepted' => $this->date_accepted,
     );
@@ -50,6 +52,7 @@ class Suggestion extends DbObject
       'comment',
       'is_verified',
       'date_created',
+      'date_verified',
       'is_accepted',
       'date_accepted',
     ];
@@ -74,6 +77,8 @@ class Suggestion extends DbObject
       $this->is_verified = $arr[$prefix . 'is_verified'] === 't';
     if (isset($arr[$prefix . 'is_accepted']))
       $this->is_accepted = $arr[$prefix . 'is_accepted'] === 't';
+    if (isset($arr[$prefix . 'date_verified']))
+      $this->date_verified = new JsonDateTime($arr[$prefix . 'date_verified']);
     if (isset($arr[$prefix . 'date_accepted']))
       $this->date_accepted = new JsonDateTime($arr[$prefix . 'date_accepted']);
   }
@@ -196,12 +201,12 @@ class Suggestion extends DbObject
     if ($expired === true) {
       $where[] = "(suggestion.is_accepted IS NOT NULL OR suggestion.is_verified = false)";
     } else if ($expired === false) {
-      $where[] = "suggestion.date_created >= NOW() - INTERVAL '" . self::$expiration_days . " days'";
+      $where[] = "(suggestion.date_verified IS NULL OR suggestion.date_verified >= NOW() - INTERVAL '" . self::$expiration_days . " days')";
       $where[] = "suggestion.is_accepted IS NULL";
       $where[] = "(suggestion.is_verified = true OR suggestion.is_verified IS NULL)";
     } else {
       //expired === null -> get expired but undecided suggestions
-      $where[] = "suggestion.date_created < NOW() - INTERVAL '" . self::$expiration_days . " days'";
+      $where[] = "suggestion.date_verified < NOW() - INTERVAL '" . self::$expiration_days . " days'";
       $where[] = "suggestion.is_accepted IS NULL";
       $where[] = "(suggestion.is_verified = true OR suggestion.is_verified IS NULL)";
     }
@@ -258,7 +263,13 @@ class Suggestion extends DbObject
       }
     }
 
-    $query .= " ORDER BY suggestion.date_accepted DESC, suggestion.date_created DESC";
+    if ($expired === true) {
+      $query .= " ORDER BY suggestion.date_accepted DESC, suggestion.date_created DESC";
+    } else {
+      //active (expired === false) and undecided (expired === null) sort by date_verified,
+      //keeping unverified suggestions (date_verified IS NULL) at the top
+      $query .= " ORDER BY suggestion.date_verified DESC NULLS FIRST, suggestion.date_created DESC";
+    }
 
     $query = "
     WITH query AS (

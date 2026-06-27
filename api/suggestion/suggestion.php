@@ -50,6 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $old_suggestion->is_verified = $suggestion->is_verified;
 
       if ($suggestion->is_verified === true) {
+        $old_suggestion->date_verified = new JsonDateTime();
         send_webhook_suggestion_verified($old_suggestion);
       } else {
         $old_suggestion->date_accepted = new JsonDateTime();
