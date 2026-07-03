@@ -226,7 +226,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2210,
   ],
   [
-    "abbreviation" => ["2kahc", "ahc", "t2ahc"],
+    "abbreviation" => ["2kahc", "ahc", "t2ahc", "housis"],
     "id" => 98,
   ],
   [
@@ -290,7 +290,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2355,
   ],
   [
-    "abbreviation" => ["ff", "frake", "frakes"],
+    "abbreviation" => ["ff"],
     "id" => 1986,
   ],
   [
@@ -534,7 +534,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 2192,
   ],
   [
-    "abbreviation" => ["for"],
+    "abbreviation" => ["for", "flig"],
     "id" => 2103,
   ],
   [
@@ -1112,19 +1112,19 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["tgitcotlawr"],
     "id" => 2224,
-  ], 
+  ],
   [
     "abbreviation" => ["ttm"],
     "id" => 2229,
-  ], 
+  ],
   [
     "abbreviation" => ["astroline"],
     "id" => 2055,
-  ], 
+  ],
   [
     "abbreviation" => ["dumber"],
     "id" => 3675,
-  ], 
+  ],
   [
     "abbreviation" => ["mbo", "brorchestra"],
     "id" => 6030,
@@ -1178,7 +1178,7 @@ $MAP_ABBREVIATIONS = [
     "id" => 6239,
   ],
   [
-    "abbreviation" => ["ff"],
+    "abbreviation" => ["ff", "frake", "frakes"],
     "id" => 6566,
   ],
   [
@@ -1456,5 +1456,193 @@ $MAP_ABBREVIATIONS = [
   [
     "abbreviation" => ["7eq"],
     "id" => 6310,
+  ],
+  [
+    "abbreviation" => ["7sj", "sjummit"],
+    "id" => 2359,
+  ],
+  [
+    "abbreviation" => ["67"],
+    "id" => 6836,
+  ],
+  [
+    "abbreviation" => ["ed"],
+    "id" => 7984,
+  ],
+  [
+    "abbreviation" => ["shss"],
+    "id" => 6639,
+  ],
+  [
+    "abbreviation" => ["+d"],
+    "id" => 8093,
+  ],
+  [
+    "abbreviation" => ["7cn"],
+    "id" => 8085,
+  ],
+  [
+    "abbreviation" => ["pd", "pleck"],
+    "id" => 8087,
+  ],
+  [
+    "abbreviation" => ["ch"],
+    "id" => 8086,
+  ],
+  [
+    "abbreviation" => ["yw"],
+    "id" => 8089,
+  ],
+  [
+    "abbreviation" => ["?ad"],
+    "id" => 8090,
+  ],
+  [
+    "abbreviation" => ["pp6p"],
+    "id" => 7332,
+  ],
+  [
+    "abbreviation" => ["r29b"],
+    "id" => 8092,
+  ],
+  [
+    "abbreviation" => ["d6d"],
+    "id" => 8094,
+  ],
+  [
+    "abbreviation" => ["d6c"],
+    "id" => 8095,
+  ],
+  [
+    "abbreviation" => ["mm"],
+    "id" => 8096,
+  ],
+  [
+    "abbreviation" => ["nn"],
+    "id" => 8099,
+  ],
+  [
+    "abbreviation" => ["nn"],
+    "id" => 8097,
+  ],
+  [
+    "abbreviation" => ["1y"],
+    "id" => 4958,
+  ],
+  [
+    "abbreviation" => ["2y"],
+    "id" => 4969,
+  ],
+  [
+    "abbreviation" => ["3y"],
+    "id" => 4970,
+  ],
+  [
+    "abbreviation" => ["4y"],
+    "id" => 4971,
+  ],
+  [
+    "abbreviation" => ["5y"],
+    "id" => 4972,
+  ],
+  [
+    "abbreviation" => ["6y"],
+    "id" => 4973,
+  ],
+  [
+    "abbreviation" => ["7y"],
+    "id" => 4974,
+  ],
+  [
+    "abbreviation" => ["8y"],
+    "id" => 4975,
+  ],
+  [
+    "abbreviation" => ["9y"],
+    "id" => 4976,
+  ],
+  [
+    "abbreviation" => ["1crouch"],
+    "id" => 4405,
+  ],
+  [
+    "abbreviation" => ["2crouch"],
+    "id" => 5481,
+  ],
+  [
+    "abbreviation" => ["eds"],
+    "id" => 7992,
+  ],
+  [
+    "abbreviation" => ["tfyw"],
+    "id" => 7066,
+  ],
+  [
+    "abbreviation" => ["5to", "5tile"],
+    "id" => 4522,
+  ],
+  [
+    "abbreviation" => ["4to", "5tile"],
+    "id" => 8104,
+  ],
+  [
+    "abbreviation" => ["lic", "olic"],
+    "id" => 8105,
+  ],
+  [
+    "abbreviation" => ["nlic", "idlic", "lic"],
+    "id" => 8106,
+  ],
+  [
+    "abbreviation" => ["sds2"],
+    "id" => 8110,
+  ],
+  [
+    "abbreviation" => ["bdhs"],
+    "id" => 4802,
+  ],
+  [
+    "abbreviation" => ["cdm"],
+    "id" => 8117,
+  ],
+  [
+    "abbreviation" => ["caviary"],
+    "id" => 6872,
+  ],
+  [
+    "abbreviation" => ["jity"],
+    "id" => 8125,
+  ],
+  [
+    "abbreviation" => ["mdagth"],
+    "id" => 8126,
+  ],
+  [
+    "abbreviation" => ["sr", "srise"],
+    "id" => 2206,
+  ],
+  [
+    "abbreviation" => ["kumper", "kj"],
+    "id" => 7076,
+  ],
+  [
+    "abbreviation" => ["t1ed"],
+    "id" => 5032,
+  ],
+  [
+    "abbreviation" => ["sorest"],
+    "id" => 1506,
+  ],
+  [
+    "abbreviation" => ["sorestb"],
+    "id" => 1507,
+  ],
+  [
+    "abbreviation" => ["sorestc"],
+    "id" => 1508,
+  ],
+  [
+    "abbreviation" => ["ctsf"],
+    "id" => 8206,
   ]
 ];

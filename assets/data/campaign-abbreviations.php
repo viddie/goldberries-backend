@@ -188,5 +188,9 @@ $CAMPAIGN_ABBREVIATIONS = [
   [
     "abbreviation" => ["vbc", "vbdc"],
     "id" => 1433,
-  ]
+  ],
+  [
+    "abbreviation" => ["cbp", "cbdp", "ocbdp"],
+    "id" => 3361,
+  ],
 ];
