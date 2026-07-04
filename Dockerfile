@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
   libzip-dev \
   libpng-dev \
   libjpeg62-turbo-dev \
+  libwebp-dev \
   libfreetype6-dev \
   libonig-dev \
   gettext \
@@ -16,6 +17,7 @@ RUN apt-get update && apt-get install -y \
   && docker-php-ext-configure gd \
   --with-freetype \
   --with-jpeg \
+  --with-webp \
   && docker-php-ext-install -j$(nproc) \
   exif \
   gd \
