@@ -13,7 +13,47 @@
 
 This repository contains the backend. The backend provides an API written in PHP, ontop of a postgres database.
 
-### Setup
+### Setup (Docker)
+
+The recommended way to run the backend is via Docker. This spins up the PHP backend, a cron container and a PostgreSQL database with a single command.
+
+#### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
+
+#### Steps
+
+1. Copy `.env.example` to `.env` and fill in proper values (database credentials, Discord OAuth, webhook URLs, ...):
+
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Build the containers:
+
+   ```sh
+   docker compose build
+   ```
+
+3. Start the containers in the background:
+
+   ```sh
+   docker compose up -d
+   ```
+
+4. Restore the database from the provided dump (`backup-safe.dump` contains no user data):
+
+   ```sh
+   pg_restore -d goldberries backup-safe.dump
+   ```
+
+5. Add an admin account for yourself. Replace `<your_id>` with your player ID and `<your_discord_id>` with your Discord ID:
+
+   ```sql
+   INSERT INTO account (player_id, role, discord_id) VALUES (<your_id>, 40, <your_discord_id>);
+   ```
+
+### Setup (old)
 
 #### Database
 
@@ -100,7 +140,7 @@ export GB_DBPORT=5432 && export GB_DBNAME=goldberries && export GB_DBUSER=<user>
 Add a cron job that runs it every 15 minutes:  
 `*/15 * * * * /var/www/goldberries.net/api/traffic/log.sh`
 
-### Run
+#### Run (old)
 
 To run the backend:
 
