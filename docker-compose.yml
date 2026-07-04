@@ -17,6 +17,17 @@ services:
 
     restart: unless-stopped
 
+  cron:
+    build: .
+    container_name: backend-cron
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
+    command: ["cron", "-f"]
+
   db:
     image: postgres:17
 

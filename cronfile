@@ -1,0 +1,5 @@
+*/15 * * * * www-data bash /var/www/html/api/traffic/log.sh >> /proc/1/fd/1 2>&1
+
+0 * * * * www-data bash /var/www/html/api/maintenance/run.sh hourly >> /proc/1/fd/1 2>&1
+0 3 * * * www-data bash /var/www/html/api/maintenance/run.sh daily >> /proc/1/fd/1 2>&1
+0 4 * * 0 www-data bash /var/www/html/api/maintenance/run.sh weekly >> /proc/1/fd/1 2>&1

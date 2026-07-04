@@ -2,6 +2,7 @@ FROM php:8.4-apache
 
 # Install required libraries
 RUN apt-get update && apt-get install -y \
+  cron \
   libcurl4-openssl-dev \
   libpq-dev \
   libzip-dev \
@@ -34,5 +35,9 @@ COPY apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Optional but handy
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Setup cron
+COPY cronfile /etc/cron.d/app-cron
+RUN chmod 0644 /etc/cron.d/app-cron
 
 WORKDIR /var/www/html
