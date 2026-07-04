@@ -1,0 +1,39 @@
+services:
+  backend:
+    build: .
+    container_name: backend
+
+    ports:
+      - "80:80"
+
+    volumes:
+      - .:/var/www/html
+
+    env_file:
+      - .env
+
+    depends_on:
+      - db
+
+    restart: unless-stopped
+
+  db:
+    image: postgres:17
+
+    container_name: postgres
+
+    ports:
+      - "5432:5432"
+
+    environment:
+      POSTGRES_DB: ${GB_DBNAME}
+      POSTGRES_USER: ${GB_DBUSER}
+      POSTGRES_PASSWORD: ${GB_DBPASS}
+
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+volumes:
+  postgres-data:

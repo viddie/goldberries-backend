@@ -8,3 +8,4 @@ embed/img/submission/*
 temp/*
 cache/*
 assets/bin_structure.json
+.env

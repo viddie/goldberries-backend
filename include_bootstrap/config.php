@@ -3,7 +3,7 @@
 #region General constants
 DEFINE("ADMIN_EMAIL", "admin@domain.com");
 DEFINE("NOREPLY_EMAIL", "noreply@goldberries.net");
-DEFINE("DB_STRING", "host=localhost port=" . getenv("GB_DBPORT") . " dbname=" . getenv("GB_DBNAME") . " user=" . getenv("GB_DBUSER") . " password=" . getenv("GB_DBPASS"));
+DEFINE("DB_STRING", "host=" . getenv("GB_DBHOST") . " port=" . getenv("GB_DBPORT") . " dbname=" . getenv("GB_DBNAME") . " user=" . getenv("GB_DBUSER") . " password=" . getenv("GB_DBPASS"));
 #endregion
 
 #region Webhooks
