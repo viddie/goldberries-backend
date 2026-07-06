@@ -48,6 +48,20 @@ require_once(GB_ROOT_LOCAL . "/include_bootstrap/embed_manage.php");
 require_once(GB_ROOT_LOCAL . "/include_bootstrap/campaign_data_index.php");
 
 
+// Initialize folders
+$directories = [
+  __DIR__ . '/cache/campaign_data',
+  __DIR__ . '/cache/campaign_data_temp',
+  __DIR__ . '/temp/campaign_data',
+  __DIR__ . '/temp/processing_locks',
+  __DIR__ . '/embed/img/cache',
+  __DIR__ . '/embed/img/campaign-collage',
+  __DIR__ . '/embed/img/submission',
+];
+
+foreach ($directories as $dir) {
+  ensureDirectory($dir);
+}
 
 
 /**
@@ -106,3 +120,18 @@ register_shutdown_function(function () {
   }
   error_log("[END][$requestId]");
 });
+
+
+function ensureDirectory(string $path, int $mode = 0775): void
+{
+  if (is_dir($path)) {
+    return;
+  }
+
+  if (!mkdir($path, $mode, true) && !is_dir($path)) {
+    throw new RuntimeException("Failed to create directory: {$path}");
+  }
+
+  // Ensure the permissions are correct even if the current umask restricted them.
+  chmod($path, $mode);
+}
