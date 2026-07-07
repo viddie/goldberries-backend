@@ -20,11 +20,14 @@ JOIN difficulty d ON d.id = c.difficulty_id
 GROUP BY ss.player_id, p.name, p.id";
 
 $sort_by_total_tier = isset($_GET['sort_by_total_tier']) ? $_GET['sort_by_total_tier'] === "true" : false;
+$sort_by_stamp_count = isset($_GET['sort_by_stamp_count']) ? $_GET['sort_by_stamp_count'] === "true" : false;
 
 if ($sort_by_total_tier) {
-    $query .= " ORDER BY total_tier DESC";
+  $query .= " ORDER BY total_tier DESC";
+} else if ($sort_by_stamp_count) {
+  $query .= " ORDER BY stamp_count DESC";
 } else {
-    $query .= " ORDER BY stamp_count DESC";
+  $query .= " ORDER BY player_name";
 }
 
 $result = pg_query($DB, $query);
