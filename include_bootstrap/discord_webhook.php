@@ -116,7 +116,7 @@ function send_webhook_suggestion_verified($suggestion)
     $difficulties_str = implode(", ", $difficulties_str_arr);
 
     $fields[] = [
-      "name" => "Difficulty Suggestions ({$count_suggestions}/{$count_submissions} submissions)",
+      "name" => "Difficulty Opinions ({$count_suggestions}/{$count_submissions} submissions)",
       "value" => "$difficulties_str",
       "inline" => false
     ];
