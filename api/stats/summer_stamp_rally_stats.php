@@ -6,6 +6,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Invalid request method');
 }
 
+$sort_by = isset($_REQUEST['sort_by']) ? $_REQUEST['sort_by'] : 'name';
+$valid_sort_by = ['name', 'total_tier', 'stamp_count'];
+
+if (!in_array($sort_by, $valid_sort_by)) {
+  die_json(400, "Invalid sort_by parameter. Valid values: " . implode(', ', $valid_sort_by));
+}
+
 $query = "SELECT
 	COUNT(*) AS stamp_count,
 	SUM(d.sort) AS total_tier,
@@ -19,22 +26,14 @@ JOIN challenge c ON c.id = s.challenge_id
 JOIN difficulty d ON d.id = c.difficulty_id
 GROUP BY ss.player_id, p.name, p.id";
 
-$sort_by_total_tier = isset($_GET['sort_by_total_tier']) ? $_GET['sort_by_total_tier'] === "true" : false;
-$sort_by_stamp_count = isset($_GET['sort_by_stamp_count']) ? $_GET['sort_by_stamp_count'] === "true" : false;
-
-if ($sort_by_total_tier) {
-  $query .= " ORDER BY total_tier DESC";
-} else if ($sort_by_stamp_count) {
-  $query .= " ORDER BY stamp_count DESC";
-} else {
+if ($sort_by === 'name') {
   $query .= " ORDER BY player_name";
+} else {
+  $order_by_column = $sort_by === 'stamp_count' ? 'stamp_count' : 'total_tier';
+  $query .= " ORDER BY $order_by_column DESC";
 }
 
-$result = pg_query($DB, $query);
-
-if (!$result) {
-  die_json(500, "Failed to query database");
-}
+$result = pg_query_params_or_die($DB, $query);
 
 $data = [];
 
