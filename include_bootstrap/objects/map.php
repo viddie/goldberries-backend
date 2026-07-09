@@ -291,7 +291,14 @@ class Map extends DbObject
     $raw_search_lower_escaped = pg_escape_string($raw_search_lower);
     $similar = $is_exact_search ? "" : " OR SIMILARITY(map.name, '$raw_search_lower_escaped') > 0.4";
 
-    $query = "SELECT * FROM map WHERE map.name ILIKE '$search' $similar ORDER BY name";
+    //If the raw search is a valid abbreviation, also match names against the constructed abbreviation regex
+    $abbreviation = "";
+    if (is_valid_abbreviation($raw_search)) {
+      $abbreviation_regex = pg_escape_string(construct_abbreviation_search($raw_search));
+      $abbreviation = " OR map.name ~* '$abbreviation_regex'";
+    }
+
+    $query = "SELECT * FROM map WHERE map.name ILIKE '$search' $similar $abbreviation ORDER BY name";
     $result = pg_query($DB, $query);
     if (!$result) {
       die_json(500, "Could not query database");
@@ -305,10 +312,12 @@ class Map extends DbObject
     }
 
     //Sort by:
-    // 1. Exact match
+    // 0. Exact match
+    // 1. Abbreviation match (check via the regex)
     // 2. Start of name
     // 3. Alphabetical
-    usort($maps, function ($a, $b) use ($raw_search_lower) {
+    $abbreviation_regex_php = is_valid_abbreviation($raw_search) ? '/' . construct_abbreviation_search($raw_search) . '/i' : null;
+    usort($maps, function ($a, $b) use ($raw_search_lower, $abbreviation_regex_php) {
       $a_name = strtolower($a->name);
       $b_name = strtolower($b->name);
       $search = $raw_search_lower;
@@ -320,6 +329,17 @@ class Map extends DbObject
         return -1;
       } else if (!$a_exact && $b_exact) {
         return 1;
+      }
+
+      if ($abbreviation_regex_php !== null) {
+        $a_abbrev = preg_match($abbreviation_regex_php, $a->name) === 1;
+        $b_abbrev = preg_match($abbreviation_regex_php, $b->name) === 1;
+
+        if ($a_abbrev && !$b_abbrev) {
+          return -1;
+        } else if (!$a_abbrev && $b_abbrev) {
+          return 1;
+        }
       }
 
       $a_start = strpos($a_name, $search) === 0;

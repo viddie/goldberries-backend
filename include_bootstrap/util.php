@@ -247,6 +247,31 @@ function has_flag(int $flags, int $flag): bool
   return ($flags & $flag) === $flag;
 }
 
+/**
+ * Validates if the input abbreviation is strictly letters and numbers, with no spaces.
+ */
+function is_valid_abbreviation(string $abbreviation): bool
+{
+  // Returns true only if the string contains 1 or more alphanumeric characters and nothing else
+  return (bool) preg_match('/^[a-zA-Z0-9]+$/', $abbreviation);
+}
+
+/**
+ * Constructs the PostgreSQL regex pattern for an abbreviation search.
+ */
+function construct_abbreviation_search(string $abbreviation): string
+{
+  // Split the input into an array of individual characters
+  $characters = str_split(mb_strtolower($abbreviation));
+
+  // Map each character to its regex representation
+  $parts = array_map(function ($char) {
+    return preg_quote($char, '/') . '[a-z0-9]*';
+  }, $characters);
+
+  // Join the parts with the whitespace separator and wrap with anchors
+  return '^' . implode('\s+', $parts) . '$';
+}
 
 #region Processing Slot Lock
 $PROCESSING_SLOT_COUNT = 3;
