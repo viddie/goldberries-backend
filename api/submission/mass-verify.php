@@ -60,7 +60,10 @@ foreach ($ids as $id) {
 //Update if all submissions are valid
 foreach ($submissions as $submission) {
   $submission->is_verified = $is_verified;
-  $submission->verifier_notes = $verifier_notes;
+  if ($verifier_notes !== null) {
+    // Update only if set, otherwise keep existing notes
+    $submission->verifier_notes = $verifier_notes;
+  }
   $submission->date_verified = new JsonDateTime();
   $submission->verifier_id = $account->player->id;
   $submission->new_challenge_id = $is_verified === true ? null : $submission->new_challenge_id;
