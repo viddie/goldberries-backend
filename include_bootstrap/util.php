@@ -252,6 +252,10 @@ function has_flag(int $flags, int $flag): bool
  */
 function is_valid_abbreviation(string $abbreviation): bool
 {
+  // Returns false if the string is 1 or fewer characters long
+  if (strlen($abbreviation) <= 1) {
+    return false;
+  }
   // Returns true only if the string contains 1 or more alphanumeric characters and nothing else
   return (bool) preg_match('/^[a-zA-Z0-9]+$/', $abbreviation);
 }
@@ -266,7 +270,7 @@ function construct_abbreviation_search(string $abbreviation): string
 
   // Map each character to its regex representation
   $parts = array_map(function ($char) {
-    return preg_quote($char, '/') . '[a-z0-9]*';
+    return preg_quote($char, '/') . '[a-z0-9\-]*';
   }, $characters);
 
   // Join the parts with the whitespace separator and wrap with anchors
