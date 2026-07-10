@@ -6,11 +6,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
   die_json(405, 'Invalid request method');
 }
 
-$sort_by = isset($_REQUEST['sort_by']) ? $_REQUEST['sort_by'] : 'name';
-$valid_sort_by = ['name', 'total_tier', 'stamp_count'];
+$sort = isset($_REQUEST['sort']) ? $_REQUEST['sort'] : 'name';
+$valid_sort = ['name', 'total_tier', 'stamp_count'];
 
-if (!in_array($sort_by, $valid_sort_by)) {
-  die_json(400, "Invalid sort_by parameter. Valid values: " . implode(', ', $valid_sort_by));
+if (!in_array($sort, $valid_sort)) {
+  die_json(400, "Invalid sort_by parameter. Valid values: " . implode(', ', $valid_sort));
 }
 
 $query = "SELECT
@@ -26,10 +26,10 @@ JOIN challenge c ON c.id = s.challenge_id
 JOIN difficulty d ON d.id = c.difficulty_id
 GROUP BY ss.player_id, p.name, p.id";
 
-if ($sort_by === 'name') {
+if ($sort === 'name') {
   $query .= " ORDER BY player_name";
 } else {
-  $order_by_column = $sort_by === 'stamp_count' ? 'stamp_count' : 'total_tier';
+  $order_by_column = $sort === 'stamp_count' ? 'stamp_count' : 'total_tier';
   $query .= " ORDER BY $order_by_column DESC";
 }
 
