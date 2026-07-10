@@ -295,7 +295,7 @@ class Map extends DbObject
     $abbreviation = "";
     if (is_valid_abbreviation($raw_search)) {
       $abbreviation_regex = pg_escape_string(construct_abbreviation_search($raw_search));
-      $abbreviation = " OR map.name ~* '$abbreviation_regex'";
+      $abbreviation = " OR regexp_replace(name, '[^a-zA-Z0-9\-\s]+', '', 'g') ~* '$abbreviation_regex'";
     }
 
     $query = "SELECT * FROM map WHERE map.name ILIKE '$search' $similar $abbreviation ORDER BY name";
