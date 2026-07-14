@@ -21,6 +21,7 @@ $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : null;
 $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : null;
 $min_diff_sort = isset($_GET['min_diff_sort']) ? intval($_GET['min_diff_sort']) : $TIERED_SORT_START; //What the user requests to see via the filter options
 $max_diff_sort = isset($_GET['max_diff_sort']) ? intval($_GET['max_diff_sort']) : $MAX_SORT;
+$liked_player_id = isset($_GET['liked_player_id']) ? intval(($_GET['liked_player_id'])) : null;
 //Clear states: 0 = all, 1 = Only C, 2 = Only FC, 3 = Only FC or C/FC (No C), 4 = Only C or C/FC (No FC)
 $clear_state = isset($_GET['clear_state']) ? intval($_GET['clear_state']) : 0;
 $filter_country = isset($_GET['country']) ? $_GET['country'] : null;
@@ -182,6 +183,14 @@ while ($row = pg_fetch_assoc($result)) {
   $challenge->submissions[$submission->id] = $submission;
 }
 
+$player_likes = [];
+//Get player likes
+if ($liked_player_id !== null) {
+  foreach (Like::get_player_likes($DB, $liked_player_id) as $like) {
+    $player_likes[] = $like->challenge_id;
+  }
+}
+
 //Flatten submissions
 foreach ($response['challenges'] as $challenge_id => $challenge) {
   if ($sub_count !== null) {
@@ -193,6 +202,11 @@ foreach ($response['challenges'] as $challenge_id => $challenge) {
       unset($response['challenges'][$challenge_id]);
       continue;
     }
+  }
+
+  if ($liked_player_id !== null && !in_array($challenge_id, $player_likes)) {
+    unset($response['challenges'][$challenge_id]);
+    continue;
   }
 
   $response['challenges'][$challenge_id]->submissions = array_values($challenge->submissions);
