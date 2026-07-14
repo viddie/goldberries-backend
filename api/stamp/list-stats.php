@@ -7,16 +7,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 $sort = isset($_REQUEST['sort']) ? $_REQUEST['sort'] : 'name';
-$valid_sort = ['name', 'total_tier', 'stamp_count'];
+$valid_sort = ['name', 'total_tier', 'stamp_count', 'avg_tier'];
 
 if (!in_array($sort, $valid_sort)) {
-  die_json(400, "Invalid sort_by parameter. Valid values: " . implode(', ', $valid_sort));
+  die_json(400, "Invalid sort parameter. Valid values: " . implode(', ', $valid_sort));
 }
 
 $query = "SELECT
 	COUNT(*) AS stamp_count,
 	SUM(d.sort) AS total_tier,
-	SUM(d.sort) / 10.0 AS avg_tier,
+	AVG(d.sort) AS avg_tier,
 	p.name AS player_name,
 	p.id AS player_id
 FROM stamp_submission ss
@@ -29,8 +29,7 @@ GROUP BY ss.player_id, p.name, p.id";
 if ($sort === 'name') {
   $query .= " ORDER BY player_name";
 } else {
-  $order_by_column = $sort === 'stamp_count' ? 'stamp_count' : 'total_tier';
-  $query .= " ORDER BY $order_by_column DESC";
+  $query .= " ORDER BY $sort DESC";
 }
 
 $result = pg_query_params_or_die($DB, $query);
