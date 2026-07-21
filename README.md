@@ -20,6 +20,8 @@ The recommended way to run the backend is via Docker. This spins up the PHP back
 #### Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/)
+- A Discord OAuth application (ClientID and Secret)
+  - Set the redirect URI to `http://localhost/api/auth/discord_auth.php`
 
 #### Steps
 
