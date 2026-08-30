@@ -82,7 +82,26 @@ function download_and_scan_mod($mod_id, $item_type, $temp_dir, $cache_dir, $rege
     return ['success' => false, 'error' => $error];
   }
 
-  $gb_files = $mod_data['_aFiles'];
+  $gb_files = [];
+  foreach ($mod_data['_aFiles'] as $file_info) {
+    $file_id = $file_info['_idRow'] ?? null;
+    if ($file_id === null) {
+      $error = "GameBanana file is missing its ID";
+      write_error_index($cache_dir, $error);
+      return ['success' => false, 'error' => $error];
+    }
+
+    $file_check = gamebanana_file_contains_bin(intval($file_id));
+    if (!$file_check['success']) {
+      $error = $file_check['error'];
+      write_error_index($cache_dir, $error);
+      return ['success' => false, 'error' => $error];
+    }
+
+    if ($file_check['contains_bin']) {
+      $gb_files[] = $file_info;
+    }
+  }
 
   // Download all mod files (skip if already cached, unless regenerate is set)
   foreach ($gb_files as $file_info) {
@@ -355,6 +374,59 @@ function write_error_index($cache_dir, $message)
 {
   $index = CampaignDataIndex::create_error($cache_dir, $message);
   $index->save();
+}
+
+/**
+ * Checks whether a GameBanana file contains any .bin files.
+ * @param int $file_id GameBanana file ID
+ * @return array{success: bool, contains_bin?: bool, error?: string}
+ */
+function gamebanana_file_contains_bin($file_id)
+{
+  $url = "https://api.gamebanana.com/Core/Item/Data?itemtype=File&itemid={$file_id}&fields=aFlattenedFileList()";
+  $response = fetch_data_response($url, 5, 30);
+  if ($response['body'] === false || $response['http_code'] >= 400) {
+    return [
+      'success' => false,
+      'error' => "Failed to fetch contents for GameBanana file {$file_id}",
+    ];
+  }
+
+  $file_list = json_decode($response['body'], true);
+  if (json_last_error() !== JSON_ERROR_NONE) {
+    return [
+      'success' => false,
+      'error' => "Failed to decode contents for GameBanana file {$file_id}",
+    ];
+  }
+
+  return [
+    'success' => true,
+    'contains_bin' => gamebanana_file_list_contains_bin($file_list),
+  ];
+}
+
+/**
+ * Recursively checks a GameBanana flattened file list for a .bin file.
+ * @param mixed $file_list
+ * @return bool
+ */
+function gamebanana_file_list_contains_bin($file_list)
+{
+  if (!is_array($file_list)) {
+    return false;
+  }
+
+  foreach ($file_list as $entry) {
+    if (is_array($entry) && gamebanana_file_list_contains_bin($entry)) {
+      return true;
+    }
+    if (is_string($entry) && preg_match('/\.bin$/i', $entry) === 1) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
