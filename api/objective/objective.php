@@ -4,6 +4,7 @@ require_once('../api_bootstrap.inc.php');
 
 #region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+  api_cache_public(300);
   $id = $_REQUEST['id'];
   $objectives = Objective::get_request($DB, $id);
   api_write($objectives);
