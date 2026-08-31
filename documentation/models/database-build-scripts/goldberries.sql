@@ -278,6 +278,7 @@ CREATE TABLE suggestion_vote
  vote          text NOT NULL,
  comment       text NULL,
  CONSTRAINT suggestion_vote_pkey PRIMARY KEY ( "id" ),
+ CONSTRAINT suggestion_vote_player_suggestion_unique UNIQUE ( player_id, suggestion_id ),
  CONSTRAINT suggestion_vote_player_id_fkey FOREIGN KEY ( player_id ) REFERENCES player ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT suggestion_vote_suggestion_id_fkey FOREIGN KEY ( suggestion_id ) REFERENCES suggestion ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE,
  CONSTRAINT check_suggestion_vote_vote CHECK ( vote IN ('+', '-', 'i') )
