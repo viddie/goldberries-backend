@@ -31,6 +31,7 @@ $highlight_player_id = isset($_GET['highlight_player_id']) ? intval($_GET['highl
 
 
 $query = "SELECT * FROM view_submissions";
+$query_params = [];
 $where = [];
 $where[] = "submission_is_verified = true";
 $where[] = "challenge_is_rejected = FALSE";
@@ -68,7 +69,25 @@ if (!isset($_GET['archived']) || $_GET['archived'] === "false") {
 if (isset($_GET["hide_objectives"])) {
   //hide_objectives will be an array of objective.id's to not include in the search
   $hide_objectives = $_GET["hide_objectives"];
-  $where[] = "objective_id NOT IN (" . implode(",", $hide_objectives) . ")";
+  if (!is_array($hide_objectives) || count($hide_objectives) === 0) {
+    die_json(400, "Invalid hide_objectives parameter");
+  }
+
+  $placeholders = [];
+  foreach ($hide_objectives as $objective_id) {
+    $validated_objective_id = filter_var(
+      $objective_id,
+      FILTER_VALIDATE_INT,
+      ["options" => ["min_range" => 1]]
+    );
+    if ($validated_objective_id === false) {
+      die_json(400, "Invalid hide_objectives parameter");
+    }
+
+    $query_params[] = $validated_objective_id;
+    $placeholders[] = '$' . count($query_params);
+  }
+  $where[] = "objective_id NOT IN (" . implode(",", $placeholders) . ")";
 }
 if ($clear_state !== 0) {
   if ($clear_state === 1) {
@@ -108,7 +127,7 @@ $where_string = implode(" AND ", $where);
 $query = $query . " WHERE " . $where_string;
 $query .= " ORDER BY difficulty_sort DESC, challenge_sort DESC, map_name ASC, submission_date_achieved ASC, submission_id ASC";
 
-$result = pg_query_params_or_die($DB, $query);
+$result = pg_query_params_or_die($DB, $query, $query_params);
 
 $difficulty_filter = "(difficulty.sort >= $min_diff_sort AND difficulty.sort <= $max_diff_sort) OR difficulty.id = $UNDETERMINED_ID"; //Always include undetermined challenges
 if (!$show_undetermined) {
