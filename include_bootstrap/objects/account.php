@@ -5,6 +5,7 @@ $session_expire_days = 7;
 class Account extends DbObject
 {
   public static string $table_name = 'account';
+  protected static bool $batch_expand = true;
 
   public static int $NOTIF_SUB_VERIFIED = 1;
   public static int $NOTIF_CHALL_PERSONAL = 2;

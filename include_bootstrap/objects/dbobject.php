@@ -5,6 +5,7 @@ abstract class DbObject
   public static string $table_name;
 
   public int $id;
+  protected static bool $batch_expand = false;
   protected int $max_expanded = 1;
   protected int $max_expanded_structure = 1;
 
@@ -55,13 +56,29 @@ abstract class DbObject
     if ($depth <= 1 || count($objects) === 0)
       return;
 
-    self::fetch_data_for_objects($DB, $objects, $depth - 1, $expand_structure);
+    if (!static::$batch_expand) {
+      foreach ($objects as $obj) {
+        $obj->expand_foreign_keys($DB, $depth, $expand_structure);
+      }
+      return;
+    }
 
+    $pending = [];
     foreach ($objects as $obj) {
+      $expanded = $expand_structure ? $obj->max_expanded_structure : $obj->max_expanded;
+      if ($expanded < $depth)
+        $pending[] = $obj;
+    }
+    if (count($pending) === 0)
+      return;
+
+    self::fetch_data_for_objects($DB, $pending, $depth - 1, $expand_structure);
+
+    foreach ($pending as $obj) {
       if ($expand_structure)
-        $obj->max_expanded_structure = max($obj->max_expanded_structure, $depth);
+        $obj->max_expanded_structure = $depth;
       else
-        $obj->max_expanded = max($obj->max_expanded, $depth);
+        $obj->max_expanded = $depth;
     }
   }
 
@@ -260,7 +277,7 @@ abstract class DbObject
 
       $fetched_data = db_fetch_id_many($DB, $table, $ids);
       if ($fetched_data === false) {
-        continue;
+        die_json(500, "Failed to fetch expand data for table {$table}");
       }
       while ($row = pg_fetch_assoc($fetched_data)) {
         self::$dataCache[$table][$row['id']] = $row;
@@ -282,7 +299,10 @@ abstract class DbObject
   }
   static function get_object_from_data_list($data, $class, $id)
   {
-    return $data[$class::$table_name][$id] ?? null;
+    $row = $data[$class::$table_name][$id] ?? null;
+    if ($row === null)
+      die_json(500, "Missing expand data for {$class::$table_name} id {$id}");
+    return $row;
   }
   #endregion
 
