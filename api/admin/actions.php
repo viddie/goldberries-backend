@@ -38,6 +38,8 @@ api_write($result);
 #region Action Functions
 function action_reject_challenge($DB)
 {
+  global $account;
+
   if (!isset($_REQUEST['id'])) {
     die_json(400, "Missing 'id' parameter");
   }
@@ -68,6 +70,7 @@ function action_reject_challenge($DB)
     $submission->is_verified = false;
     $submission->verifier_notes = "challenge is rejected";
     $submission->date_verified = new JsonDateTime();
+    $submission->verifier_id = $account->player->id;
     $submission->expand_foreign_keys($DB, 4);
 
     if (!$submission->update($DB)) {
