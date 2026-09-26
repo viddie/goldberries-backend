@@ -78,7 +78,10 @@ foreach ($submissions as $submission) {
       webhook_check_high_time_taken($submission);
 
       // Check high tier badge if verified successfully
-      Badge::add_players_tier_badge($DB, $submission->player_id, $submission->challenge->difficulty->sort);
+      $badge_awarded = Badge::add_players_tier_badge($DB, $submission->player_id, $submission->challenge->difficulty->sort);
+      if ($badge_awarded) {
+        send_webhook_new_hardest_submission($submission);
+      }
     }
 
   } else {

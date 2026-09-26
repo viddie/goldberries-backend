@@ -272,6 +272,38 @@ function send_webhook_submission_verified($submission)
 
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
+
+function send_webhook_new_hardest_submission($submission)
+{
+  global $DB, $webhooks_enabled;
+  if (!$webhooks_enabled) {
+    return;
+  }
+
+  $submission->expand_foreign_keys($DB, 5);
+  $sort = $submission->challenge->difficulty->sort;
+  if ($sort <= 3) {
+    return;
+  }
+
+  $account = $submission->player->get_account($DB);
+  if ($account === null || !$account->has_notification_flag(Account::$NOTIF_NEW_HARDEST)) {
+    return;
+  }
+
+  $webhook_url = constant($sort > 13 ? 'MILESTONES_WEBHOOK_URL' : 'CHANGELOG_WEBHOOK_URL');
+  $player_name = "@`{$submission->player->get_name_escaped()}`";
+  $allowed_mentions = ["users" => []];
+  if ($account->discord_id !== null) {
+    $player_name = "<@{$account->discord_id}>";
+    $allowed_mentions["users"][] = $account->discord_id;
+  }
+
+  $challenge_name = $submission->challenge->get_name_for_discord();
+  $message = ":trophy: {$player_name} has achieved a new hardest submission! {$challenge_name} (Tier {$sort})";
+  send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+}
+
 function send_webhook_multi_submission_verified($submissions)
 {
   global $DB;

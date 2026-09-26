@@ -189,7 +189,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
           // Check high tier badge if verified successfully
           if ($old_submission->is_verified === true) {
-            Badge::add_players_tier_badge($DB, $old_submission->player_id, $old_submission->challenge->difficulty->sort);
+            $badge_awarded = Badge::add_players_tier_badge($DB, $old_submission->player_id, $old_submission->challenge->difficulty->sort);
+            if ($badge_awarded && !$skip_webhook) {
+              send_webhook_new_hardest_submission($old_submission);
+            }
           }
         }
 

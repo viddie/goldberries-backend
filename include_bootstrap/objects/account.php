@@ -11,6 +11,7 @@ class Account extends DbObject
   public static int $NOTIF_SUGGESTION_VERIFIED = 4;
   public static int $NOTIF_CHALL_MOVED = 8;
   public static int $NOTIF_SUGGESTION_ACCEPTED = 16;
+  public static int $NOTIF_NEW_HARDEST = 32;
 
   public ?string $email = null;
   public ?string $password = null;
