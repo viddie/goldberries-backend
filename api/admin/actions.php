@@ -256,12 +256,15 @@ function action_merge_players($DB)
     die_json(500, "Merge failed: merge player still has {$remaining} submission(s) after transfer");
   }
 
+  // Move tag assignments, the base player's values win on conflicts
+  $moved_tags_count = ChallengeTag::transfer_player_tags($DB, $merge_player_id, $base_player_id);
+
   // Delete the merge player
   if (!$merge_player->delete($DB)) {
     die_json(500, "Failed to delete merge player (id: {$merge_player_id})");
   }
 
-  log_info("Merged player '{$merge_player->name}' (id:{$merge_player_id}) into '{$base_player->name}' (id:{$base_player_id}), moved {$moved_count} submission(s)", "Player");
+  log_info("Merged player '{$merge_player->name}' (id:{$merge_player_id}) into '{$base_player->name}' (id:{$base_player_id}), moved {$moved_count} submission(s) and {$moved_tags_count} tag assignment(s)", "Player");
 
   return [
     'message' => "Merged player '{$merge_player->name}' into '{$base_player->name}', moved {$moved_count} submission(s)",
@@ -269,6 +272,7 @@ function action_merge_players($DB)
       'deleted_merge_player_id' => $merge_player_id,
       'deleted_merge_player_name' => $merge_player->name,
       'submissions_moved' => $moved_count,
+      'tags_moved' => $moved_tags_count,
       'base_player' => $base_player,
     ],
   ];

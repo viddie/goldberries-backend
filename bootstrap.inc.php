@@ -33,6 +33,10 @@ $requireObjects = array(
   "badge",
   "badge_player",
   "stamp_submission",
+  "tag_category",
+  "tag",
+  "tag_value",
+  "challenge_tag",
 );
 
 foreach ($requireObjects as $obj) {

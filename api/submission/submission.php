@@ -268,6 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_submission->is_personal = $submission->is_personal;
     $new_submission->time_taken = $submission->time_taken;
     $new_submission->date_achieved = $submission->date_achieved;
+    $tag_value_ids = null;
 
     //new challenge stuff
     if (isset($data['new_challenge'])) {
@@ -320,6 +321,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($player_submission !== null) {
         die_json(400, "You already have a submission for this challenge");
       }
+      if (isset($data['tag_value_ids'])) {
+        // Only tags present in the selection replace the player's existing values, other tags stay untouched
+        $existing_tag_value_ids = ChallengeTag::get_player_value_ids($DB, $challenge->id, $new_submission->player_id);
+        $merged_tag_value_ids = ChallengeTag::merge_partial_selection($DB, $data['tag_value_ids'], $existing_tag_value_ids);
+        $tag_value_ids = ChallengeTag::resolve_player_tags($DB, $account, $merged_tag_value_ids, $existing_tag_value_ids);
+      }
     } else {
       die_json(400, "challenge_id or new_challenge is missing");
     }
@@ -355,8 +362,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($new_submission->date_achieved === null) {
       $new_submission->date_achieved = $new_submission->date_created;
     }
-    if ($new_submission->insert($DB) && $like_challenge) {
-      Like::like_challenge($DB, $new_submission->challenge_id, $account->player_id);
+    if ($new_submission->insert($DB)) {
+      if ($like_challenge) {
+        Like::like_challenge($DB, $new_submission->challenge_id, $account->player_id);
+      }
+      if ($tag_value_ids !== null) {
+        ChallengeTag::set_player_tags($DB, $new_submission->challenge_id, $new_submission->player_id, $tag_value_ids);
+      }
     }
     $new_submission->expand_foreign_keys($DB, 5);
     api_write($new_submission);

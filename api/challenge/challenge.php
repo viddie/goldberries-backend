@@ -102,6 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
 
+    //Step 4: Both challenges share the same gameplay, so copy the tags over
+    ChallengeTag::transfer_challenge_tags($DB, $challenge->id, $new_challenge->id, true);
+
     http_response_code(200);
     die();
 
@@ -142,6 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die_json(500, "Failed to move submission to challenge A");
       }
     }
+
+    //Move tags from challenge_b to challenge_a before challenge_b is deleted
+    ChallengeTag::transfer_challenge_tags($DB, $challenge_b->id, $challenge_a->id);
 
     //Delete challenge_b
     if (!$challenge_b->delete($DB)) {

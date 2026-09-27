@@ -25,6 +25,11 @@ SELECT setval('traffic_id_seq', (SELECT MAX(id) FROM traffic));
 SELECT setval('badge_id_seq', (SELECT MAX(id) FROM badge));
 SELECT setval('badge_player_id_seq', (SELECT MAX(id) FROM badge_player));
 
+SELECT setval('tag_category_id_seq', (SELECT MAX(id) FROM tag_category));
+SELECT setval('tag_id_seq', (SELECT MAX(id) FROM tag));
+SELECT setval('tag_value_id_seq', (SELECT MAX(id) FROM tag_value));
+SELECT setval('challenge_tag_id_seq', (SELECT MAX(id) FROM challenge_tag));
+
 -- Set sequences to 0 to start from scratch
 SELECT setval('account_id_seq', 1);
 SELECT setval('player_id_seq', 1);
