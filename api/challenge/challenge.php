@@ -232,9 +232,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           send_webhook_challenge_moved($old_challenge, $challenge->difficulty_id);
         }
         // Check for badge changes
-        $challenge->fetch_submissions($DB);
+        if (!$challenge->fetch_submissions($DB)) {
+          die_json(500, "Failed to fetch submissions");
+        }
         foreach ($challenge->submissions as $submission) {
-          Badge::check_players_tier_badge($DB, $submission->player_id);
+          Badge::check_players_tier_badge($DB, $submission->player_id, !$skip_webhook);
         }
       }
 

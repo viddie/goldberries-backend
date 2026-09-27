@@ -212,7 +212,7 @@ class Badge extends DbObject
   }
 
   // Fetch the hardest submission of this player, remove the existing badge if available, add the definitely correct badge.
-  static function check_players_tier_badge($DB, $player_id)
+  static function check_players_tier_badge($DB, $player_id, $send_webhook = false)
   {
     $submissions = Submission::get_hardest_for_player($DB, $player_id, 1);
     if (count($submissions) === 0) {
@@ -222,13 +222,15 @@ class Badge extends DbObject
     $submission = $submissions[0];
     $hardest_sort = $submission->challenge->difficulty->sort;
     $current_badge = self::get_players_tier_badge($DB, $player_id);
+    $is_upgrade = $current_badge === null;
     if ($current_badge !== null) {
       // Check if the current badge is different from the hardest submission
       $current_sort = array_search($current_badge->id, self::$TIER_BADGES) + 1;
       if ($current_sort === $hardest_sort) {
-        // Player already has this or a better badge
+        // Player already has the correct badge
         return false;
       }
+      $is_upgrade = $hardest_sort > $current_sort;
 
       // Delete badge
       $badge_player = new BadgePlayer();
@@ -239,7 +241,12 @@ class Badge extends DbObject
       }
     }
     // Add new badge
-    self::add_players_tier_badge($DB, $player_id, $hardest_sort, true);
+    if (!self::add_players_tier_badge($DB, $player_id, $hardest_sort, true)) {
+      return false;
+    }
+    if ($is_upgrade && $send_webhook) {
+      send_webhook_new_hardest_submission($submission);
+    }
     return true;
   }
   #endregion
