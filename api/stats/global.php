@@ -18,8 +18,8 @@ $where_challenge = "WHERE challenge.is_rejected = FALSE";
 $where_submission = "WHERE submission.is_verified = TRUE AND submission.is_obsolete = FALSE";
 
 if ($month !== null) {
-  $where_campaign = "WHERE date_trunc('month', campaign.date_added, 'UTC') < '$month-01'";
-  $where_map .= " AND date_trunc('month', map.date_added, 'UTC') < '$month-01'";
+  $where_campaign = "WHERE date_trunc('month', campaign.date_created, 'UTC') < '$month-01'";
+  $where_map .= " AND date_trunc('month', map.date_created, 'UTC') < '$month-01'";
   $where_challenge .= " AND date_trunc('month', challenge.date_created, 'UTC') < '$month-01'";
   $where_submission .= " AND date_trunc('month', submission.date_achieved, 'UTC') < '$month-01'";
 }

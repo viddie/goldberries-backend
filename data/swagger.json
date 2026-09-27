@@ -5705,7 +5705,7 @@
             ],
             "description": "URL of the campaign"
           },
-          "date_added": {
+          "date_created": {
             "oneOf": [
               {
                 "type": "string",
@@ -5892,7 +5892,7 @@
             ],
             "description": "Map URL entries, each containing a URL and its label."
           },
-          "date_added": {
+          "date_created": {
             "oneOf": [
               {
                 "type": "string",

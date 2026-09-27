@@ -7,7 +7,7 @@ class Map extends DbObject
 
   public string $name;
   public ?StringList $url = null;
-  public ?JsonDateTime $date_added = null;
+  public ?JsonDateTime $date_created = null;
   public bool $is_archived = false;
   public ?int $sort_major = null;
   public ?int $sort_minor = null;
@@ -53,7 +53,7 @@ class Map extends DbObject
     return array(
       'name' => $this->name,
       'url' => $this->url === null ? null : $this->url->__toString(),
-      'date_added' => $this->date_added,
+      'date_created' => $this->date_created,
       'is_archived' => $this->is_archived,
       'sort_major' => $this->sort_major,
       'sort_minor' => $this->sort_minor,
@@ -74,7 +74,7 @@ class Map extends DbObject
     return [
       'name',
       'url',
-      'date_added',
+      'date_created',
       'is_archived',
       'sort_major',
       'sort_minor',
@@ -98,8 +98,8 @@ class Map extends DbObject
     $this->is_archived = $arr[$prefix . 'is_archived'] === 't';
     $this->is_progress = $arr[$prefix . 'is_progress'] === 't';
 
-    if (isset($arr[$prefix . 'date_added']))
-      $this->date_added = new JsonDateTime($arr[$prefix . 'date_added']);
+    if (isset($arr[$prefix . 'date_created']))
+      $this->date_created = new JsonDateTime($arr[$prefix . 'date_created']);
     if (isset($arr[$prefix . 'url'])) {
       $value = $arr[$prefix . 'url'];
       if (is_array($value)) {
@@ -241,7 +241,7 @@ class Map extends DbObject
       'map_id',
       'map_name',
       'map_url',
-      'map_date_added',
+      'map_date_created',
       'map_is_archived',
       'map_sort_major',
       'map_sort_minor',

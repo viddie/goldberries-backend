@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } else {
       // Insert
-      $map->date_added = new JsonDateTime();
+      $map->date_created = new JsonDateTime();
       if ($map->insert($DB)) {
         $map->generate_create_changelog($DB);
         log_info("'{$account->player->name}' created {$map}", "Map");

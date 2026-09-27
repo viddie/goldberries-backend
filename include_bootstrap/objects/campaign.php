@@ -7,7 +7,7 @@ class Campaign extends DbObject
 
   public string $name;
   public ?string $url = null;
-  public ?JsonDateTime $date_added = null;
+  public ?JsonDateTime $date_created = null;
   public ?string $icon_url = null;
   public ?string $sort_major_name = null;
   public ?array $sort_major_labels = null;
@@ -30,7 +30,7 @@ class Campaign extends DbObject
     return array(
       'name' => $this->name,
       'url' => $this->url,
-      'date_added' => $this->date_added,
+      'date_created' => $this->date_created,
       'icon_url' => $this->icon_url,
       'sort_major_name' => $this->sort_major_name,
       'sort_major_labels' => $this->sort_major_labels ? implode("\t", $this->sort_major_labels) : null,
@@ -48,7 +48,7 @@ class Campaign extends DbObject
     return [
       'name',
       'url',
-      'date_added',
+      'date_created',
       'icon_url',
       'sort_major_name',
       'sort_major_labels',
@@ -67,7 +67,7 @@ class Campaign extends DbObject
   {
     $this->id = intval($arr[$prefix . 'id']);
     $this->name = $arr[$prefix . 'name'];
-    $this->date_added = new JsonDateTime($arr[$prefix . 'date_added']);
+    $this->date_created = new JsonDateTime($arr[$prefix . 'date_created']);
 
     if (isset($arr[$prefix . 'url']))
       $this->url = $arr[$prefix . 'url'];

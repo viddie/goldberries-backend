@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   } else {
     // Insert
-    $campaign->date_added = new JsonDateTime();
+    $campaign->date_created = new JsonDateTime();
     if ($campaign->insert($DB)) {
       $campaign->generate_create_changelog($DB);
       log_info("'{$account->player->name}' created {$campaign}", "Campaign");
