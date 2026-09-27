@@ -13,6 +13,15 @@ class Account extends DbObject
   public static int $NOTIF_SUGGESTION_ACCEPTED = 16;
   public static int $NOTIF_NEW_HARDEST = 32;
 
+  public static int $RESTRICT_RENAME = 1;
+  public static int $RESTRICT_PROFILE = 2;
+  public static int $RESTRICT_SUBMIT = 4;
+  public static int $RESTRICT_SUGGEST_DIFFICULTY = 8;
+  public static int $RESTRICT_CREATE_SUGGESTION = 16;
+  public static int $RESTRICT_VOTE = 32;
+  public static int $RESTRICT_ADD_TAGS = 64;
+  public static int $RESTRICT_ALL = 127;
+
   public ?string $email = null;
   public ?string $password = null;
   public ?string $discord_id = null;
@@ -34,6 +43,7 @@ class Account extends DbObject
   // Other
   public ?JsonDateTime $last_player_rename = null;
   public int $notifications = 3; //Default notifications: Account::$NOTIF_SUB_VERIFIED | Account::$NOTIF_CHALL_PERSONAL
+  public int $restrictions = 0;
   public ?string $api_key = null;
   public bool $using_api_key = false; //Field not set from DB, only set through auth process
 
@@ -53,6 +63,7 @@ class Account extends DbObject
     $this->role = intval($arr[$prefix . 'role']);
     $this->is_suspended = $arr[$prefix . 'is_suspended'] === 't';
     $this->notifications = intval($arr[$prefix . 'notifications']);
+    $this->restrictions = intval($arr[$prefix . 'restrictions'] ?? 0);
 
     if (isset($arr[$prefix . 'player_id']))
       $this->player_id = intval($arr[$prefix . 'player_id']);
@@ -186,6 +197,7 @@ class Account extends DbObject
       'country' => $this->country,
       'last_player_rename' => $this->last_player_rename,
       'notifications' => $this->notifications,
+      'restrictions' => $this->restrictions,
       'api_key' => $this->api_key,
     );
   }
@@ -210,6 +222,7 @@ class Account extends DbObject
       'country',
       'last_player_rename',
       'notifications',
+      'restrictions',
       'api_key',
     ];
   }
@@ -303,6 +316,11 @@ class Account extends DbObject
   function has_notification_flag(int $flag): bool
   {
     return ($this->notifications & $flag) === $flag;
+  }
+
+  function has_restriction_flag(int $flag): bool
+  {
+    return ($this->restrictions & $flag) === $flag;
   }
   #endregion
 }

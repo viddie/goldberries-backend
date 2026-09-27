@@ -79,6 +79,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   } else {
     //Create a new suggestion
+    check_restriction($account, Account::$RESTRICT_CREATE_SUGGESTION, "You are restricted from creating suggestions");
+
     //Challenge id is optional
     if (isset($data['challenge_id'])) {
       $challenge = Challenge::get_by_id($DB, $data['challenge_id']);
@@ -137,13 +139,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($suggestion->insert($DB)) {
       $suggestion->expand_foreign_keys($DB, 5);
 
-      //Create a vote for the suggestion
-      $vote = new SuggestionVote();
-      $vote->suggestion_id = $suggestion->id;
-      $vote->player_id = $account->player_id;
-      $vote->vote = "+";
-      if (!$vote->insert($DB)) {
-        log_error("Created suggestion but failed to create own vote for suggestion {$suggestion->id}", "Suggestion");
+      //Create a vote for the suggestion, unless the author is restricted from voting
+      if (!$account->has_restriction_flag(Account::$RESTRICT_VOTE)) {
+        $vote = new SuggestionVote();
+        $vote->suggestion_id = $suggestion->id;
+        $vote->player_id = $account->player_id;
+        $vote->vote = "+";
+        if (!$vote->insert($DB)) {
+          log_error("Created suggestion but failed to create own vote for suggestion {$suggestion->id}", "Suggestion");
+        }
       }
 
       api_write($suggestion);

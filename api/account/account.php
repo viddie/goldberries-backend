@@ -53,6 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $accountReq = new Account();
     $accountReq->apply_db_data($request);
 
+    // A restricted verifier must not bypass their own profile restriction through this branch
+    if ($account->id === $target->id && $target->has_restriction_flag(Account::$RESTRICT_PROFILE)) {
+      if (!links_equal($accountReq->links, $target->links) || ($accountReq->about_me ?? '') !== ($target->about_me ?? '')) {
+        die_json(403, "You are restricted from editing the about me or links of your profile");
+      }
+    }
+
     if ($target->player_id !== null) {
       submission_embed_change($target->player_id, "player");
     }
@@ -104,6 +111,25 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
     if ($accountReq->password !== null) {
       $target->password = password_hash($accountReq->password, PASSWORD_DEFAULT);
+    }
+
+    //Restrictions, checked against the target's role before a potential role change
+    if (array_key_exists('restrictions', $request)) {
+      $new_restrictions = $request['restrictions'];
+      if (is_string($new_restrictions) && ctype_digit($new_restrictions)) {
+        $new_restrictions = intval($new_restrictions);
+      }
+      if (!is_int($new_restrictions) || $new_restrictions < 0 || ($new_restrictions & ~Account::$RESTRICT_ALL) !== 0) {
+        die_json(400, "Invalid restrictions");
+      }
+      if ($new_restrictions !== $target->restrictions) {
+        if (!can_modify_restrictions($account, $target)) {
+          die_json(403, "You cannot change the restrictions of this account");
+        }
+        $old_restrictions = $target->restrictions;
+        $target->restrictions = $new_restrictions;
+        log_warn("'{$account->player->name}' changed restrictions of {$target} from {$old_restrictions} to {$new_restrictions}", "Account");
+      }
     }
 
     //Assigning roles
@@ -208,6 +234,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       if ($linkList !== null && !is_array($linkList)) {
         die_json(400, "Invalid links");
       }
+      if (!links_equal($linkList, $account->links)) {
+        check_restriction($account, Account::$RESTRICT_PROFILE, "You are restricted from editing the links of your profile");
+      }
       if ($linkList !== null && count($linkList) > 10) {
         die_json(400, "Too many links");
       }
@@ -234,6 +263,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       $changes .= "input_method ({$account->input_method}), ";
     }
     if (array_key_exists("about_me", $request) && $request['about_me'] !== $account->about_me) {
+      if (($request['about_me'] ?? '') !== ($account->about_me ?? '')) {
+        check_restriction($account, Account::$RESTRICT_PROFILE, "You are restricted from editing the about me of your profile");
+      }
       if ($request['about_me'] !== null && strlen($request['about_me']) > 5000) {
         die_json(400, "About me can't be longer than 5000 characters");
       }
@@ -308,5 +340,20 @@ if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
     http_response_code(200);
     exit();
   }
+}
+#endregion
+
+#region Utility Functions
+// Compares two link lists while ignoring array keys, whitespace and empty entries
+function links_equal($a, $b): bool
+{
+  $normalize = function ($links) {
+    if (!is_array($links)) {
+      return [];
+    }
+    $links = array_map(fn($link) => is_string($link) ? trim($link) : $link, $links);
+    return array_values(array_filter($links, fn($link) => $link !== ''));
+  };
+  return $normalize($a) === $normalize($b);
 }
 #endregion

@@ -147,6 +147,7 @@ CREATE TABLE account
  name_color_end     text NULL,
  last_player_rename timestamptz NULL,
  notifications      integer NOT NULL DEFAULT 3,
+ restrictions       integer NOT NULL DEFAULT 0,
  country            text NULL,
  api_key            varchar(32) NULL,
  CONSTRAINT account_pkey PRIMARY KEY ( "id" ),

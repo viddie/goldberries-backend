@@ -57,6 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($old_submission->player_id !== $account->player->id && !is_helper($account)) {
       die_json(403, "You are not allowed to edit submissions for other players");
     }
+    $keep_suggested_difficulty = $old_submission->player_id === $account->player->id && $account->has_restriction_flag(Account::$RESTRICT_SUGGEST_DIFFICULTY);
+    if ($keep_suggested_difficulty) {
+      $submission->suggested_difficulty_id = $old_submission->suggested_difficulty_id;
+      $submission->frac = $old_submission->frac;
+    }
 
     $log_message = null;
 
@@ -132,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die_json(400, "Notes can't be longer than 5000 characters");
       }
       $old_submission->player_notes = $submission->player_notes;
-      if ($submission->suggested_difficulty_id !== null) {
+      if (!$keep_suggested_difficulty && $submission->suggested_difficulty_id !== null) {
         $difficulty = Difficulty::get_by_id($DB, $submission->suggested_difficulty_id);
         if ($difficulty === false) {
           die_json(400, "Difficulty with id {$submission->suggested_difficulty_id} does not exist");
@@ -208,7 +213,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
       $old_submission->player_notes = $submission->player_notes;
 
-      if ($submission->suggested_difficulty_id !== null) {
+      if (!$keep_suggested_difficulty && $submission->suggested_difficulty_id !== null) {
         $difficulty = Difficulty::get_by_id($DB, $submission->suggested_difficulty_id);
         if ($difficulty === false) {
           die_json(400, "Difficulty with id {$submission->suggested_difficulty_id} does not exist");
@@ -254,6 +259,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$settings->submissions_enabled) {
       die_json(400, "Submissions are currently disabled");
     }
+    check_restriction($account, Account::$RESTRICT_SUBMIT, "You are restricted from making new submissions");
 
     //Create blank submission and only carry over fields that the player is allowed to set
     $new_submission = new Submission();
@@ -265,6 +271,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_submission->player_notes = $submission->player_notes;
     $new_submission->suggested_difficulty_id = $submission->suggested_difficulty_id;
     $new_submission->frac = $submission->frac;
+    if ($account->has_restriction_flag(Account::$RESTRICT_SUGGEST_DIFFICULTY)) {
+      $new_submission->suggested_difficulty_id = null;
+      $new_submission->frac = null;
+    }
     $new_submission->is_personal = $submission->is_personal;
     $new_submission->time_taken = $submission->time_taken;
     $new_submission->date_achieved = $submission->date_achieved;
@@ -310,12 +320,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
       if (!$challenge->requires_fc && !$challenge->has_fc) {
         $new_submission->is_fc = false;
-      }
-      if ($challenge->map_id !== null) {
-        $map = Map::get_by_id($DB, $challenge->map_id);
-        if ($map->is_rejected) {
-          die_json(400, "Rejected maps don't accept submissions");
-        }
       }
       $player_submission = Challenge::get_player_submission($DB, $challenge->id, $data['player_id']);
       if ($player_submission !== null) {

@@ -40,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($target === false) {
         die_json(400, "Invalid id");
       }
+      if ($target->id === $account->player_id) {
+        check_restriction($account, Account::$RESTRICT_RENAME, "You are restricted from renaming yourself");
+      }
 
       if (!isset($request['name'])) {
         die_json(400, "Missing parameter 'name'");
@@ -81,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if ($target === null) {
         die_json(400, "Account does not have a player");
       }
+      check_restriction($account, Account::$RESTRICT_RENAME, "You are restricted from renaming yourself");
 
       $last_rename = $account->last_player_rename;
       //$last_rename is null if the player has never renamed themselves, otherwise its a JsonDateTime

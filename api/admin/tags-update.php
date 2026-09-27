@@ -7,6 +7,7 @@ require_once('../api_bootstrap.inc.php');
 //  2. Rename campaign.date_added / map.date_added to date_created (+ view columns)
 //  3. Backfill date_created of challenges, maps and campaigns from their oldest submission
 //  4. Backfill account.date_created from the player's oldest submission
+//  5. Add account.restrictions (if missing)
 //
 // Query params:
 //  dry_run=true  -> run everything inside the transaction, then roll back
@@ -211,6 +212,18 @@ $query = "UPDATE account
     AND s.oldest_date < account.date_created
   RETURNING account.id, s.old_date, s.oldest_date";
 print_date_updates("account", migration_query($DB, $query), $verbose);
+echo "\n";
+//#endregion
+
+//#region Step 5: Account restrictions
+echo "Step 5: Account restrictions\n";
+
+if (column_exists($DB, "account", "restrictions")) {
+  echo "  account.restrictions already exists, skipped\n";
+} else {
+  migration_query($DB, "ALTER TABLE account ADD COLUMN restrictions integer NOT NULL DEFAULT 0");
+  echo "  Added account.restrictions\n";
+}
 echo "\n";
 //#endregion
 

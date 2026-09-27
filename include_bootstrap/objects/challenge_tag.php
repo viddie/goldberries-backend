@@ -245,6 +245,10 @@ class ChallengeTag extends DbObject
     }
 
     sort($final);
+
+    if ($account->has_restriction_flag(Account::$RESTRICT_ADD_TAGS) && count(array_diff($final, $existing_ids)) > 0) {
+      die_json(403, "You are restricted from adding tags to challenges");
+    }
     return $final;
   }
 

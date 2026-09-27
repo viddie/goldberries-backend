@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 #region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
+  check_restriction($account, Account::$RESTRICT_VOTE, "You are restricted from voting on suggestions");
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $vote = new SuggestionVote();

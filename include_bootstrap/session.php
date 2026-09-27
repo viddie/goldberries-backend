@@ -246,6 +246,27 @@ function can_assign_role($account, $role)
   return false;
 }
 
+// Verifiers may restrict helpers and below, admins may restrict verifiers and below
+function can_modify_restrictions($account, $target)
+{
+  global $VERIFIER;
+
+  if ($account === null || $target === null) {
+    return false;
+  }
+  if ($account->role < $VERIFIER) {
+    return false;
+  }
+  return $target->role < $account->role;
+}
+
+function check_restriction($account, int $flag, string $message)
+{
+  if ($account !== null && $account->has_restriction_flag($flag)) {
+    die_json(403, $message);
+  }
+}
+
 function get_role_name($role)
 {
   global $USER, $EX_HELPER, $EX_VERIFIER, $EX_ADMIN, $NEWS_WRITER, $HELPER, $VERIFIER, $ADMIN;
