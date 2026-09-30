@@ -19,3 +19,5 @@ embed/img/campaign-collage
 .env
 .github/copilot-instructions.md
 .github/agent
+
+backup.dump
