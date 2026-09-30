@@ -6,6 +6,7 @@ class ChallengeTag extends DbObject
 
   public static int $MAX_FILTER_CONDITIONS = 30;
   public static int $MAX_CONFIDENCE = 100;
+  public static int $DEFAULT_AGREEMENT = 50;
 
   public int $challenge_id;
   public int $player_id;
@@ -367,6 +368,7 @@ class ChallengeTag extends DbObject
    * Input format:
    * {
    *   "confidence": 3,                    // optional, default 1
+   *   "agreement": 80,                    // optional, percentage 0-100, default 50
    *   "conditions": [
    *     { "tag_id": 1, "mode": "include", "min": 12, "max": 14 },   // ordinal tags only
    *     { "tag_id": 3, "mode": "exclude" },                         // all values of the tag
@@ -375,16 +377,19 @@ class ChallengeTag extends DbObject
    * }
    *
    * Semantics: conditions are ANDed, values in one condition are ORed. A condition's "support" is the number of
-   * distinct players that assigned any of its values. Includes match and excludes remove when support >= required.
-   * Team-only tags always have a required support of 1.
+   * distinct players that assigned any of its values. A condition matches when support >= required (confidence) and
+   * support makes up at least `agreement` percent of all players that assigned any value of the tag. Includes match
+   * and excludes remove when the condition matches. Team-only tags always have a required support of 1 and ignore
+   * the agreement.
    *
    * @param mixed $filter JSON string, decoded array or null
-   * @return array ['confidence' => int, 'conditions' => list of ['tag_id', 'mode', 'value_ids', 'required']]
+   * @return array ['confidence' => int, 'agreement' => int, 'conditions' => list of
+   *   ['tag_id', 'mode', 'value_ids', 'tag_value_ids', 'required', 'agreement']]
    */
   static function parse_filter($DB, $filter): array
   {
     if ($filter === null || $filter === '') {
-      return ['confidence' => 1, 'conditions' => []];
+      return ['confidence' => 1, 'agreement' => self::$DEFAULT_AGREEMENT, 'conditions' => []];
     }
     if (is_string($filter)) {
       $filter = json_decode($filter, true);
@@ -404,6 +409,17 @@ class ChallengeTag extends DbObject
       $confidence = intval($filter['confidence']);
       if ($confidence < 1 || $confidence > self::$MAX_CONFIDENCE) {
         die_json(400, "filter.confidence must be between 1 and " . self::$MAX_CONFIDENCE);
+      }
+    }
+
+    $agreement = self::$DEFAULT_AGREEMENT;
+    if (isset($filter['agreement'])) {
+      if (!is_int($filter['agreement']) && !(is_string($filter['agreement']) && is_id_string($filter['agreement']))) {
+        die_json(400, "filter.agreement must be a number");
+      }
+      $agreement = intval($filter['agreement']);
+      if ($agreement < 0 || $agreement > 100) {
+        die_json(400, "filter.agreement must be between 0 and 100");
       }
     }
 
@@ -471,15 +487,20 @@ class ChallengeTag extends DbObject
         $value_ids = $tag->get_value_ids();
       }
 
+      $tag_value_ids = $tag->get_value_ids();
+      // Selecting all values of a tag always has 100% agreement
+      $covers_tag = count(array_diff($tag_value_ids, $value_ids)) === 0;
       $conditions[] = [
         'tag_id' => $tag_id,
         'mode' => $mode,
         'value_ids' => $value_ids,
+        'tag_value_ids' => $tag_value_ids,
         'required' => $tag->is_player_assignable ? $confidence : 1,
+        'agreement' => $tag->is_player_assignable && !$covers_tag ? $agreement : 0,
       ];
     }
 
-    return ['confidence' => $confidence, 'conditions' => $conditions];
+    return ['confidence' => $confidence, 'agreement' => $agreement, 'conditions' => $conditions];
   }
 
   /**
@@ -501,10 +522,21 @@ class ChallengeTag extends DbObject
       $all_value_ids = [];
       $having = [];
       foreach ($conditions as $condition) {
-        $all_value_ids = array_merge($all_value_ids, $condition['value_ids']);
         $set_param = self::add_param($params, "{" . implode(",", $condition['value_ids']) . "}");
         $required = intval($condition['required']);
-        $having[] = "COUNT(DISTINCT player_id) FILTER (WHERE tag_value_id = ANY({$set_param}::int[])) >= {$required}";
+        $agreement = intval($condition['agreement']);
+        $support = "COUNT(DISTINCT player_id) FILTER (WHERE tag_value_id = ANY({$set_param}::int[]))";
+        $clause = "{$support} >= {$required}";
+        if ($agreement > 0) {
+          // Compare against all players that voted on the tag, so the other values need to be fetched as well
+          $all_value_ids = array_merge($all_value_ids, $condition['tag_value_ids']);
+          $tag_param = self::add_param($params, "{" . implode(",", $condition['tag_value_ids']) . "}");
+          $total = "COUNT(DISTINCT player_id) FILTER (WHERE tag_value_id = ANY({$tag_param}::int[]))";
+          $clause .= " AND {$support} * 100 >= {$agreement} * {$total}";
+        } else {
+          $all_value_ids = array_merge($all_value_ids, $condition['value_ids']);
+        }
+        $having[] = "({$clause})";
       }
       $all_param = self::add_param($params, "{" . implode(",", array_unique($all_value_ids)) . "}");
 
