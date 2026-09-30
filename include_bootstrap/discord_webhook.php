@@ -300,7 +300,15 @@ function send_webhook_new_hardest_submission($submission)
   }
 
   $challenge_name = $submission->challenge->get_name_for_discord();
-  $message = ":trophy: {$player_name} has achieved a new hardest submission! {$challenge_name} (Tier {$sort})";
+  $submission_url = $submission->get_url();
+  if ($sort >= 19) {
+    $emote = "<:lfgeline:1554098940193013820>";
+  } else if ($sort >= 14) {
+    $emote = "<:catpog:1328779000235167816>";
+  } else {
+    $emote = "<:gladeline:703804100177035264>";
+  }
+  $message = ":trophy: {$player_name} has achieved a new hardest [submission](<{$submission_url}>) on {$challenge_name} (Tier {$sort}) {$emote}";
   send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
 }
 

@@ -246,7 +246,7 @@ function can_assign_role($account, $role)
   return false;
 }
 
-// Verifiers may restrict helpers and below, admins may restrict verifiers and below
+// Verifiers may restrict helpers and below, admins may restrict verifiers and below. Both may restrict themselves (for testing)
 function can_modify_restrictions($account, $target)
 {
   global $VERIFIER;
@@ -257,7 +257,7 @@ function can_modify_restrictions($account, $target)
   if ($account->role < $VERIFIER) {
     return false;
   }
-  return $target->role < $account->role;
+  return $account->id === $target->id || $target->role < $account->role;
 }
 
 function check_restriction($account, int $flag, string $message)
