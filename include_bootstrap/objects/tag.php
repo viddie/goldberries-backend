@@ -3,14 +3,17 @@
 class Tag extends DbObject
 {
   public static string $table_name = 'tag';
+  public static array $SELECTION_MODES = ['single', 'multi'];
 
   public int $category_id;
   public string $name;
+  public ?string $short = null;
   public string $description;
   public int $sort = 0;
   public bool $is_common = false;
   public bool $is_player_assignable = true;
   public bool $is_ordinal = false;
+  public string $selection_mode = 'single';
 
   // Linked Objects
   public ?TagCategory $category = null;
@@ -28,11 +31,13 @@ class Tag extends DbObject
     return array(
       'category_id' => $this->category_id,
       'name' => $this->name,
+      'short' => $this->short,
       'description' => $this->description,
       'sort' => $this->sort,
       'is_common' => $this->is_common,
       'is_player_assignable' => $this->is_player_assignable,
       'is_ordinal' => $this->is_ordinal,
+      'selection_mode' => $this->selection_mode,
     );
   }
 
@@ -41,11 +46,13 @@ class Tag extends DbObject
     return [
       'category_id',
       'name',
+      'short',
       'description',
       'sort',
       'is_common',
       'is_player_assignable',
       'is_ordinal',
+      'selection_mode',
     ];
   }
 
@@ -59,6 +66,10 @@ class Tag extends DbObject
     $this->is_common = $arr[$prefix . 'is_common'] === 't';
     $this->is_player_assignable = $arr[$prefix . 'is_player_assignable'] === 't';
     $this->is_ordinal = $arr[$prefix . 'is_ordinal'] === 't';
+    $this->selection_mode = $arr[$prefix . 'selection_mode'];
+
+    if (isset($arr[$prefix . 'short']))
+      $this->short = $arr[$prefix . 'short'];
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
@@ -325,7 +336,7 @@ class Tag extends DbObject
 
   function __toString()
   {
-    return "(Tag, id:{$this->id}, name:'{$this->name}', category_id:{$this->category_id})";
+    return "(Tag, id:{$this->id}, name:'{$this->name}', category_id:{$this->category_id}, selection_mode:{$this->selection_mode})";
   }
   #endregion
 }

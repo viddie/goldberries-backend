@@ -49,6 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (mb_strlen($description) > 5000) {
     die_json(400, "description can't be longer than 5000 characters");
   }
+  $short = isset($data['short']) && is_string($data['short']) ? trim($data['short']) : '';
+  if ($short === '')
+    $short = null;
+  if ($short !== null && mb_strlen($short) > 64) {
+    die_json(400, "short can't be longer than 64 characters");
+  }
   if (!isset($data['category_id'])) {
     die_json(400, "category_id is required");
   }
@@ -56,13 +62,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($category === false) {
     die_json(400, "Tag category with id {$data['category_id']} does not exist");
   }
+  $selection_mode = $data['selection_mode'] ?? 'single';
+  if (!in_array($selection_mode, Tag::$SELECTION_MODES, true)) {
+    die_json(400, "selection_mode must be one of: " . implode(', ', Tag::$SELECTION_MODES));
+  }
   $tag->category_id = $category->id;
   $tag->name = $name;
+  $tag->short = $short;
   $tag->description = $description;
   $tag->sort = isset($data['sort']) ? intval($data['sort']) : 0;
   $tag->is_common = isset($data['is_common']) ? $data['is_common'] === true : false;
   $tag->is_player_assignable = isset($data['is_player_assignable']) ? $data['is_player_assignable'] === true : true;
   $tag->is_ordinal = isset($data['is_ordinal']) ? $data['is_ordinal'] === true : false;
+  $tag->selection_mode = $selection_mode;
 
   // Validate all values before writing anything
   $values = $tag->parse_values_payload($data['values'] ?? []);

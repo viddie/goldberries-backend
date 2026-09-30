@@ -178,7 +178,7 @@ class ChallengeTag extends DbObject
    * - All ids must exist.
    * - "Locked" values can neither be added nor removed through this function. They are kept as they are.
    *   A value is locked if its category is archived, or if its tag is team-only and the account is not a team member.
-   * - For tags whose values changed: at most 1 value per tag, since the values of a tag are mutually exclusive.
+   * - For tags whose values changed: 'single' tags allow at most 1 value, 'multi' tags allow any number of values.
    *
    * @param array $requested_ids the tag value ids the player wants to have assigned
    * @param array $existing_ids the tag value ids the player currently has assigned
@@ -237,7 +237,7 @@ class ChallengeTag extends DbObject
         continue;
 
       $tag = $defs['tags'][$tag_id];
-      if (count($new_values) > 1) {
+      if ($tag->selection_mode === 'single' && count($new_values) > 1) {
         die_json(400, "Only one value of tag '{$tag->name}' can be assigned");
       }
     }
@@ -380,7 +380,7 @@ class ChallengeTag extends DbObject
    * distinct players that assigned any of its values. A condition matches when support >= required (confidence) and
    * support makes up at least `agreement` percent of all players that assigned any value of the tag. Includes match
    * and excludes remove when the condition matches. Team-only tags always have a required support of 1 and ignore
-   * the agreement.
+   * the agreement. 'multi' tags also ignore the agreement, since their values aren't mutually exclusive.
    *
    * @param mixed $filter JSON string, decoded array or null
    * @return array ['confidence' => int, 'agreement' => int, 'conditions' => list of
@@ -488,15 +488,17 @@ class ChallengeTag extends DbObject
       }
 
       $tag_value_ids = $tag->get_value_ids();
-      // Selecting all values of a tag always has 100% agreement
+      // Selecting all values of a tag always has 100% agreement.
+      // Values of 'multi' tags aren't mutually exclusive, so they don't compete for agreement.
       $covers_tag = count(array_diff($tag_value_ids, $value_ids)) === 0;
+      $uses_agreement = $tag->is_player_assignable && $tag->selection_mode !== 'multi' && !$covers_tag;
       $conditions[] = [
         'tag_id' => $tag_id,
         'mode' => $mode,
         'value_ids' => $value_ids,
         'tag_value_ids' => $tag_value_ids,
         'required' => $tag->is_player_assignable ? $confidence : 1,
-        'agreement' => $tag->is_player_assignable && !$covers_tag ? $agreement : 0,
+        'agreement' => $uses_agreement ? $agreement : 0,
       ];
     }
 
