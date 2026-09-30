@@ -64,6 +64,7 @@ if (getenv('DEBUG') === 'true') {
   DEFINE('REDIRECT_POST_LOGIN', 'https://goldberries.net');
   DEFINE('REDIRECT_POST_LINK_ACCOUNT', 'https://goldberries.net/my-account');
 }
+DEFINE('DEV_ACCOUNT_OVERRIDE_COOKIE', 'gb_dev_account_override');
 #endregion
 
 #region Roles

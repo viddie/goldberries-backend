@@ -42,7 +42,7 @@ function logout()
 {
   global $DB;
 
-  $account = get_user_data();
+  $account = get_user_data(false);
   if ($account == null) {
     return false;
   }
@@ -98,7 +98,8 @@ function get_token()
   return $_COOKIE['token'];
 }
 
-function get_user_data()
+// $allow_dev_override = false returns the real account, ignoring the dev account override
+function get_user_data($allow_dev_override = true)
 {
   global $DB;
 
@@ -132,8 +133,45 @@ function get_user_data()
     return null;
   }
 
+  if ($allow_dev_override) {
+    $override = get_dev_account_override($account);
+    if ($override !== null) {
+      $account = $override;
+      if (is_suspended($account)) {
+        return null;
+      }
+    }
+  }
+
   $account->expand_foreign_keys($DB);
   return $account;
+}
+
+// Dev-only: lets an admin act as another account, set via the cookie DEV_ACCOUNT_OVERRIDE_COOKIE.
+// Only active with DEBUG=true AND when the real account is an admin, so a leak into prod can't be abused by non-admins.
+function get_dev_account_override($real_account)
+{
+  global $DB;
+
+  if (!is_dev_account_override_allowed($real_account)) {
+    return null;
+  }
+  $override_id = $_COOKIE[DEV_ACCOUNT_OVERRIDE_COOKIE] ?? null;
+  if ($override_id === null || !ctype_digit($override_id)) {
+    return null;
+  }
+  $override_id = intval($override_id);
+  if ($override_id === $real_account->id) {
+    return null;
+  }
+
+  $override = Account::get_by_id($DB, $override_id);
+  return $override === false ? null : $override;
+}
+
+function is_dev_account_override_allowed($real_account)
+{
+  return getenv('DEBUG') === 'true' && $real_account !== null && !$real_account->using_api_key && is_admin($real_account);
 }
 
 // === Utility Functions ===
