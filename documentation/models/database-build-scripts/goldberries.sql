@@ -489,11 +489,8 @@ CREATE TABLE tag
  is_common            boolean NOT NULL DEFAULT false,
  is_player_assignable boolean NOT NULL DEFAULT true,
  is_ordinal           boolean NOT NULL DEFAULT false,
- selection_mode       text NOT NULL DEFAULT 'single',
  CONSTRAINT tag_pkey PRIMARY KEY ( "id" ),
- CONSTRAINT tag_category_id_fkey FOREIGN KEY ( category_id ) REFERENCES tag_category ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE,
- CONSTRAINT check_tag_selection_mode CHECK ( selection_mode IN ('single', 'multi', 'range') ),
- CONSTRAINT check_tag_range_ordinal CHECK ( selection_mode <> 'range' OR is_ordinal = true )
+ CONSTRAINT tag_category_id_fkey FOREIGN KEY ( category_id ) REFERENCES tag_category ( "id" ) ON DELETE CASCADE ON UPDATE CASCADE
 );
 CREATE INDEX tag_category_id_idx ON tag ( category_id );
 

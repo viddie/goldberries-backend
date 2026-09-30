@@ -3,7 +3,6 @@
 class Tag extends DbObject
 {
   public static string $table_name = 'tag';
-  public static array $SELECTION_MODES = ['single', 'multi', 'range'];
 
   public int $category_id;
   public string $name;
@@ -12,7 +11,6 @@ class Tag extends DbObject
   public bool $is_common = false;
   public bool $is_player_assignable = true;
   public bool $is_ordinal = false;
-  public string $selection_mode = 'single';
 
   // Linked Objects
   public ?TagCategory $category = null;
@@ -35,7 +33,6 @@ class Tag extends DbObject
       'is_common' => $this->is_common,
       'is_player_assignable' => $this->is_player_assignable,
       'is_ordinal' => $this->is_ordinal,
-      'selection_mode' => $this->selection_mode,
     );
   }
 
@@ -49,7 +46,6 @@ class Tag extends DbObject
       'is_common',
       'is_player_assignable',
       'is_ordinal',
-      'selection_mode',
     ];
   }
 
@@ -63,7 +59,6 @@ class Tag extends DbObject
     $this->is_common = $arr[$prefix . 'is_common'] === 't';
     $this->is_player_assignable = $arr[$prefix . 'is_player_assignable'] === 't';
     $this->is_ordinal = $arr[$prefix . 'is_ordinal'] === 't';
-    $this->selection_mode = $arr[$prefix . 'selection_mode'];
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
@@ -191,24 +186,6 @@ class Tag extends DbObject
       $ids[] = $value->id;
     }
     return $ids;
-  }
-
-  /**
-   * Checks whether the given value ids form a gap-free block in this tag's value order.
-   */
-  function are_values_contiguous(array $value_ids): bool
-  {
-    if (count($value_ids) <= 1)
-      return true;
-
-    $indices = [];
-    foreach ($this->values ?? [] as $index => $value) {
-      if (in_array($value->id, $value_ids, true))
-        $indices[] = $index;
-    }
-    if (count($indices) !== count($value_ids))
-      return false;
-    return max($indices) - min($indices) === count($indices) - 1;
   }
 
   /**
@@ -348,7 +325,7 @@ class Tag extends DbObject
 
   function __toString()
   {
-    return "(Tag, id:{$this->id}, name:'{$this->name}', category_id:{$this->category_id}, selection_mode:{$this->selection_mode})";
+    return "(Tag, id:{$this->id}, name:'{$this->name}', category_id:{$this->category_id})";
   }
   #endregion
 }

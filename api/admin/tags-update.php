@@ -3,7 +3,7 @@
 require_once('../api_bootstrap.inc.php');
 
 // One-shot migration, safe to re-run:
-//  1. Create the challenge tag tables + indices (if missing)
+//  1. Create the challenge tag tables + indices (if missing), drop the old tag.selection_mode column
 //  2. Rename campaign.date_added / map.date_added to date_created (+ view columns)
 //  3. Backfill date_created of challenges, maps and campaigns from their oldest submission
 //  4. Backfill account.date_created from the player's oldest submission
@@ -56,11 +56,8 @@ $tag_statements = [
      is_common            boolean NOT NULL DEFAULT false,
      is_player_assignable boolean NOT NULL DEFAULT true,
      is_ordinal           boolean NOT NULL DEFAULT false,
-     selection_mode       text NOT NULL DEFAULT 'single',
      CONSTRAINT tag_pkey PRIMARY KEY ( \"id\" ),
-     CONSTRAINT tag_category_id_fkey FOREIGN KEY ( category_id ) REFERENCES tag_category ( \"id\" ) ON DELETE CASCADE ON UPDATE CASCADE,
-     CONSTRAINT check_tag_selection_mode CHECK ( selection_mode IN ('single', 'multi', 'range') ),
-     CONSTRAINT check_tag_range_ordinal CHECK ( selection_mode <> 'range' OR is_ordinal = true )
+     CONSTRAINT tag_category_id_fkey FOREIGN KEY ( category_id ) REFERENCES tag_category ( \"id\" ) ON DELETE CASCADE ON UPDATE CASCADE
     )",
   "tag_category_id_idx" => "CREATE INDEX IF NOT EXISTS tag_category_id_idx ON tag ( category_id )",
   "tag_value" => "CREATE TABLE IF NOT EXISTS tag_value
@@ -96,6 +93,14 @@ foreach ($tag_statements as $relation => $statement) {
   $existed = relation_exists($DB, $relation);
   migration_query($DB, $statement);
   echo $existed ? "  '$relation' already exists, skipped\n" : "  '$relation' created\n";
+}
+
+// Early versions of the tag table had a selection_mode column (+ its check constraints, which are dropped with it)
+if (column_exists($DB, "tag", "selection_mode")) {
+  migration_query($DB, "ALTER TABLE tag DROP COLUMN selection_mode");
+  echo "  Dropped tag.selection_mode\n";
+} else {
+  echo "  tag.selection_mode doesn't exist, skipped\n";
 }
 echo "\n";
 //#endregion

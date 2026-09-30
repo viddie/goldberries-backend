@@ -177,7 +177,7 @@ class ChallengeTag extends DbObject
    * - All ids must exist.
    * - "Locked" values can neither be added nor removed through this function. They are kept as they are.
    *   A value is locked if its category is archived, or if its tag is team-only and the account is not a team member.
-   * - For tags whose values changed: 'single' tags allow at most 1 value, 'range' tags require a gap-free block.
+   * - For tags whose values changed: at most 1 value per tag, since the values of a tag are mutually exclusive.
    *
    * @param array $requested_ids the tag value ids the player wants to have assigned
    * @param array $existing_ids the tag value ids the player currently has assigned
@@ -236,11 +236,8 @@ class ChallengeTag extends DbObject
         continue;
 
       $tag = $defs['tags'][$tag_id];
-      if ($tag->selection_mode === 'single' && count($new_values) > 1) {
+      if (count($new_values) > 1) {
         die_json(400, "Only one value of tag '{$tag->name}' can be assigned");
-      }
-      if ($tag->selection_mode === 'range' && !$tag->are_values_contiguous($new_values)) {
-        die_json(400, "Values of tag '{$tag->name}' must form a continuous range");
       }
     }
 

@@ -56,23 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if ($category === false) {
     die_json(400, "Tag category with id {$data['category_id']} does not exist");
   }
-  $selection_mode = $data['selection_mode'] ?? 'single';
-  if (!in_array($selection_mode, Tag::$SELECTION_MODES, true)) {
-    die_json(400, "selection_mode must be one of: " . implode(', ', Tag::$SELECTION_MODES));
-  }
-  $is_ordinal = isset($data['is_ordinal']) ? $data['is_ordinal'] === true : false;
-  if ($selection_mode === 'range' && !$is_ordinal) {
-    die_json(400, "Only ordinal tags can use the 'range' selection mode");
-  }
-
   $tag->category_id = $category->id;
   $tag->name = $name;
   $tag->description = $description;
   $tag->sort = isset($data['sort']) ? intval($data['sort']) : 0;
   $tag->is_common = isset($data['is_common']) ? $data['is_common'] === true : false;
   $tag->is_player_assignable = isset($data['is_player_assignable']) ? $data['is_player_assignable'] === true : true;
-  $tag->is_ordinal = $is_ordinal;
-  $tag->selection_mode = $selection_mode;
+  $tag->is_ordinal = isset($data['is_ordinal']) ? $data['is_ordinal'] === true : false;
 
   // Validate all values before writing anything
   $values = $tag->parse_values_payload($data['values'] ?? []);
