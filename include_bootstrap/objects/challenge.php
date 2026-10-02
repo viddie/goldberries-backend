@@ -3,6 +3,7 @@
 class Challenge extends DbObject
 {
   public static string $table_name = 'challenge';
+  protected static bool $batch_expand = true;
 
   public ?string $label = null;
   public ?string $description = null;
