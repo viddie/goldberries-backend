@@ -12,6 +12,12 @@ $TRENDING_MIN_LIKES = 3;
 $TRENDING_MIN_SUBMISSIONS = 3;
 $SEED_MAX = 2147483647;
 $DEPTH = 3;
+$CLEAR_STATES = [
+  1 => "challenge.has_fc = false AND challenge.requires_fc = false",
+  2 => "challenge.requires_fc = true AND challenge.has_fc = false",
+  3 => "(challenge.requires_fc = true OR challenge.has_fc = true)",
+  4 => "challenge.requires_fc = false",
+];
 
 #region GET Request
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -38,7 +44,22 @@ if ($seed_provided) {
   $seed = random_int(1, $SEED_MAX);
 }
 
-$filter = ChallengeTag::parse_filter($DB, $_REQUEST['filter'] ?? null);
+$raw_filter = $_REQUEST['filter'] ?? null;
+if (is_string($raw_filter) && $raw_filter !== '') {
+  $raw_filter = json_decode($raw_filter, true);
+  if (!is_array($raw_filter)) {
+    die_json(400, "filter is not valid JSON");
+  }
+}
+$filter = ChallengeTag::parse_filter($DB, $raw_filter);
+$advanced_filter = parse_discovery_filter($DB, is_array($raw_filter) ? $raw_filter : []);
+$filter = array_merge($filter, $advanced_filter);
+$player_id = null;
+if ($filter['exclude_cleared']) {
+  $account = get_user_data();
+  check_access($account);
+  $player_id = $account->player_id;
+}
 
 $group_definitions = [
   'popular' => ['where' => null, 'order' => "count_submissions DESC, likes DESC, id DESC"],
@@ -56,6 +77,28 @@ $group_definitions = [
 $params = [];
 $filter_sql = ChallengeTag::build_filter_sql($filter, $params, 'challenge.id');
 $where = array_merge(["challenge.is_rejected = false"], $filter_sql['where']);
+foreach (['min_diff_id' => '>=', 'max_diff_id' => '<='] as $key => $operator) {
+  if (isset($filter[$key])) {
+    $params[] = $filter[$key];
+    $where[] = "difficulty.sort {$operator} (SELECT sort FROM difficulty WHERE id = $" . count($params) . ")";
+  }
+}
+if (count($filter['hide_objectives']) > 0) {
+  $params[] = "{" . implode(",", $filter['hide_objectives']) . "}";
+  $where[] = "NOT (challenge.objective_id = ANY($" . count($params) . "::int[]))";
+}
+if ($filter['clear_state'] !== 0) {
+  $where[] = $CLEAR_STATES[$filter['clear_state']];
+}
+if ($filter['exclude_cleared']) {
+  $params[] = $player_id;
+  $where[] = "NOT EXISTS (
+    SELECT 1 FROM submission cleared
+    WHERE cleared.challenge_id = challenge.id
+      AND cleared.player_id = $" . count($params) . "
+      AND cleared.is_verified IS DISTINCT FROM false
+  )";
+}
 
 $ctes = $filter_sql['ctes'];
 $ctes[] = "submission_counts AS (
@@ -67,6 +110,7 @@ $ctes[] = "submission_counts AS (
 $ctes[] = "matched AS (
   SELECT challenge.id, challenge.likes, challenge.date_created, COALESCE(submission_counts.count_submissions, 0) AS count_submissions
   FROM challenge
+  JOIN difficulty ON difficulty.id = challenge.difficulty_id
   LEFT JOIN submission_counts ON submission_counts.challenge_id = challenge.id
   WHERE " . implode(" AND ", $where) . "
 )";
@@ -148,6 +192,61 @@ if ($group === 'all') {
 #endregion
 
 #region Utility Functions
+function parse_discovery_filter($DB, array $raw): array
+{
+  $filter = ['hide_objectives' => [], 'clear_state' => 0, 'exclude_cleared' => false];
+  $bounds = [];
+  foreach (['min_diff_id', 'max_diff_id'] as $key) {
+    if (!array_key_exists($key, $raw)) continue;
+    $id = discovery_filter_integer($raw[$key], $key, 1);
+    $difficulty = Difficulty::get_by_id($DB, $id);
+    if (!$difficulty) {
+      die_json(400, "filter.{$key} must reference an existing difficulty");
+    }
+    $filter[$key] = $id;
+    $bounds[$key] = $difficulty->sort;
+  }
+  if (isset($bounds['min_diff_id'], $bounds['max_diff_id']) && $bounds['min_diff_id'] > $bounds['max_diff_id']) {
+    die_json(400, "filter.min_diff_id must not be above filter.max_diff_id");
+  }
+  if (array_key_exists('hide_objectives', $raw)) {
+    if (!is_array($raw['hide_objectives']) || !array_is_list($raw['hide_objectives'])) {
+      die_json(400, "filter.hide_objectives must be a list of objective ids");
+    }
+    $objectives = Objective::get_request($DB, 'all');
+    $objective_ids = array_map(fn($objective) => $objective->id, $objectives);
+    foreach ($raw['hide_objectives'] as $value) {
+      $id = discovery_filter_integer($value, 'hide_objectives', 1);
+      if (!in_array($id, $objective_ids, true)) {
+        die_json(400, "filter.hide_objectives must reference existing objectives");
+      }
+      $filter['hide_objectives'][] = $id;
+    }
+    $filter['hide_objectives'] = array_values(array_unique($filter['hide_objectives']));
+  }
+  if (array_key_exists('clear_state', $raw)) {
+    $filter['clear_state'] = discovery_filter_integer($raw['clear_state'], 'clear_state', 0);
+    if ($filter['clear_state'] > 4) {
+      die_json(400, "filter.clear_state must be between 0 and 4");
+    }
+  }
+  if (array_key_exists('exclude_cleared', $raw)) {
+    if (!is_bool($raw['exclude_cleared'])) {
+      die_json(400, "filter.exclude_cleared must be a boolean");
+    }
+    $filter['exclude_cleared'] = $raw['exclude_cleared'];
+  }
+  return $filter;
+}
+
+function discovery_filter_integer($value, string $key, int $minimum): int
+{
+  if ((!is_int($value) && !is_string($value)) || filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => $minimum]]) === false) {
+    die_json(400, "filter.{$key} must be an integer of at least {$minimum}");
+  }
+  return intval($value);
+}
+
 function build_group_select(string $name, array $definition, int $limit, int $offset): string
 {
   $where = $definition['where'] !== null ? "WHERE {$definition['where']}" : "";
