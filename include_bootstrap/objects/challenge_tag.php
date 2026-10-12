@@ -304,7 +304,8 @@ class ChallengeTag extends DbObject
 
   /**
    * Transfers all assignments from one challenge to another (challenge merging / splitting).
-   * If a player already has a value of the same tag on the target challenge, the target's values win.
+   * Combines multiple-selection values without duplicates. For single-selection tags,
+   * the target challenge's values win for each player.
    * @param bool $copy if false, the assignments on the source challenge are deleted afterwards
    */
   static function transfer_challenge_tags($DB, int $from_challenge_id, int $to_challenge_id, bool $copy = false)
@@ -315,11 +316,15 @@ class ChallengeTag extends DbObject
        SELECT $2, src.player_id, src.tag_value_id, src.date_created
        FROM challenge_tag src
        JOIN tag_value src_value ON src_value.id = src.tag_value_id
+       JOIN tag ON tag.id = src_value.tag_id
        WHERE src.challenge_id = $1
-         AND NOT EXISTS (
-           SELECT 1 FROM challenge_tag dst
-           JOIN tag_value dst_value ON dst_value.id = dst.tag_value_id
-           WHERE dst.challenge_id = $2 AND dst.player_id = src.player_id AND dst_value.tag_id = src_value.tag_id
+         AND (
+           tag.selection_mode = 'multi'
+           OR NOT EXISTS (
+             SELECT 1 FROM challenge_tag dst
+             JOIN tag_value dst_value ON dst_value.id = dst.tag_value_id
+             WHERE dst.challenge_id = $2 AND dst.player_id = src.player_id AND dst_value.tag_id = src_value.tag_id
+           )
          )
        ON CONFLICT (challenge_id, player_id, tag_value_id) DO NOTHING",
       [$from_challenge_id, $to_challenge_id],
