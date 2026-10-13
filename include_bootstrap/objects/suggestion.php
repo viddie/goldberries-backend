@@ -3,6 +3,7 @@
 class Suggestion extends DbObject
 {
   public static int $expiration_days = 7;
+  public static int $vote_lock_hours = 24;
   public static int $placement_cooldown_days = 14;
   public static string $table_name = 'suggestion';
 
@@ -361,9 +362,14 @@ class Suggestion extends DbObject
 
   function has_expired()
   {
-    $now = new DateTime();
-    $diff = $now->diff($this->date_created);
-    return $diff->days > self::$expiration_days;
+    return $this->date_verified !== null &&
+      time() >= $this->date_verified->getTimestamp() + self::$expiration_days * 24 * 60 * 60;
+  }
+
+  function is_vote_locked()
+  {
+    return $this->date_verified === null ||
+      time() < $this->date_verified->getTimestamp() + self::$vote_lock_hours * 60 * 60;
   }
 
   function get_url()
