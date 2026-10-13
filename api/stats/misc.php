@@ -46,9 +46,10 @@ $query = "SELECT
 FROM (SELECT DISTINCT player.id
 	FROM submission
 	JOIN challenge ON challenge.id = submission.challenge_id
+	JOIN difficulty completed_diff ON completed_diff.id = challenge.difficulty_id
 	JOIN player ON player.id = submission.player_id
   LEFT JOIN map ON map.id = challenge.map_id
-	WHERE challenge.difficulty_id = diff.id AND submission.is_verified = TRUE AND challenge.is_rejected = FALSE) AS temp) AS player_count
+	WHERE completed_diff.sort >= diff.sort AND submission.is_verified = TRUE AND challenge.is_rejected = FALSE) AS temp) AS player_count
 FROM difficulty diff";
 $result = pg_query($DB, $query);
 if (!$result) {
