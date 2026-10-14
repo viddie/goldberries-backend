@@ -94,9 +94,9 @@ if ($filter['exclude_cleared']) {
   $params[] = $player_id;
   $where[] = "NOT EXISTS (
     SELECT 1 FROM submission cleared
-    WHERE cleared.challenge_id = challenge.id
+    JOIN challenge cleared_challenge ON cleared_challenge.id = cleared.challenge_id
+    WHERE (cleared_challenge.map_id = challenge.map_id OR cleared_challenge.id = challenge.id)
       AND cleared.player_id = $" . count($params) . "
-      AND cleared.is_verified IS DISTINCT FROM false
   )";
 }
 
