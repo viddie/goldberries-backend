@@ -13,6 +13,7 @@ $page = max(1, $page);
 $per_page = isset($_REQUEST['per_page']) ? intval($_REQUEST['per_page']) : 10;
 $per_page = max(1, min(1000, $per_page));
 $player = isset($_REQUEST['player']) ? intval($_REQUEST['player']) : null;
-$result = Submission::get_recent_submissions($DB, $verified, $page, $per_page, $player);
+$challenge_id = isset($_REQUEST['challenge_id']) ? intval($_REQUEST['challenge_id']) : null;
+$result = Submission::get_recent_submissions($DB, $verified, $page, $per_page, $player, $challenge_id);
 api_write($result);
 #endregion

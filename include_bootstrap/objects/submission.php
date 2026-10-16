@@ -271,7 +271,7 @@ class Submission extends DbObject
     return $submissions;
   }
 
-  static function get_recent_submissions($DB, $verified, $page, $per_page, $player = null)
+  static function get_recent_submissions($DB, $verified, $page, $per_page, $player = null, $challenge_id = null)
   {
     $where = [];
     $params = [];
@@ -287,6 +287,11 @@ class Submission extends DbObject
     if ($player !== null) {
       $where[] = "player_id = \${$param_index}";
       $params[] = intval($player);
+      $param_index++;
+    }
+    if ($challenge_id !== null) {
+      $where[] = "challenge_id = \${$param_index}";
+      $params[] = intval($challenge_id);
       $param_index++;
     }
 
