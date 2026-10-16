@@ -15,9 +15,20 @@ pg_dump -h 109.123.243.54 -p 5432 -U postgres -d goldberries -Fc \
 
 ## Load dump
 
+Terminate all connections to the database, then drop + recreate + load the dump
+```
+psql -h localhost -p 5432 -U postgres goldberries
+
+SELECT pg_terminate_backend(pid)
+FROM pg_stat_activity
+WHERE datname = current_database()
+  AND pid <> pg_backend_pid();
+
 dropdb -h localhost -p 5432 -U postgres goldberries
 createdb -h localhost -p 5432 -U postgres goldberries
 pg_restore -h localhost -p 5432 -U postgres -d goldberries backup.dump
+
+```
 
 ## Dev State
 

@@ -366,6 +366,36 @@ class ChallengeTag extends DbObject
   }
   #endregion
 
+  #region Consensus Functions
+  /**
+   * CTEs resolving the consensus tags of every challenge, matching what tag chips show:
+   * - 'single' tags: only the top-voted value(s). Tied values split the weight evenly.
+   * - 'multi' tags: every assigned value, with a weight of 1.
+   * Archived categories are ignored. The last CTE is `tag_consensus (challenge_id, tag_id, tag_value_id, weight)`.
+   */
+  static function get_consensus_ctes(): string
+  {
+    return "tag_consensus_counts AS (
+        SELECT ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode, COUNT(*) AS votes
+        FROM challenge_tag ct
+        JOIN tag_value tv ON tv.id = ct.tag_value_id
+        JOIN tag t ON t.id = tv.tag_id
+        JOIN tag_category tc ON tc.id = t.category_id
+        WHERE tc.is_archived = false
+        GROUP BY ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode
+      ), tag_consensus_ranked AS (
+        SELECT *, MAX(votes) OVER (PARTITION BY challenge_id, tag_id) AS max_votes
+        FROM tag_consensus_counts
+      ), tag_consensus AS (
+        SELECT challenge_id, tag_id, tag_value_id,
+          CASE WHEN selection_mode = 'multi' THEN 1.0
+            ELSE 1.0 / COUNT(*) OVER (PARTITION BY challenge_id, tag_id) END AS weight
+        FROM tag_consensus_ranked
+        WHERE selection_mode = 'multi' OR votes = max_votes
+      )";
+  }
+  #endregion
+
   #region Filter Functions
   /**
    * Parses and resolves a tag filter into value id sets. Dies with an error response on invalid input.
