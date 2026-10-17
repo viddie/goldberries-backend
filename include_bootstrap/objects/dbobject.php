@@ -5,8 +5,9 @@ abstract class DbObject
   public static string $table_name;
 
   public int $id;
-  private int $max_expanded = 1;
-  private int $max_expanded_structure = 1;
+  protected static bool $batch_expand = false;
+  protected int $max_expanded = 1;
+  protected int $max_expanded_structure = 1;
 
   #region Abstract Functions
   abstract function get_field_set();
@@ -48,6 +49,37 @@ abstract class DbObject
     }
 
     $this->do_expand_foreign_keys($DB, $depth, $expand_structure);
+  }
+
+  static function expand_many($DB, $objects, $depth = 2, $expand_structure = true)
+  {
+    if ($depth <= 1 || count($objects) === 0)
+      return;
+
+    if (!static::$batch_expand) {
+      foreach ($objects as $obj) {
+        $obj->expand_foreign_keys($DB, $depth, $expand_structure);
+      }
+      return;
+    }
+
+    $pending = [];
+    foreach ($objects as $obj) {
+      $expanded = $expand_structure ? $obj->max_expanded_structure : $obj->max_expanded;
+      if ($expanded < $depth)
+        $pending[] = $obj;
+    }
+    if (count($pending) === 0)
+      return;
+
+    self::fetch_data_for_objects($DB, $pending, $depth - 1, $expand_structure);
+
+    foreach ($pending as $obj) {
+      if ($expand_structure)
+        $obj->max_expanded_structure = $depth;
+      else
+        $obj->max_expanded = $depth;
+    }
   }
 
   #endregion
@@ -129,10 +161,9 @@ abstract class DbObject
       while ($row = pg_fetch_assoc($result)) {
         $obj = new static;
         $obj->apply_db_data($row);
-        if ($depth > 1)
-          $obj->expand_foreign_keys($DB, $depth, $expand_structure);
         $json_arr[] = $obj;
       }
+      static::expand_many($DB, $json_arr, $depth, $expand_structure);
       return $json_arr;
     }
     if (!is_valid_id_query($id)) {
@@ -239,19 +270,16 @@ abstract class DbObject
   static function fetch_expand_data($DB, $expand_list)
   {
     foreach ($expand_list as $table => $ids) {
-      // Remove any already cached IDs from the list to fetch
-      if (isset(self::$dataCache[$table])) {
-        $cached_ids = array_keys(self::$dataCache[$table]);
-        $ids = array_diff($ids, $cached_ids);
+      $ids = array_diff_key($ids, self::$dataCache[$table] ?? []);
+      if (count($ids) === 0) {
+        continue;
       }
 
       $fetched_data = db_fetch_id_many($DB, $table, $ids);
       if ($fetched_data === false) {
-        continue;
+        die_json(500, "Failed to fetch expand data for table {$table}");
       }
       while ($row = pg_fetch_assoc($fetched_data)) {
-        if (!isset(self::$dataCache[$table]))
-          self::$dataCache[$table] = [];
         self::$dataCache[$table][$row['id']] = $row;
       }
     }
@@ -259,39 +287,22 @@ abstract class DbObject
 
   static function add_to_expand_list(&$expand_list, $class, $id)
   {
-    if (!isset($expand_list[$class::$table_name]))
-      $expand_list[$class::$table_name] = [];
-    if (!in_array($id, $expand_list[$class::$table_name]))
-      $expand_list[$class::$table_name][] = $id;
+    $expand_list[$class::$table_name][$id] = $id;
   }
   static function merge_expand_lists(&$expand_list1, $expand_list2)
   {
-    if ($expand_list1 === null) {
-      $expand_list1 = $expand_list2;
-      return;
-    }
-    if ($expand_list2 === null) {
-      return;
-    }
-
-    foreach ($expand_list2 as $table => $ids) {
-      if (!isset($expand_list1[$table]))
-        $expand_list1[$table] = [];
+    foreach ($expand_list2 ?? [] as $table => $ids) {
       foreach ($ids as $id) {
-        if (!in_array($id, $expand_list1[$table]))
-          $expand_list1[$table][] = $id;
+        $expand_list1[$table][$id] = $id;
       }
     }
   }
   static function get_object_from_data_list($data, $class, $id)
   {
-    $table = $class::$table_name;
-    $arr = $data[$table] ?? null;
-    if (!isset($arr) || !in_array($id, array_keys($arr))) {
-      return null;
-    }
-    $obj = $arr[$id] ?? null;
-    return $obj;
+    $row = $data[$class::$table_name][$id] ?? null;
+    if ($row === null)
+      die_json(500, "Missing expand data for {$class::$table_name} id {$id}");
+    return $row;
   }
   #endregion
 
