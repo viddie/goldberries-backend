@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     'challenge_id' => $challenge_id,
     'player_id' => $player_id,
     'tag_value_ids' => ChallengeTag::get_player_value_ids($DB, $challenge_id, $player_id),
+    'negative_tag_value_ids' => ChallengeTag::get_player_value_ids($DB, $challenge_id, $player_id, true),
   ]);
 }
 #endregion
@@ -26,7 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   check_access($account);
 
-  // Replaces the full set of tag values a player has assigned to a challenge
+  // Replaces the full set of tag values a player has assigned to a challenge.
+  // negative_tag_value_ids is optional, if omitted the existing negative votes are kept.
   $data = parse_post_body_as_json();
   $challenge_id = intval($data['challenge_id'] ?? 0);
   $player_id = isset($data['player_id']) ? intval($data['player_id']) : $account->player->id;
@@ -58,7 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $existing_ids = ChallengeTag::get_player_value_ids($DB, $challenge_id, $player_id);
   $final_ids = ChallengeTag::resolve_player_tags($DB, $account, $data['tag_value_ids'], $existing_ids);
-  $changes = ChallengeTag::set_player_tags($DB, $challenge_id, $player_id, $final_ids);
+  $existing_negative_ids = ChallengeTag::get_player_value_ids($DB, $challenge_id, $player_id, true);
+  $final_negative_ids = ChallengeTag::resolve_player_negative_tags($DB, $account, $data['negative_tag_value_ids'] ?? null, $final_ids, $existing_negative_ids, $challenge_id, $player_id);
+  $changes = ChallengeTag::set_player_tags($DB, $challenge_id, $player_id, $final_ids, $final_negative_ids);
 
   if (!$is_own && ($changes['added'] > 0 || $changes['removed'] > 0)) {
     log_info("'{$account->player->name}' changed the tags of player '{$player->name}' on {$challenge} (added: {$changes['added']}, removed: {$changes['removed']})", "Tag");
@@ -68,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'challenge_id' => $challenge_id,
     'player_id' => $player_id,
     'tag_value_ids' => $final_ids,
+    'negative_tag_value_ids' => $final_negative_ids,
   ]);
 }
 #endregion
@@ -92,7 +97,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $value = $defs['values'][$assignment->tag_value_id];
     $tag = $defs['tags'][$value->tag_id];
     $value_str = $value->name === null ? $tag->name : "{$tag->name} ({$value->name})";
-    log_info("'{$account->player->name}' removed tag '{$value_str}' of player '{$assignment->player->name}' from challenge {$assignment->challenge_id}", "Tag");
+    $vote_str = $assignment->is_negative ? "negative vote on tag" : "tag";
+    log_info("'{$account->player->name}' removed {$vote_str} '{$value_str}' of player '{$assignment->player->name}' from challenge {$assignment->challenge_id}", "Tag");
     api_write($assignment);
   } else {
     die_json(500, "Failed to delete tag assignment");

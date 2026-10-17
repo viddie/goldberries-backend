@@ -12,6 +12,7 @@ class ChallengeTag extends DbObject
   public int $player_id;
   public int $tag_value_id;
   public ?JsonDateTime $date_created = null;
+  public bool $is_negative = false;
 
   // Linked Objects
   public ?Challenge $challenge = null;
@@ -27,6 +28,7 @@ class ChallengeTag extends DbObject
       'player_id' => $this->player_id,
       'tag_value_id' => $this->tag_value_id,
       'date_created' => $this->date_created,
+      'is_negative' => $this->is_negative,
     );
   }
 
@@ -37,6 +39,7 @@ class ChallengeTag extends DbObject
       'player_id',
       'tag_value_id',
       'date_created',
+      'is_negative',
     ];
   }
 
@@ -47,6 +50,7 @@ class ChallengeTag extends DbObject
     $this->player_id = intval($arr[$prefix . 'player_id']);
     $this->tag_value_id = intval($arr[$prefix . 'tag_value_id']);
     $this->date_created = new JsonDateTime($arr[$prefix . 'date_created']);
+    $this->is_negative = $arr[$prefix . 'is_negative'] === 't';
   }
 
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
@@ -73,12 +77,15 @@ class ChallengeTag extends DbObject
   #endregion
 
   #region Find Functions
-  static function get_player_value_ids($DB, int $challenge_id, int $player_id): array
+  /**
+   * The tag value ids a player voted for (or against, with $negative = true) on a challenge.
+   */
+  static function get_player_value_ids($DB, int $challenge_id, int $player_id, bool $negative = false): array
   {
     $result = pg_query_params_or_die(
       $DB,
-      "SELECT tag_value_id FROM challenge_tag WHERE challenge_id = $1 AND player_id = $2 ORDER BY tag_value_id",
-      [$challenge_id, $player_id],
+      "SELECT tag_value_id FROM challenge_tag WHERE challenge_id = $1 AND player_id = $2 AND is_negative = $3 ORDER BY tag_value_id",
+      [$challenge_id, $player_id, $negative ? 't' : 'f'],
       "Failed to fetch tag assignments"
     );
     $ids = [];
@@ -90,7 +97,8 @@ class ChallengeTag extends DbObject
 
   /**
    * Aggregated tag counts ("chips") for a list of challenges.
-   * @return array list of ['challenge_id' => int, 'tag_value_id' => int, 'count' => int]
+   * `count` is the net total (positive votes - negative votes), `negative` the number of negative votes.
+   * @return array list of ['challenge_id' => int, 'tag_value_id' => int, 'count' => int, 'negative' => int]
    */
   static function get_counts_for_challenges($DB, array $challenge_ids): array
   {
@@ -100,7 +108,9 @@ class ChallengeTag extends DbObject
     $ids_str = "{" . implode(",", array_map('intval', $challenge_ids)) . "}";
     $result = pg_query_params_or_die(
       $DB,
-      "SELECT challenge_id, tag_value_id, COUNT(*) AS count
+      "SELECT challenge_id, tag_value_id,
+         SUM(CASE WHEN is_negative THEN -1 ELSE 1 END) AS count,
+         COUNT(*) FILTER (WHERE is_negative) AS negative
        FROM challenge_tag
        WHERE challenge_id = ANY($1::int[])
        GROUP BY challenge_id, tag_value_id
@@ -115,6 +125,7 @@ class ChallengeTag extends DbObject
         'challenge_id' => intval($row['challenge_id']),
         'tag_value_id' => intval($row['tag_value_id']),
         'count' => intval($row['count']),
+        'negative' => intval($row['negative']),
       ];
     }
     return $counts;
@@ -131,6 +142,7 @@ class ChallengeTag extends DbObject
       $grouped[$row['challenge_id']][] = [
         'tag_value_id' => $row['tag_value_id'],
         'count' => $row['count'],
+        'negative' => $row['negative'],
       ];
     }
     foreach ($challenges as $challenge) {
@@ -142,6 +154,7 @@ class ChallengeTag extends DbObject
 
   /**
    * All assignments of one tag value on one challenge, with the players expanded (for the "who tagged this" list).
+   * Positive votes come first, followed by negative votes.
    * @return ChallengeTag[]
    */
   static function get_assignments($DB, int $challenge_id, int $tag_value_id): array
@@ -152,7 +165,7 @@ class ChallengeTag extends DbObject
        FROM challenge_tag
        JOIN view_players ON view_players.player_id = challenge_tag.player_id
        WHERE challenge_tag.challenge_id = $1 AND challenge_tag.tag_value_id = $2
-       ORDER BY challenge_tag.date_created, challenge_tag.id",
+       ORDER BY challenge_tag.is_negative, challenge_tag.date_created, challenge_tag.id",
       [$challenge_id, $tag_value_id],
       "Failed to fetch tag assignments"
     );
@@ -251,6 +264,95 @@ class ChallengeTag extends DbObject
   }
 
   /**
+   * Validates a player's requested set of negative votes for one challenge and computes the final set to store.
+   * Dies with an error response on invalid input. If $requested_ids is null, the existing negative votes are kept,
+   * except for those that are now voted for positively.
+   *
+   * Rules:
+   * - All ids must exist and belong to non-competing tags (see Tag::allows_negative_votes).
+   * - A value can't be voted for and against at the same time.
+   * - Locked values are kept as they are (see resolve_player_tags).
+   * - New negative votes require at least one positive vote of another player on the value.
+   *
+   * @param array $positive_ids the final (already resolved) positive votes of the player
+   * @param array $existing_ids the negative votes the player currently has
+   * @return int[] the final set of negative tag value ids
+   */
+  static function resolve_player_negative_tags($DB, $account, $requested_ids, array $positive_ids, array $existing_ids, int $challenge_id, int $player_id): array
+  {
+    if ($requested_ids === null) {
+      return array_values(array_diff($existing_ids, $positive_ids));
+    }
+    if (!is_array($requested_ids) || !array_is_list($requested_ids)) {
+      die_json(400, "negative_tag_value_ids must be a list");
+    }
+    if (count($requested_ids) > 200) {
+      die_json(400, "Too many tag values");
+    }
+
+    $defs = Tag::get_definitions($DB);
+    $is_team = is_helper($account);
+
+    $final = [];
+    foreach ($requested_ids as $id) {
+      if (!is_int($id) && !(is_string($id) && is_id_string($id))) {
+        die_json(400, "Invalid tag value id");
+      }
+      $id = intval($id);
+      if (!isset($defs['values'][$id])) {
+        die_json(400, "Tag value with id {$id} does not exist");
+      }
+      if (in_array($id, $final, true))
+        continue;
+      $tag = self::get_tag_of_value($defs, $id);
+      if (!$tag->allows_negative_votes()) {
+        die_json(400, "Tag '{$tag->name}' doesn't allow negative votes");
+      }
+      if (in_array($id, $positive_ids, true)) {
+        die_json(400, "Tag '{$tag->name}' can't be voted for and against at the same time");
+      }
+      $locked_reason = self::get_locked_reason($defs, $id, $is_team);
+      if ($locked_reason !== null && !in_array($id, $existing_ids, true)) {
+        die_json(403, "Tag '{$tag->name}' {$locked_reason}");
+      }
+      $final[] = $id;
+    }
+    foreach ($existing_ids as $id) {
+      if (!isset($defs['values'][$id]) || in_array($id, $final, true) || in_array($id, $positive_ids, true))
+        continue;
+      if (self::get_locked_reason($defs, $id, $is_team) !== null)
+        $final[] = $id;
+    }
+
+    $added = array_values(array_diff($final, $existing_ids));
+    if (count($added) > 0) {
+      if ($account->has_restriction_flag(Account::$RESTRICT_ADD_TAGS)) {
+        die_json(403, "You are restricted from adding tags to challenges");
+      }
+      $result = pg_query_params_or_die(
+        $DB,
+        "SELECT DISTINCT tag_value_id FROM challenge_tag
+         WHERE challenge_id = $1 AND player_id <> $2 AND is_negative = false AND tag_value_id = ANY($3::int[])",
+        [$challenge_id, $player_id, "{" . implode(",", $added) . "}"],
+        "Failed to check tag assignments"
+      );
+      $voted_ids = [];
+      while ($row = pg_fetch_assoc($result)) {
+        $voted_ids[] = intval($row['tag_value_id']);
+      }
+      foreach ($added as $id) {
+        if (!in_array($id, $voted_ids, true)) {
+          $tag = self::get_tag_of_value($defs, $id);
+          die_json(400, "Tag '{$tag->name}' can only be voted against if another player has assigned it");
+        }
+      }
+    }
+
+    sort($final);
+    return $final;
+  }
+
+  /**
    * Merges a partial selection into the existing set: for every tag that appears in $partial_ids,
    * the player's existing values of that tag are replaced. Tags not mentioned are left untouched.
    */
@@ -273,26 +375,33 @@ class ChallengeTag extends DbObject
   }
 
   /**
-   * Replaces a player's tag values on a challenge with the given (already validated) set in a single statement.
+   * Replaces a player's tag votes on a challenge with the given (already validated, disjoint) sets in a single statement.
+   * Votes that flip between positive and negative are updated in place.
    * @return array ['added' => int, 'removed' => int]
    */
-  static function set_player_tags($DB, int $challenge_id, int $player_id, array $value_ids): array
+  static function set_player_tags($DB, int $challenge_id, int $player_id, array $value_ids, array $negative_value_ids = []): array
   {
     $ids_str = "{" . implode(",", array_map('intval', $value_ids)) . "}";
+    $negative_ids_str = "{" . implode(",", array_map('intval', $negative_value_ids)) . "}";
     $result = pg_query_params_or_die(
       $DB,
       "WITH removed AS (
          DELETE FROM challenge_tag
-         WHERE challenge_id = $1 AND player_id = $2 AND NOT (tag_value_id = ANY($3::int[]))
+         WHERE challenge_id = $1 AND player_id = $2
+           AND NOT (tag_value_id = ANY($3::int[])) AND NOT (tag_value_id = ANY($4::int[]))
          RETURNING id
        ), added AS (
-         INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id)
-         SELECT $1, $2, value_id FROM unnest($3::int[]) AS value_id
-         ON CONFLICT (challenge_id, player_id, tag_value_id) DO NOTHING
+         INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id, is_negative)
+         SELECT $1, $2, value_id, false FROM unnest($3::int[]) AS value_id
+         UNION ALL
+         SELECT $1, $2, value_id, true FROM unnest($4::int[]) AS value_id
+         ON CONFLICT (challenge_id, player_id, tag_value_id) DO UPDATE
+           SET is_negative = EXCLUDED.is_negative, date_created = CURRENT_TIMESTAMP
+           WHERE challenge_tag.is_negative <> EXCLUDED.is_negative
          RETURNING id
        )
        SELECT (SELECT COUNT(*) FROM added) AS added, (SELECT COUNT(*) FROM removed) AS removed",
-      [$challenge_id, $player_id, $ids_str],
+      [$challenge_id, $player_id, $ids_str, $negative_ids_str],
       "Failed to save tag assignments"
     );
     $row = pg_fetch_assoc($result);
@@ -312,8 +421,8 @@ class ChallengeTag extends DbObject
   {
     pg_query_params_or_die(
       $DB,
-      "INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id, date_created)
-       SELECT $2, src.player_id, src.tag_value_id, src.date_created
+      "INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id, date_created, is_negative)
+       SELECT $2, src.player_id, src.tag_value_id, src.date_created, src.is_negative
        FROM challenge_tag src
        JOIN tag_value src_value ON src_value.id = src.tag_value_id
        JOIN tag ON tag.id = src_value.tag_id
@@ -345,8 +454,8 @@ class ChallengeTag extends DbObject
   {
     $result = pg_query_params_or_die(
       $DB,
-      "INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id, date_created)
-       SELECT src.challenge_id, $2, src.tag_value_id, src.date_created
+      "INSERT INTO challenge_tag (challenge_id, player_id, tag_value_id, date_created, is_negative)
+       SELECT src.challenge_id, $2, src.tag_value_id, src.date_created, src.is_negative
        FROM challenge_tag src
        JOIN tag_value src_value ON src_value.id = src.tag_value_id
        WHERE src.player_id = $1
@@ -371,18 +480,20 @@ class ChallengeTag extends DbObject
    * CTEs resolving the consensus tags of every challenge, matching what tag chips show:
    * - 'single' tags: only the top-voted value(s). Tied values split the weight evenly.
    * - 'multi' tags: every assigned value, with a weight of 1.
+   * Votes are net totals (negative votes count as -1), values at 0 or less are out-voted and ignored.
    * Archived categories are ignored. The last CTE is `tag_consensus (challenge_id, tag_id, tag_value_id, weight)`.
    */
   static function get_consensus_ctes(): string
   {
     return "tag_consensus_counts AS (
-        SELECT ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode, COUNT(*) AS votes
+        SELECT ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode, SUM(CASE WHEN ct.is_negative THEN -1 ELSE 1 END) AS votes
         FROM challenge_tag ct
         JOIN tag_value tv ON tv.id = ct.tag_value_id
         JOIN tag t ON t.id = tv.tag_id
         JOIN tag_category tc ON tc.id = t.category_id
         WHERE tc.is_archived = false
         GROUP BY ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode
+        HAVING SUM(CASE WHEN ct.is_negative THEN -1 ELSE 1 END) > 0
       ), tag_consensus_ranked AS (
         SELECT *, MAX(votes) OVER (PARTITION BY challenge_id, tag_id) AS max_votes
         FROM tag_consensus_counts
@@ -416,6 +527,8 @@ class ChallengeTag extends DbObject
    * support makes up at least `agreement` percent of all players that assigned any value of the tag. Includes match
    * and excludes remove when the condition matches. Team-only tags always have a required support of 1 and ignore
    * the agreement. 'multi' tags also ignore the agreement, since their values aren't mutually exclusive.
+   * Values with a net total of 0 or less on a challenge (negative votes count as -1) are out-voted and ignored. For the
+   * remaining values, the distinct players that voted against any of the condition's values are subtracted from the support.
    *
    * @param mixed $filter JSON string, decoded array or null
    * @return array ['confidence' => int, 'agreement' => int, 'conditions' => list of
@@ -562,13 +675,14 @@ class ChallengeTag extends DbObject
         $set_param = self::add_param($params, "{" . implode(",", $condition['value_ids']) . "}");
         $required = intval($condition['required']);
         $agreement = intval($condition['agreement']);
-        $support = "COUNT(DISTINCT player_id) FILTER (WHERE tag_value_id = ANY({$set_param}::int[]))";
+        $support = "(COUNT(DISTINCT player_id) FILTER (WHERE NOT is_negative AND tag_value_id = ANY({$set_param}::int[]))"
+          . " - COUNT(DISTINCT player_id) FILTER (WHERE is_negative AND tag_value_id = ANY({$set_param}::int[])))";
         $clause = "{$support} >= {$required}";
         if ($agreement > 0) {
           // Compare against all players that voted on the tag, so the other values need to be fetched as well
           $all_value_ids = array_merge($all_value_ids, $condition['tag_value_ids']);
           $tag_param = self::add_param($params, "{" . implode(",", $condition['tag_value_ids']) . "}");
-          $total = "COUNT(DISTINCT player_id) FILTER (WHERE tag_value_id = ANY({$tag_param}::int[]))";
+          $total = "COUNT(DISTINCT player_id) FILTER (WHERE NOT is_negative AND tag_value_id = ANY({$tag_param}::int[]))";
           $clause .= " AND {$support} * 100 >= {$agreement} * {$total}";
         } else {
           $all_value_ids = array_merge($all_value_ids, $condition['value_ids']);
@@ -578,11 +692,17 @@ class ChallengeTag extends DbObject
       $all_param = self::add_param($params, "{" . implode(",", array_unique($all_value_ids)) . "}");
 
       // For excludes, a challenge is removed if ANY exclude condition matches
+      // Out-voted values (net total of 0 or less) are dropped before aggregating
       $joiner = $mode === 'include' ? " AND " : " OR ";
       $ctes[] = "{$cte_name} AS (
         SELECT challenge_id
-        FROM challenge_tag
-        WHERE tag_value_id = ANY({$all_param}::int[])
+        FROM (
+          SELECT challenge_id, player_id, tag_value_id, is_negative,
+            SUM(CASE WHEN is_negative THEN -1 ELSE 1 END) OVER (PARTITION BY challenge_id, tag_value_id) AS net_votes
+          FROM challenge_tag
+          WHERE tag_value_id = ANY({$all_param}::int[])
+        ) votes
+        WHERE net_votes > 0
         GROUP BY challenge_id
         HAVING " . implode($joiner, $having) . "
       )";

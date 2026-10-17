@@ -90,6 +90,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   $tag->save_values($DB, $values);
 
+  // Negative votes are only allowed on non-competing tags
+  $tag->fetch_values($DB);
+  if (!$tag->allows_negative_votes()) {
+    $result = pg_query_params_or_die(
+      $DB,
+      "DELETE FROM challenge_tag USING tag_value WHERE challenge_tag.tag_value_id = tag_value.id AND tag_value.tag_id = $1 AND challenge_tag.is_negative = true",
+      [$tag->id],
+      "Failed to remove negative tag votes"
+    );
+    $removed_negative = pg_affected_rows($result);
+    if ($removed_negative > 0) {
+      log_info("'{$account->player->name}' made {$tag} competing, removing {$removed_negative} negative vote(s)", "Tag");
+    }
+  }
+
   if ($old_tag_str !== null) {
     log_info("'{$account->player->name}' updated {$old_tag_str} to {$tag} [{$tag->get_values_string()}]", "Tag");
   } else {

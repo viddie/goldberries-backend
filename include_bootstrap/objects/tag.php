@@ -159,6 +159,15 @@ class Tag extends DbObject
   #endregion
 
   #region Value Functions
+  /**
+   * Values of non-competing tags ('multi' tags or tags with a single value) don't out-vote each other,
+   * so players can vote against them instead.
+   */
+  function allows_negative_votes(): bool
+  {
+    return $this->selection_mode === 'multi' || count($this->values ?? []) === 1;
+  }
+
   function get_value_ids(): array
   {
     return array_map(fn($v) => $v->id, $this->values ?? []);

@@ -279,6 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_submission->time_taken = $submission->time_taken;
     $new_submission->date_achieved = $submission->date_achieved;
     $tag_value_ids = null;
+    $negative_tag_value_ids = [];
 
     //new challenge stuff
     if (isset($data['new_challenge'])) {
@@ -330,6 +331,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $existing_tag_value_ids = ChallengeTag::get_player_value_ids($DB, $challenge->id, $new_submission->player_id);
         $merged_tag_value_ids = ChallengeTag::merge_partial_selection($DB, $data['tag_value_ids'], $existing_tag_value_ids);
         $tag_value_ids = ChallengeTag::resolve_player_tags($DB, $account, $merged_tag_value_ids, $existing_tag_value_ids);
+        // Negative votes are kept, unless the value is now voted for
+        $existing_negative_ids = ChallengeTag::get_player_value_ids($DB, $challenge->id, $new_submission->player_id, true);
+        $negative_tag_value_ids = ChallengeTag::resolve_player_negative_tags($DB, $account, null, $tag_value_ids, $existing_negative_ids, $challenge->id, $new_submission->player_id);
       }
     } else {
       die_json(400, "challenge_id or new_challenge is missing");
@@ -371,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         Like::like_challenge($DB, $new_submission->challenge_id, $account->player_id);
       }
       if ($tag_value_ids !== null) {
-        ChallengeTag::set_player_tags($DB, $new_submission->challenge_id, $new_submission->player_id, $tag_value_ids);
+        ChallengeTag::set_player_tags($DB, $new_submission->challenge_id, $new_submission->player_id, $tag_value_ids, $negative_tag_value_ids);
       }
     }
     $new_submission->expand_foreign_keys($DB, 5);
