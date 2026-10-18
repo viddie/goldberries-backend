@@ -7,6 +7,7 @@ $account = get_user_data();
 #region GET Request
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   check_role($account, $VERIFIER);
+  reject_api_keys($account);
 
   if (!isset($_REQUEST['page'])) {
     die_json(400, "Missing parameter: page");

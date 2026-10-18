@@ -14,6 +14,7 @@ if ($account === null) {
 if (!is_verifier($account)) {
   die_json(403, "Not authorized");
 }
+reject_api_keys($account);
 
 $accounts = Account::get_all_player_claims($DB);
 foreach ($accounts as $account) {

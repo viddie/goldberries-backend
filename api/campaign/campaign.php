@@ -67,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
+  check_api_key_scope($account, isset($data['id']) ? ApiKey::$SCOPE_CONTENT_MANAGE : ApiKey::$SCOPE_CONTENT_CREATE);
   $campaign = new Campaign();
   $campaign->apply_db_data($data);
 

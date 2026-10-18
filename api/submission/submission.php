@@ -57,6 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($old_submission->player_id !== $account->player->id && !is_helper($account)) {
       die_json(403, "You are not allowed to edit submissions for other players");
     }
+    $is_own_submission = $old_submission->player_id === $account->player->id && $submission->player_id === $account->player->id;
+    check_api_key_scope($account, $is_own_submission ? ApiKey::$SCOPE_SUBMISSION_MANAGE : ApiKey::$SCOPE_SUBMISSION_VERIFY);
     $keep_suggested_difficulty = $old_submission->player_id === $account->player->id && $account->has_restriction_flag(Account::$RESTRICT_SUGGEST_DIFFICULTY);
     if ($keep_suggested_difficulty) {
       $submission->suggested_difficulty_id = $old_submission->suggested_difficulty_id;
@@ -260,6 +262,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       die_json(400, "Submissions are currently disabled");
     }
     check_restriction($account, Account::$RESTRICT_SUBMIT, "You are restricted from making new submissions");
+    check_api_key_scope($account, ApiKey::$SCOPE_SUBMISSION_CREATE);
+    if ($like_challenge) {
+      check_api_key_scope($account, ApiKey::$SCOPE_LIKE);
+    }
 
     //Create blank submission and only carry over fields that the player is allowed to set
     $new_submission = new Submission();
@@ -398,6 +404,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   //Trying to delete submission for another player
   if ($submission->player_id !== $account->player->id) {
     check_role($account, $HELPER);
+    check_api_key_scope($account, ApiKey::$SCOPE_SUBMISSION_VERIFY);
+  } else {
+    check_api_key_scope($account, ApiKey::$SCOPE_SUBMISSION_MANAGE);
   }
 
   if ($submission->id === 46033) { //The golden challenge

@@ -48,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 #region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_ACCOUNT_MANAGE);
 
   $submission_ids = parse_post_body_as_json();
   $checked_submission_ids = array();

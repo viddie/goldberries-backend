@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   check_role($account, $HELPER);
+  check_api_key_scope($account, ApiKey::$SCOPE_CONTENT_MANAGE);
 
   $campaign = Campaign::get_by_id($DB, $id, 0, false);
   if ($campaign === null) {
@@ -65,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_role($account, $HELPER);
+  check_api_key_scope($account, ApiKey::$SCOPE_CONTENT_MANAGE);
 
   $cache_dir = GB_ROOT_LOCAL . "/cache/campaign_data/{$id}";
   if (!is_dir($cache_dir)) {

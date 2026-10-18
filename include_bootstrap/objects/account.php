@@ -20,7 +20,8 @@ class Account extends DbObject
   public static int $RESTRICT_CREATE_SUGGESTION = 16;
   public static int $RESTRICT_VOTE = 32;
   public static int $RESTRICT_ADD_TAGS = 64;
-  public static int $RESTRICT_ALL = 127;
+  public static int $RESTRICT_INGAME_STATUS = 128;
+  public static int $RESTRICT_ALL = 255;
 
   public ?string $email = null;
   public ?string $password = null;
@@ -39,13 +40,15 @@ class Account extends DbObject
   public ?string $name_color_start = null;
   public ?string $name_color_end = null;
   public ?string $country = null;
+  public ?string $stream_url = null;
 
   // Other
   public ?JsonDateTime $last_player_rename = null;
   public int $notifications = 3; //Default notifications: Account::$NOTIF_SUB_VERIFIED | Account::$NOTIF_CHALL_PERSONAL
   public int $restrictions = 0;
-  public ?string $api_key = null;
   public bool $using_api_key = false; //Field not set from DB, only set through auth process
+  public ?ApiKey $active_api_key = null; //Field not set from DB, the key used to authenticate this request
+  public ?int $api_key_scopes = null; //Field not set from DB, only exposed through check_session when using an API key
 
   // Foreign Keys
   public ?int $player_id = null;
@@ -108,12 +111,11 @@ class Account extends DbObject
       $this->name_color_end = $arr[$prefix . 'name_color_end'];
     if (isset($arr[$prefix . 'country']))
       $this->country = $arr[$prefix . 'country'];
+    if (isset($arr[$prefix . 'stream_url']))
+      $this->stream_url = $arr[$prefix . 'stream_url'];
 
     if (isset($arr[$prefix . 'last_player_rename']))
       $this->last_player_rename = new JsonDateTime($arr[$prefix . 'last_player_rename']);
-
-    if (isset($arr[$prefix . 'api_key']))
-      $this->api_key = $arr[$prefix . 'api_key'];
   }
   protected function do_expand_foreign_keys($DB, $depth, $expand_structure)
   {
@@ -195,10 +197,10 @@ class Account extends DbObject
       'name_color_start' => $this->name_color_start,
       'name_color_end' => $this->name_color_end,
       'country' => $this->country,
+      'stream_url' => $this->stream_url,
       'last_player_rename' => $this->last_player_rename,
       'notifications' => $this->notifications,
       'restrictions' => $this->restrictions,
-      'api_key' => $this->api_key,
     );
   }
   static function static_field_set()
@@ -220,10 +222,10 @@ class Account extends DbObject
       'name_color_start',
       'name_color_end',
       'country',
+      'stream_url',
       'last_player_rename',
       'notifications',
       'restrictions',
-      'api_key',
     ];
   }
   #endregion
@@ -251,16 +253,18 @@ class Account extends DbObject
     return $session->account;
   }
 
-  static function find_by_api_key($DB, string $api_key)
+  static function find_by_api_key($DB, string $key)
   {
-    $query = "SELECT * FROM account WHERE api_key IS NOT NULL AND api_key = $1";
-    $result = pg_query_params_or_die($DB, $query, [$api_key]);
-    if (pg_num_rows($result) === 0) {
+    $api_key = ApiKey::find_by_key($DB, $key);
+    if ($api_key === false) {
       return false;
     }
-    $row = pg_fetch_assoc($result);
-    $account = new Account();
-    $account->apply_db_data($row);
+    $account = Account::get_by_id($DB, $api_key->account_id, 1);
+    if ($account === false) {
+      return false;
+    }
+    $account->using_api_key = true;
+    $account->active_api_key = $api_key;
     return $account;
   }
 
@@ -296,8 +300,8 @@ class Account extends DbObject
   {
     $this->password = null;
     $this->email_verify_code = null;
-    $this->api_key = null;
     $this->using_api_key = false;
+    $this->active_api_key = null;
 
     if ($remove_email) {
       $this->email = null;

@@ -13,6 +13,7 @@ check_access($account, true);
 if (!is_helper($account)) {
   die_json(403, 'Not Authorized');
 }
+check_api_key_scope($account, ApiKey::$SCOPE_SUBMISSION_VERIFY);
 
 $data = parse_post_body_as_json();
 

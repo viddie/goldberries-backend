@@ -2,6 +2,8 @@
 
 require_once('../api_bootstrap.inc.php');
 
+const MAX_STREAM_URL_LENGTH = 256;
+
 $account = get_user_data();
 if ($account === null) {
   die_json(401, "Not logged in");
@@ -12,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   if (!is_verifier($account)) {
     die_json(403, "Not authorized");
   }
+  reject_api_keys($account);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {
@@ -37,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
   //Update request
   if (is_verifier($account) && (!isset($request['self']) || $request['self'] !== 't')) {
+    reject_api_keys($account);
     if (!isset($request['id'])) {
       die_json(400, "Invalid id");
     }
@@ -55,8 +59,8 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
 
     // A restricted verifier must not bypass their own profile restriction through this branch
     if ($account->id === $target->id && $target->has_restriction_flag(Account::$RESTRICT_PROFILE)) {
-      if (!links_equal($accountReq->links, $target->links) || ($accountReq->about_me ?? '') !== ($target->about_me ?? '')) {
-        die_json(403, "You are restricted from editing the about me or links of your profile");
+      if (!links_equal($accountReq->links, $target->links) || ($accountReq->about_me ?? '') !== ($target->about_me ?? '') || (array_key_exists('stream_url', $request) && ($accountReq->stream_url ?? '') !== ($target->stream_url ?? ''))) {
+        die_json(403, "You are restricted from editing the about me, links or stream URL of your profile");
       }
     }
 
@@ -74,6 +78,9 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $target->name_color_end = $accountReq->name_color_end;
     $target->input_method = $accountReq->input_method;
     $target->about_me = $accountReq->about_me;
+    if (array_key_exists('stream_url', $request)) {
+      $target->stream_url = validate_stream_url($request['stream_url']);
+    }
 
     if (Account::is_valid_country($accountReq->country)) {
       $target->country = $accountReq->country;
@@ -163,6 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     if (!isset($request['self']) || $request['self'] !== 't') {
       die_json(403, "Not authorized");
     }
+    check_api_key_scope($account, ApiKey::$SCOPE_ACCOUNT_MANAGE);
 
     //User are allowed to: Update their email and password
     //Unlink their discord account (discord_id = null)
@@ -171,6 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     $changes = "";
 
     if (isset($request['email']) && $request['email'] !== $account->email) {
+      reject_api_keys($account);
       if (!filter_var($request['email'], FILTER_VALIDATE_EMAIL)) {
         die_json(400, "Invalid email");
       }
@@ -186,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       $account->email_verified = true; //Skip email verification if it's been added later
     }
     if (isset($request['unlink_email']) && $request['unlink_email'] === 't') {
+      reject_api_keys($account);
       if ($account->discord_id === null) {
         die_json(400, "Cannot unlink email without discord account linked");
       }
@@ -195,11 +205,13 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     }
 
     if (isset($request['password'])) {
+      reject_api_keys($account);
       $changes .= "password, ";
       $account->password = password_hash($request['password'], PASSWORD_DEFAULT);
     }
 
     if (isset($request['unlink_discord']) && $request['unlink_discord'] === 't') {
+      reject_api_keys($account);
       if ($account->email === null && $account->password === null) {
         die_json(400, "Cannot unlink discord account without email and password");
       }
@@ -271,6 +283,14 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       }
       $account->about_me = $request['about_me'];
       $changes .= "about_me ({$account->about_me}), ";
+    }
+    if (array_key_exists("stream_url", $request) && $request['stream_url'] !== $account->stream_url) {
+      $stream_url = validate_stream_url($request['stream_url']);
+      if (($stream_url ?? '') !== ($account->stream_url ?? '')) {
+        check_restriction($account, Account::$RESTRICT_PROFILE, "You are restricted from editing the stream URL of your profile");
+      }
+      $account->stream_url = $stream_url;
+      $changes .= "stream_url ({$account->stream_url}), ";
     }
     if (array_key_exists("country", $request) && $request['country'] !== $account->country) {
       if (!Account::is_valid_country($request['country'])) {
@@ -344,6 +364,25 @@ if ($_SERVER['REQUEST_METHOD'] === "DELETE") {
 #endregion
 
 #region Utility Functions
+function validate_stream_url($stream_url): ?string
+{
+  if ($stream_url === null) {
+    return null;
+  }
+  if (!is_string($stream_url)) {
+    die_json(400, "Invalid stream_url");
+  }
+  $stream_url = trim($stream_url);
+  if ($stream_url === "") {
+    return null;
+  }
+  if (strlen($stream_url) > MAX_STREAM_URL_LENGTH) {
+    die_json(400, "stream_url can't be longer than " . MAX_STREAM_URL_LENGTH . " characters");
+  }
+  check_url($stream_url, "stream_url");
+  return $stream_url;
+}
+
 // Compares two link lists while ignoring array keys, whitespace and empty entries
 function links_equal($a, $b): bool
 {

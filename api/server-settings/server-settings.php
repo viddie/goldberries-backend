@@ -13,6 +13,7 @@ $account = get_user_data();
 #region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_role($account, $ADMIN);
+  reject_api_keys($account);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $settings = new ServerSettings();

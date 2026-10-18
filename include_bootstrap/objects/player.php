@@ -96,6 +96,7 @@ class Player extends DbObject
       $this->account['input_method'] = $account->input_method;
       $this->account['about_me'] = $account->about_me;
       $this->account['country'] = $account->country;
+      $this->account['stream_url'] = $account->stream_url;
     }
   }
   #endregion

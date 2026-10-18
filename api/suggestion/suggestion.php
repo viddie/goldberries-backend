@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 #region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_SUGGESTION);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $suggestion = new Suggestion();
@@ -43,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!is_helper($account)) {
       die_json(403, "Not authorized");
     }
+    reject_api_keys($account);
 
     if ($old_suggestion->is_verified !== true && $old_suggestion->is_verified !== $suggestion->is_verified) {
       $toLog = $suggestion->is_verified ? "verified" : "rejected";
@@ -161,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 #region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_SUGGESTION);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {
@@ -171,7 +174,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   if ($suggestion === false) {
     die_json(404, "Suggestion not found");
   }
-  if (!is_helper($account)) {
+  if (!is_helper($account) || $account->using_api_key) {
+    // API keys can only delete suggestions within the regular user rules, team moderation is not allowed
     if ($suggestion->author_id !== $account->player_id) {
       die_json(403, "You can only delete your own suggestions");
     }

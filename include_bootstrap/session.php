@@ -1,5 +1,7 @@
 <?php
 
+// Path prefixes (relative to the web root) on which API key authentication is never allowed
+const API_KEY_BLOCKED_PATHS = ['/api/admin/', '/api/traffic/'];
 
 function get_discord_url()
 {
@@ -116,12 +118,13 @@ function get_user_data($allow_dev_override = true)
 
   // If not available, check for header: X-API-Key
   if ($account === null && isset($_SERVER['HTTP_X_API_KEY'])) {
-    $api_key = $_SERVER['HTTP_X_API_KEY'];
-    $account = Account::find_by_api_key($DB, $api_key);
+    if (is_api_key_blocked_path()) {
+      die_json(403, "API keys are not allowed for this endpoint");
+    }
+    $account = Account::find_by_api_key($DB, $_SERVER['HTTP_X_API_KEY']);
     if ($account == false) {
       return null;
     }
-    $account->using_api_key = true;
   }
 
   if ($account === null) {
@@ -367,6 +370,33 @@ function reject_api_keys($account)
   if ($account->using_api_key) {
     die_json(403, "This action is not allowed when using an API key");
   }
+}
+
+// Rejects requests authenticated via an API key that doesn't have the given scope. Session-authenticated requests always pass.
+function check_api_key_scope($account, int $scope)
+{
+  if ($account === null) {
+    die_json(401, "Not logged in");
+  }
+  if (!$account->using_api_key) {
+    return;
+  }
+  if ($account->active_api_key === null || !$account->active_api_key->has_scope($scope)) {
+    $scope_name = ApiKey::get_scope_name($scope);
+    die_json(403, "This API key is missing the required scope: {$scope_name}");
+  }
+}
+
+function is_api_key_blocked_path(): bool
+{
+  $path = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
+  $script = $_SERVER['SCRIPT_NAME'] ?? '';
+  foreach (API_KEY_BLOCKED_PATHS as $prefix) {
+    if (str_starts_with($path, $prefix) || str_starts_with($script, $prefix)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function release_session_lock()

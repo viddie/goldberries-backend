@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!is_helper($account)) {
     die_json(403, "You cannot modify stamp submissions");
   }
+  reject_api_keys($account);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $stamp_submission = new StampSubmission();
@@ -56,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   if (!is_helper($account)) {
     die_json(403, "You cannot modify stamp submissions");
   }
+  reject_api_keys($account);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {

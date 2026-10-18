@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!is_verifier($account)) {
     die_json(403, "You cannot modify badges");
   }
+  reject_api_keys($account);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $badgePlayer = new BadgePlayer();
@@ -47,6 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   if (!is_verifier($account)) {
     die_json(403, "You cannot modify badges");
   }
+  reject_api_keys($account);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {

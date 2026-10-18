@@ -48,6 +48,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // If the data is just a single object, put it in an array
     $data_arr = array($data_arr);
   }
+  foreach ($data_arr as $data) {
+    check_api_key_scope($account, isset($data['id']) ? ApiKey::$SCOPE_CONTENT_MANAGE : ApiKey::$SCOPE_CONTENT_CREATE);
+  }
 
   $maps = array();
   foreach ($data_arr as $data) {

@@ -42,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $is_own = $player_id === $account->player->id;
   if (!$is_own) {
     check_role($account, $HELPER);
+    reject_api_keys($account);
   }
+  check_api_key_scope($account, ApiKey::$SCOPE_TAG);
 
   $challenge = Challenge::get_by_id($DB, $challenge_id, 1, false);
   if ($challenge === false) {
@@ -82,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   // Team moderation: remove a single assignment
   $account = get_user_data();
   check_role($account, $HELPER);
+  reject_api_keys($account);
 
   if (!isset($_REQUEST['id'])) {
     die_json(400, "Missing id");

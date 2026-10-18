@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
+  // Split and merge requests modify existing challenges
+  $is_modification = isset($data['id']) || ($data['split'] ?? null) === "t" || ($data['merge'] ?? null) === "t";
+  check_api_key_scope($account, $is_modification ? ApiKey::$SCOPE_CONTENT_MANAGE : ApiKey::$SCOPE_CONTENT_CREATE);
 
 
   #region Special Challenge Requests

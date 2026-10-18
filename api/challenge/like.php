@@ -29,6 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_LIKE);
 
   $data = parse_post_body_as_json();
   $like = new Like();
@@ -123,6 +124,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($old_like->player_id !== $account->player->id && !is_verifier($account)) {
       die_json(403, "You can only update your own likes");
     }
+    if ($old_like->player_id !== $account->player->id) {
+      reject_api_keys($account);
+    }
 
     // challenge_id and date_created cannot be modified
     // Update allowed fields
@@ -164,6 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   $account = get_user_data();
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_LIKE);
 
   if (!isset($_REQUEST['id'])) {
     die_json(400, "Missing id");
@@ -182,6 +187,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   // Check if player_id matches own player OR user is verifier+
   if ($like->player_id !== $account->player->id && !is_verifier($account)) {
     die_json(403, "You can only delete your own likes");
+  }
+  if ($like->player_id !== $account->player->id) {
+    reject_api_keys($account);
   }
 
   $challenge_id = $like->challenge_id;

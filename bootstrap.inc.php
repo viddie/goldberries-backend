@@ -37,6 +37,8 @@ $requireObjects = array(
   "tag",
   "tag_value",
   "challenge_tag",
+  "api_key",
+  "ingame_status",
 );
 
 foreach ($requireObjects as $obj) {

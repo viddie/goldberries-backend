@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 #region POST Request
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_SUGGESTION);
   check_restriction($account, Account::$RESTRICT_VOTE, "You are restricted from voting on suggestions");
 
   $data = parse_post_body_as_json();
@@ -106,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 #region DELETE Request
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   check_access($account, true);
+  check_api_key_scope($account, ApiKey::$SCOPE_SUGGESTION);
 
   $id = $_REQUEST['id'] ?? null;
   if ($id === null) {
@@ -118,6 +120,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
   }
   if ($vote->player_id !== $account->player_id && !is_verifier($account)) {
     die_json(403, "You can only delete your own votes");
+  }
+  if ($vote->player_id !== $account->player_id) {
+    reject_api_keys($account);
   }
 
   $suggestion = Suggestion::get_by_id($DB, $vote->suggestion_id);

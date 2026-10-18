@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   } else if (!is_news_writer($account)) {
     die_json(403, "Not authorized");
   }
+  reject_api_keys($account);
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
   $post = new Post();

@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //Update request
     $log_change = isset($request['log_change']) && $request['log_change'] === 't';
     if (is_verifier($account) && (!isset($request['self']) || $request['self'] !== 't')) {
+      reject_api_keys($account);
       if (!isset($request['id'])) {
         die_json(400, "Invalid id");
       }
@@ -78,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       if (!isset($request['self']) || $request['self'] !== 't') {
         die_json(403, "Not authorized");
       }
+      check_api_key_scope($account, ApiKey::$SCOPE_ACCOUNT_MANAGE);
 
       //Check if the account has a player set
       $target = $account->player;
@@ -134,6 +136,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($account->player_id !== null && !is_helper($account)) {
       die_json(400, "Account already has a player");
     }
+    // Helpers creating additional players is content creation, otherwise it's the account's own player
+    check_api_key_scope($account, $account->player_id !== null ? ApiKey::$SCOPE_CONTENT_CREATE : ApiKey::$SCOPE_ACCOUNT_MANAGE);
     if (!isset($request['name'])) {
       die_json(400, "Missing parameter 'name'");
     }

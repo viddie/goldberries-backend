@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $account = get_user_data();
   check_role($account, $HELPER);
+  reject_api_keys($account);
 
   $data = parse_post_body_as_json();
 
