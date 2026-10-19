@@ -7,14 +7,18 @@ class IngameStatus extends DbObject
   public static int $MAX_ENTRIES_PER_ACCOUNT = 1000;
   public static int $MAX_STRING_LENGTH = 128;
 
+  public static array $EVENTS = ['status', 'death', 'reset', 'win', 'exit'];
+
   public int $account_id;
   public ?JsonDateTime $date = null;
+  public string $event = 'status';
   public ?int $challenge_id = null;
   public ?string $map_name = null; // Only set if challenge_id couldn't be determined
   public ?int $room_number = null;
   public ?int $max_room_number = null;
-  public ?string $room_name = null;
-  public ?string $custom_room_name = null;
+  public ?string $room_name = null; // Name of the room on the path, null if the player is not on the path
+  public ?string $custom_room_name = null; // Custom name of the room on the path, only set if room_name is set
+  public ?string $debug_room_name = null; // Debug name of the current room, regardless of the path
   public bool $in_golden_run = false;
   public ?int $session_pb_room_number = null;
   public ?int $overall_pb_room_number = null;
@@ -28,12 +32,14 @@ class IngameStatus extends DbObject
     return array(
       'account_id' => $this->account_id,
       'date' => $this->date,
+      'event' => $this->event,
       'challenge_id' => $this->challenge_id,
       'map_name' => $this->map_name,
       'room_number' => $this->room_number,
       'max_room_number' => $this->max_room_number,
       'room_name' => $this->room_name,
       'custom_room_name' => $this->custom_room_name,
+      'debug_room_name' => $this->debug_room_name,
       'in_golden_run' => $this->in_golden_run,
       'session_pb_room_number' => $this->session_pb_room_number,
       'overall_pb_room_number' => $this->overall_pb_room_number,
@@ -45,12 +51,14 @@ class IngameStatus extends DbObject
     return [
       'account_id',
       'date',
+      'event',
       'challenge_id',
       'map_name',
       'room_number',
       'max_room_number',
       'room_name',
       'custom_room_name',
+      'debug_room_name',
       'in_golden_run',
       'session_pb_room_number',
       'overall_pb_room_number',
@@ -62,6 +70,7 @@ class IngameStatus extends DbObject
     $this->id = intval($arr[$prefix . 'id']);
     $this->account_id = intval($arr[$prefix . 'account_id']);
     $this->date = new JsonDateTime($arr[$prefix . 'date']);
+    $this->event = $arr[$prefix . 'event'];
     $this->in_golden_run = $arr[$prefix . 'in_golden_run'] === 't';
 
     if (isset($arr[$prefix . 'challenge_id']))
@@ -76,6 +85,8 @@ class IngameStatus extends DbObject
       $this->room_name = $arr[$prefix . 'room_name'];
     if (isset($arr[$prefix . 'custom_room_name']))
       $this->custom_room_name = $arr[$prefix . 'custom_room_name'];
+    if (isset($arr[$prefix . 'debug_room_name']))
+      $this->debug_room_name = $arr[$prefix . 'debug_room_name'];
     if (isset($arr[$prefix . 'session_pb_room_number']))
       $this->session_pb_room_number = intval($arr[$prefix . 'session_pb_room_number']);
     if (isset($arr[$prefix . 'overall_pb_room_number']))
@@ -210,7 +221,7 @@ class IngameStatus extends DbObject
   function __toString()
   {
     $location = $this->challenge_id !== null ? "challenge_id: {$this->challenge_id}" : "map_name: '{$this->map_name}'";
-    return "(IngameStatus, id: {$this->id}, account_id: {$this->account_id}, {$location}, room: {$this->room_number}/{$this->max_room_number})";
+    return "(IngameStatus, id: {$this->id}, account_id: {$this->account_id}, event: {$this->event}, {$location}, room: {$this->room_number}/{$this->max_room_number})";
   }
   #endregion
 }

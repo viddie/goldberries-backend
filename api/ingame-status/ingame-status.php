@@ -53,12 +53,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $status = new IngameStatus();
   $status->account_id = $account->id;
   $status->date = new JsonDateTime();
+  $event = $data['event'] ?? 'status';
+  if (!is_string($event) || !in_array($event, IngameStatus::$EVENTS, true)) {
+    die_json(400, "event must be one of: " . implode(", ", IngameStatus::$EVENTS));
+  }
+  $status->event = $event;
   $status->challenge_id = parse_nullable_int($data, 'challenge_id', 1, PHP_INT_MAX);
   $status->map_name = parse_nullable_string($data, 'map_name');
   $status->room_number = parse_nullable_int($data, 'room_number', 0, MAX_ROOM_NUMBER);
   $status->max_room_number = parse_nullable_int($data, 'max_room_number', 0, MAX_ROOM_NUMBER);
   $status->room_name = parse_nullable_string($data, 'room_name');
   $status->custom_room_name = parse_nullable_string($data, 'custom_room_name');
+  $status->debug_room_name = parse_nullable_string($data, 'debug_room_name');
+  // A custom room name only exists for rooms on the path
+  if ($status->room_name === null) {
+    $status->custom_room_name = null;
+  }
   $status->session_pb_room_number = parse_nullable_int($data, 'session_pb_room_number', 0, MAX_ROOM_NUMBER);
   $status->overall_pb_room_number = parse_nullable_int($data, 'overall_pb_room_number', 0, MAX_ROOM_NUMBER);
 

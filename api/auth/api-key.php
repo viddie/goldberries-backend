@@ -34,6 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $changes = [];
     if (array_key_exists('name', $data)) {
       $api_key->name = validate_api_key_name($data['name']);
+      check_api_key_name_unique($DB, $target_account->id, $api_key->name, $api_key->id);
       $changes[] = "name";
     }
     if (array_key_exists('scopes', $data)) {
@@ -64,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $api_key = new ApiKey();
   $api_key->account_id = $target_account->id;
   $api_key->name = validate_api_key_name($data['name'] ?? null);
+  check_api_key_name_unique($DB, $target_account->id, $api_key->name);
   $api_key->scopes = validate_api_key_scopes($data['scopes'] ?? null, $target_account);
   $api_key->key = ApiKey::generate_key();
   $api_key->date_created = new JsonDateTime();
@@ -133,6 +135,19 @@ function validate_api_key_name($name): string
     die_json(400, "Name needs to be between 1 and " . ApiKey::$MAX_NAME_LENGTH . " characters long");
   }
   return $name;
+}
+
+// Names are compared case-insensitively
+function check_api_key_name_unique($DB, int $account_id, string $name, ?int $exclude_id = null)
+{
+  foreach (ApiKey::find_all_for_account($DB, $account_id) as $existing) {
+    if ($existing->id === $exclude_id) {
+      continue;
+    }
+    if (mb_strtolower($existing->name) === mb_strtolower($name)) {
+      die_json(400, "An API key with the name '{$name}' already exists");
+    }
+  }
 }
 
 function validate_api_key_scopes($scopes, $target_account): int
