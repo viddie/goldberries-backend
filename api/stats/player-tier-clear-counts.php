@@ -68,6 +68,7 @@ if ($group_by === null) {
       account.name_color_start AS account_name_color_start,
       account.name_color_end AS account_name_color_end,
       account.input_method AS account_input_method,
+      account.country AS account_country,
       $selects_str,
       COUNT(submission.id) AS total
     FROM player
@@ -90,7 +91,8 @@ if ($group_by === null) {
   $data = array();
   while ($row = pg_fetch_assoc($result)) {
     $player = new Player();
-    $player->apply_db_data($row, '', false);
+    //Customization contains input_method and country, which the frontend uses for filtering
+    $player->apply_db_data($row, '', true);
 
     $row_data = [];
     $row_data['player'] = $player;
