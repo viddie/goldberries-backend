@@ -152,6 +152,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //Move tags from challenge_b to challenge_a before challenge_b is deleted
     ChallengeTag::transfer_challenge_tags($DB, $challenge_b->id, $challenge_a->id);
 
+    //Move likes/wishlist entries from challenge_b to challenge_a. On duplicates, challenge_a's entry is kept
+    Like::transfer_challenge_likes($DB, $challenge_b->id, $challenge_a->id);
+
     //Delete challenge_b
     if (!$challenge_b->delete($DB)) {
       die_json(500, "Failed to delete challenge B");

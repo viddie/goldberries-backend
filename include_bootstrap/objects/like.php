@@ -267,5 +267,26 @@ class Like extends DbObject
     $like->insert($DB);
     self::recalculate_challenge_likes($DB, $challenge_id);
   }
+
+  /**
+   * Moves all likes/wishlist entries from one challenge to another (challenge merging).
+   * If a player has an entry on both challenges, the target challenge's entry wins and the other is dropped.
+   */
+  static function transfer_challenge_likes($DB, int $from_challenge_id, int $to_challenge_id): void
+  {
+    pg_query_params_or_die(
+      $DB,
+      "UPDATE \"like\" src SET challenge_id = $2
+       WHERE src.challenge_id = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM \"like\" dst WHERE dst.challenge_id = $2 AND dst.player_id = src.player_id
+         )",
+      [$from_challenge_id, $to_challenge_id],
+      "Failed to transfer likes"
+    );
+    pg_query_params_or_die($DB, "DELETE FROM \"like\" WHERE challenge_id = $1", [$from_challenge_id], "Failed to delete old likes");
+
+    self::recalculate_challenge_likes($DB, $to_challenge_id);
+  }
   #endregion
 }
