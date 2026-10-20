@@ -98,6 +98,7 @@ class ChallengeTag extends DbObject
   /**
    * Aggregated tag counts ("chips") for a list of challenges.
    * `count` is the net total (positive votes - negative votes), `negative` the number of negative votes.
+   * Votes of suspended players are ignored.
    * @return array list of ['challenge_id' => int, 'tag_value_id' => int, 'count' => int, 'negative' => int]
    */
   static function get_counts_for_challenges($DB, array $challenge_ids): array
@@ -113,6 +114,7 @@ class ChallengeTag extends DbObject
          COUNT(*) FILTER (WHERE is_negative) AS negative
        FROM challenge_tag
        WHERE challenge_id = ANY($1::int[])
+         AND " . Account::sql_not_suspended('challenge_tag.player_id') . "
        GROUP BY challenge_id, tag_value_id
        ORDER BY challenge_id, count DESC, tag_value_id",
       [$ids_str],
@@ -165,6 +167,7 @@ class ChallengeTag extends DbObject
        FROM challenge_tag
        JOIN view_players ON view_players.player_id = challenge_tag.player_id
        WHERE challenge_tag.challenge_id = $1 AND challenge_tag.tag_value_id = $2
+         AND view_players.player_account_is_suspended IS NOT TRUE
        ORDER BY challenge_tag.is_negative, challenge_tag.date_created, challenge_tag.id",
       [$challenge_id, $tag_value_id],
       "Failed to fetch tag assignments"
@@ -332,7 +335,8 @@ class ChallengeTag extends DbObject
       $result = pg_query_params_or_die(
         $DB,
         "SELECT DISTINCT tag_value_id FROM challenge_tag
-         WHERE challenge_id = $1 AND player_id <> $2 AND is_negative = false AND tag_value_id = ANY($3::int[])",
+         WHERE challenge_id = $1 AND player_id <> $2 AND is_negative = false AND tag_value_id = ANY($3::int[])
+           AND " . Account::sql_not_suspended('challenge_tag.player_id'),
         [$challenge_id, $player_id, "{" . implode(",", $added) . "}"],
         "Failed to check tag assignments"
       );
@@ -481,7 +485,7 @@ class ChallengeTag extends DbObject
    * - 'single' tags: only the top-voted value(s). Tied values split the weight evenly.
    * - 'multi' tags: every assigned value, with a weight of 1.
    * Votes are net totals (negative votes count as -1), values at 0 or less are out-voted and ignored.
-   * Archived categories are ignored. The last CTE is `tag_consensus (challenge_id, tag_id, tag_value_id, weight)`.
+   * Archived categories and votes of suspended players are ignored. The last CTE is `tag_consensus (challenge_id, tag_id, tag_value_id, weight)`.
    */
   static function get_consensus_ctes(): string
   {
@@ -492,6 +496,7 @@ class ChallengeTag extends DbObject
         JOIN tag t ON t.id = tv.tag_id
         JOIN tag_category tc ON tc.id = t.category_id
         WHERE tc.is_archived = false
+          AND " . Account::sql_not_suspended('ct.player_id') . "
         GROUP BY ct.challenge_id, ct.tag_value_id, tv.tag_id, t.selection_mode
         HAVING SUM(CASE WHEN ct.is_negative THEN -1 ELSE 1 END) > 0
       ), tag_consensus_ranked AS (
@@ -529,6 +534,7 @@ class ChallengeTag extends DbObject
    * the agreement. 'multi' tags also ignore the agreement, since their values aren't mutually exclusive.
    * Values with a net total of 0 or less on a challenge (negative votes count as -1) are out-voted and ignored. For the
    * remaining values, the distinct players that voted against any of the condition's values are subtracted from the support.
+   * Votes of suspended players are ignored.
    *
    * @param mixed $filter JSON string, decoded array or null
    * @return array ['confidence' => int, 'agreement' => int, 'conditions' => list of
@@ -701,6 +707,7 @@ class ChallengeTag extends DbObject
             SUM(CASE WHEN is_negative THEN -1 ELSE 1 END) OVER (PARTITION BY challenge_id, tag_value_id) AS net_votes
           FROM challenge_tag
           WHERE tag_value_id = ANY({$all_param}::int[])
+            AND " . Account::sql_not_suspended('challenge_tag.player_id') . "
         ) votes
         WHERE net_votes > 0
         GROUP BY challenge_id

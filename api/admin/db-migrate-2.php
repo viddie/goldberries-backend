@@ -7,6 +7,7 @@ require_once('../api_bootstrap.inc.php');
 //  2. Move account.api_key into api_key (with all scopes the account's role allows), then drop account.api_key
 //  3. Add account.stream_url
 //  4. Create table ingame_status (and add ingame_status.event/debug_room_name if the table already existed)
+//  5. Add account.date_suspended and account.date_appeal, plus the partial index for suspended players
 //
 // Query params:
 //  dry_run=true  -> run everything inside the transaction, then roll back
@@ -126,6 +127,18 @@ migration_query($DB, "CREATE INDEX IF NOT EXISTS ingame_status_account_id_date_i
 echo "  Ensured index ingame_status_account_id_date_idx\n";
 migration_query($DB, "CREATE INDEX IF NOT EXISTS ingame_status_date_idx ON ingame_status ( \"date\" )");
 echo "  Ensured index ingame_status_date_idx\n";
+echo "\n";
+//#endregion
+
+//#region Step 5: account suspension dates
+echo "Step 5: account suspension dates\n";
+
+migration_query($DB, "ALTER TABLE account ADD COLUMN IF NOT EXISTS date_suspended timestamptz NULL");
+echo "  Ensured column account.date_suspended\n";
+migration_query($DB, "ALTER TABLE account ADD COLUMN IF NOT EXISTS date_appeal timestamptz NULL");
+echo "  Ensured column account.date_appeal\n";
+migration_query($DB, "CREATE INDEX IF NOT EXISTS account_suspended_player_idx ON account ( player_id ) WHERE is_suspended = true");
+echo "  Ensured index account_suspended_player_idx\n";
 echo "\n";
 //#endregion
 

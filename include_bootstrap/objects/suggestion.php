@@ -192,6 +192,7 @@ class Suggestion extends DbObject
     }
 
     $where = array();
+    $where[] = Account::sql_not_suspended("suggestion.author_id");
     if ($search !== null) {
       $search = pg_escape_string($DB, $search);
       $where[] = "(campaign.name ILIKE '%" . $search . "%' OR map.name ILIKE '%" . $search . "%' OR author.name ILIKE '%" . $search . "%' OR suggestion.comment ILIKE '%" . $search . "%')";
@@ -311,7 +312,7 @@ class Suggestion extends DbObject
 
   static function get_last_placement_suggestion($DB, $challenge_id, $placement = true)
   {
-    $query = "SELECT * FROM suggestion WHERE is_verified = TRUE AND challenge_id = " . $challenge_id;
+    $query = "SELECT * FROM suggestion WHERE is_verified = TRUE AND challenge_id = " . $challenge_id . " AND " . Account::sql_not_suspended("suggestion.author_id");
     if ($placement === true) {
       $query .= " AND suggested_difficulty_id IS NOT NULL";
     }
@@ -370,6 +371,12 @@ class Suggestion extends DbObject
   {
     return $this->date_verified === null ||
       time() < $this->date_verified->getTimestamp() + self::$vote_lock_hours * 60 * 60;
+  }
+
+  // Requires the author's account data to be fetched (see fetch_associated_contents)
+  function is_author_suspended()
+  {
+    return $this->author !== null && ($this->author->account['is_suspended'] ?? false) === true;
   }
 
   function get_url()
@@ -522,6 +529,7 @@ class Suggestion extends DbObject
 
   /**
    * Batch-fetches votes for multiple suggestions from view_suggestion_votes in a single query.
+   * Votes of suspended players are excluded.
    * @param resource $DB
    * @param Suggestion[] $suggestions
    */
@@ -539,7 +547,7 @@ class Suggestion extends DbObject
       return;
 
     $id_list = "{" . implode(",", $suggestion_ids) . "}";
-    $query = "SELECT * FROM view_suggestion_votes WHERE suggestion_vote_suggestion_id = ANY ($1)";
+    $query = "SELECT * FROM view_suggestion_votes WHERE suggestion_vote_suggestion_id = ANY ($1) AND suggestion_player_account_is_suspended IS NOT TRUE";
     $result = pg_query_params_or_die($DB, $query, [$id_list]);
 
     while ($row = pg_fetch_assoc($result)) {

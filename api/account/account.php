@@ -112,8 +112,33 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
     if (isset($request['reset_session']) && $request['reset_session'] === 't') {
       $target->session_token = null;
     }
+    //Suspension
+    $was_suspended = $target->is_suspended;
     $target->is_suspended = $accountReq->is_suspended;
     $target->suspension_reason = $accountReq->suspension_reason;
+    if (!$target->is_suspended) {
+      $target->date_suspended = null;
+      $target->date_appeal = null;
+      if ($was_suspended) {
+        log_warn("'{$account->player->name}' lifted the suspension of {$target}", "Account");
+      }
+    } else {
+      if ($target->suspension_reason === null || trim($target->suspension_reason) === '') {
+        die_json(400, "A suspension reason is required");
+      }
+      if (!$was_suspended) {
+        $target->date_suspended = new JsonDateTime();
+      } else if (array_key_exists('date_suspended', $request)) {
+        $target->date_suspended = $accountReq->date_suspended;
+      }
+      if (array_key_exists('date_appeal', $request)) {
+        $target->date_appeal = $accountReq->date_appeal;
+      }
+      if (!$was_suspended) {
+        $appeal_str = $target->date_appeal !== null ? $target->date_appeal->format("Y-m-d") : "never";
+        log_warn("'{$account->player->name}' suspended {$target} (appeal: {$appeal_str}) for reason: {$target->suspension_reason}", "Account");
+      }
+    }
     $target->email_verified = $accountReq->email_verified;
 
     if ($accountReq->password !== null) {

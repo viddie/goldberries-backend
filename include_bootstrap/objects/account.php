@@ -30,6 +30,8 @@ class Account extends DbObject
   public int $role = 0;
   public bool $is_suspended = false;
   public ?string $suspension_reason = null;
+  public ?JsonDateTime $date_suspended = null; // NULL for suspensions from before this field existed
+  public ?JsonDateTime $date_appeal = null; // NULL = indefinite suspension
   public bool $email_verified = false;
   public ?string $email_verify_code = null;
 
@@ -80,6 +82,10 @@ class Account extends DbObject
       $this->discord_id = $arr[$prefix . 'discord_id'];
     if (isset($arr[$prefix . 'suspension_reason']))
       $this->suspension_reason = $arr[$prefix . 'suspension_reason'];
+    if (isset($arr[$prefix . 'date_suspended']))
+      $this->date_suspended = new JsonDateTime($arr[$prefix . 'date_suspended']);
+    if (isset($arr[$prefix . 'date_appeal']))
+      $this->date_appeal = new JsonDateTime($arr[$prefix . 'date_appeal']);
     if (isset($arr[$prefix . 'email_verified']))
       $this->email_verified = $arr[$prefix . 'email_verified'] === 't';
     if (isset($arr[$prefix . 'email_verify_code']))
@@ -187,6 +193,8 @@ class Account extends DbObject
       'password' => $this->password,
       'discord_id' => $this->discord_id,
       'suspension_reason' => $this->suspension_reason,
+      'date_suspended' => $this->date_suspended,
+      'date_appeal' => $this->date_appeal,
       'email_verified' => $this->email_verified,
       'email_verify_code' => $this->email_verify_code,
       'role' => $this->role,
@@ -212,6 +220,8 @@ class Account extends DbObject
       'password',
       'discord_id',
       'suspension_reason',
+      'date_suspended',
+      'date_appeal',
       'email_verified',
       'email_verify_code',
       'role',
@@ -325,6 +335,24 @@ class Account extends DbObject
   function has_restriction_flag(int $flag): bool
   {
     return ($this->restrictions & $flag) === $flag;
+  }
+
+  // Suspension data sent to the user on a failed login, the frontend builds the (translated) message from it
+  function get_suspension_info(): array
+  {
+    return [
+      'reason' => $this->suspension_reason,
+      'date_appeal' => $this->date_appeal,
+    ];
+  }
+
+  /**
+   * SQL condition that is true if the player in $player_id_column does not belong to a suspended account.
+   * Backed by the partial index account_suspended_player_idx, so the subquery only scans suspended accounts.
+   */
+  static function sql_not_suspended(string $player_id_column): string
+  {
+    return "NOT EXISTS (SELECT 1 FROM account suspended_account WHERE suspended_account.player_id = {$player_id_column} AND suspended_account.is_suspended = true)";
   }
   #endregion
 }

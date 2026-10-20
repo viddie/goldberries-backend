@@ -26,7 +26,9 @@ if ($account->email_verified === false) {
   die_json(401, "Email is not verified");
 }
 if (is_suspended($account)) {
-  die_json(401, "Account is suspended: " . $account->suspension_reason);
+  http_response_code(401);
+  echo json_encode(['error' => "Account is suspended", 'suspension' => $account->get_suspension_info()]);
+  exit();
 }
 
 if (successful_login($account, "mail")) {

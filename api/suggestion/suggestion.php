@@ -15,10 +15,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   if ($suggestion === false) {
     die_json(404, "Suggestion not found");
   }
+  //Suggestions of suspended players are hidden
   if (is_array($suggestion)) {
     Suggestion::fetch_associated_contents($DB, $suggestion);
+    $suggestion = array_values(array_filter($suggestion, fn($s) => !$s->is_author_suspended()));
   } else {
     Suggestion::fetch_associated_contents($DB, [$suggestion]);
+    if ($suggestion->is_author_suspended()) {
+      die_json(404, "Suggestion not found");
+    }
   }
   api_write($suggestion);
   exit();

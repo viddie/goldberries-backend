@@ -141,6 +141,8 @@ CREATE TABLE account
  role               integer NOT NULL DEFAULT 0,
  is_suspended       boolean NOT NULL DEFAULT false,
  suspension_reason  text NULL,
+ date_suspended     timestamptz NULL,
+ date_appeal        timestamptz NULL,
  email_verified     boolean NOT NULL DEFAULT false,
  email_verify_code  varchar(16) NULL,
  links              text NULL,
@@ -159,6 +161,8 @@ CREATE TABLE account
  CONSTRAINT check_account_input_method CHECK ( input_method IS NULL OR input_method IN ('keyboard', 'dpad', 'analog', 'hybrid', 'other') ),
  CONSTRAINT check_account_login_method CHECK ( discord_id IS NOT NULL OR (email IS NOT NULL AND password IS NOT NULL) )
 );
+-- Partial index for excluding content of suspended players (see Account::sql_not_suspended)
+CREATE INDEX account_suspended_player_idx ON account ( player_id ) WHERE is_suspended = true;
 
 -- ====== session ======
 CREATE TABLE session

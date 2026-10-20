@@ -23,6 +23,10 @@ if (!$suggestion || $suggestion->is_verified !== true) {
 
 $suggestion->expand_foreign_keys($DB, 5);
 Suggestion::fetch_associated_contents($DB, [$suggestion]);
+if ($suggestion->is_author_suspended()) {
+  http_response_code(404);
+  die();
+}
 
 //Objects
 $challenge = $suggestion->challenge;

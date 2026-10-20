@@ -75,7 +75,11 @@ if (isset($_REQUEST['code'])) {
     //User account was found, try to login
     $account = $accounts[0];
     if (is_suspended($account)) {
-      header('Location: ' . constant('REGISTER_URL') . "/" . urlencode("Account is suspended: " . $account->suspension_reason));
+      $suspension = array_filter($account->get_suspension_info(), fn($value) => $value !== null);
+      if (isset($suspension['date_appeal'])) {
+        $suspension['date_appeal'] = $suspension['date_appeal']->format("c");
+      }
+      header('Location: ' . constant('REGISTER_URL') . "/suspended?" . http_build_query($suspension));
       exit();
     }
   }
