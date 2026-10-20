@@ -7,6 +7,25 @@ function remove_backticks($str)
   return preg_replace('/`/', '', $str);
 }
 
+//Cuts the string at the last word before $max_length characters and appends "..."
+function truncate_at_word($str, $max_length)
+{
+  if ($str === null || mb_strlen($str) <= $max_length) {
+    return $str;
+  }
+  $cut = mb_substr($str, 0, $max_length);
+  //Drop the partial last word (if the cut is mid-word), unless the whole text is a single word
+  $next_char = mb_substr($str, $max_length, 1);
+  if (preg_match('/\s/u', $next_char)) {
+    return rtrim($cut) . "...";
+  }
+  $trimmed = preg_replace('/\s+\S*$/u', '', $cut);
+  if ($trimmed !== null && $trimmed !== "") {
+    $cut = $trimmed;
+  }
+  return rtrim($cut) . "...";
+}
+
 function send_webhook_suggestion_verified($suggestion)
 {
   global $DB;
@@ -48,7 +67,7 @@ function send_webhook_suggestion_verified($suggestion)
 
   $fields[] = [
     "name" => "Author: `" . $suggestion->author->get_name_escaped() . "`",
-    "value" => "Comment: `" . remove_backticks($suggestion->comment) . "`",
+    "value" => "Comment: `" . truncate_at_word(remove_backticks($suggestion->comment), 900) . "`",
     "inline" => false,
   ];
 

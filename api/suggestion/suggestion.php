@@ -131,8 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       }
     }
 
-    if (isset($data['comment']) && strlen($data['comment']) > 1000) {
-      die_json(400, "Comment cannot be longer than 1000 characters");
+    if (isset($data['comment']) && strlen($data['comment']) > 5000) {
+      die_json(400, "Comment cannot be longer than 5000 characters");
     }
     $suggestion->author_id = $account->player_id;
     $suggestion->date_created = new JsonDateTime();
