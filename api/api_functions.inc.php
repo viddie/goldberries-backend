@@ -109,7 +109,12 @@ function api_write($output, $check_numbers = false, $run_profiler = false)
     api_write_for_profiler($output, $flags);
     return;
   }
-  echo json_encode($output, $flags);
+  $json = json_encode($output, $flags);
+  //json_encode returns false on failure (e.g. invalid UTF-8), which would otherwise be sent as an empty 200 response
+  if ($json === false) {
+    die_json(500, "Failed to encode response: " . json_last_error_msg());
+  }
+  echo $json;
 }
 
 function api_write_for_profiler($output, $flags)

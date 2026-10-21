@@ -1,6 +1,5 @@
 <?php
 require_once(__DIR__ . '/../../assets/data/country-codes.php');
-$session_expire_days = 7;
 
 class Account extends DbObject
 {

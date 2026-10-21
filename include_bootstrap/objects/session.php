@@ -1,10 +1,9 @@
 <?php
 
-$session_expire_days = 31;
-
 class Session extends DbObject
 {
   public static string $table_name = 'session';
+  public static int $EXPIRE_DAYS = 31;
 
   public string $token;
   public JsonDateTime $created;
@@ -88,8 +87,8 @@ class Session extends DbObject
   #region Find Functions
   static function find_by_token($DB, string $token)
   {
-    global $session_expire_days;
-    return find_in_db($DB, 'Session', "token = $1 AND created > NOW() - INTERVAL '$session_expire_days days'", array($token), new Session());
+    $expire_days = Session::$EXPIRE_DAYS;
+    return find_in_db($DB, 'Session', "token = $1 AND created > NOW() - INTERVAL '$expire_days days'", array($token), new Session());
   }
   #endregion
 
