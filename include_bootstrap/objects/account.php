@@ -91,17 +91,13 @@ class Account extends DbObject
       $this->email_verify_code = $arr[$prefix . 'email_verify_code'];
     if (isset($arr[$prefix . 'links'])) {
       $value = $arr[$prefix . 'links'];
-      if (is_array($value)) {
-        $this->links = $value;
-      } else {
-        $this->links = explode("\t", $value);
-        //Trim all strings
-        $this->links = array_map('trim', $this->links);
-        //Remove empty strings
-        $this->links = array_filter($this->links, function ($link) {
-          return $link !== '';
-        });
-      }
+      $this->links = is_array($value) ? $value : explode("\t", $value);
+      //Trim all strings
+      $this->links = array_map(fn($link) => is_string($link) ? trim($link) : $link, $this->links);
+      //Remove empty strings, reindexing so it serializes as a JSON array
+      $this->links = array_values(array_filter($this->links, function ($link) {
+        return $link !== '';
+      }));
       //Set to null if empty
       if (count($this->links) === 0)
         $this->links = null;

@@ -277,7 +277,14 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       if ($linkList !== null && count($linkList) > 10) {
         die_json(400, "Too many links");
       }
-      $account->links = $request['links'];
+      if ($linkList !== null) {
+        //Trim and remove empty links, reindexing so it stays a JSON array
+        $linkList = array_map(fn($link) => is_string($link) ? trim($link) : $link, $linkList);
+        $linkList = array_values(array_filter($linkList, fn($link) => $link !== ''));
+        if (count($linkList) === 0)
+          $linkList = null;
+      }
+      $account->links = $linkList;
       $linksStr = $account->links === null ? "null" : implode("\t", $account->links);
       $changes .= "links (new list: {$linksStr}), ";
     }
