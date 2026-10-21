@@ -199,7 +199,6 @@ function send_webhook_suggestion_notification($suggestion)
   $challenge_name = $challenge->get_name_for_discord();
 
   $ping_list = [];
-  $allowed_mentions = ["users" => []];
   foreach ($challenge->submissions as $submission) {
     $account = $submission->player->get_account($DB);
     if ($account !== null) {
@@ -207,12 +206,10 @@ function send_webhook_suggestion_notification($suggestion)
         continue; //Ignore suspended users
       }
       if ($account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_SUGGESTION_VERIFIED)) {
-        $ping_list[] = "<@{$account->discord_id}>";
-        $allowed_mentions["users"][] = $account->discord_id;
+        $ping_list[] = ["text" => "<@{$account->discord_id}>", "user_id" => $account->discord_id];
       }
     }
   }
-  $ping_addition = count($ping_list) > 0 ? " " . implode(" ", $ping_list) : "";
 
   $emote = ":memo:";
   if ($suggestion->suggested_difficulty !== null) {
@@ -228,8 +225,8 @@ function send_webhook_suggestion_notification($suggestion)
     }
   }
 
-  $message = "{$emote} A new suggestion was made for {$challenge_name}!{$ping_addition}";
-  send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+  $message = "{$emote} A new suggestion was made for {$challenge_name}!";
+  send_segmented_webhook_message($webhook_url, $message, $ping_list);
 }
 
 function send_webhook_suggestion_accepted($suggestion)
@@ -504,7 +501,6 @@ function send_webhook_challenge_marked_personal($challenge)
   $challenge_name = $challenge->get_name_for_discord();
 
   $list_impacted = [];
-  $allowed_mentions = ["users" => []];
   $total_count = 0;
   foreach ($challenge->submissions as $submission) {
     $account = $submission->player->get_account($DB);
@@ -516,21 +512,21 @@ function send_webhook_challenge_marked_personal($challenge)
     if ($submission->suggested_difficulty_id !== null && !$submission->is_personal) {
       $submission_url = $submission->get_url();
       $name = "[{$submission->player->name}](<{$submission_url}>)";
+      $user_id = null;
       if ($account !== null && $account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_CHALL_PERSONAL)) {
         $name .= " (<@{$account->discord_id}>)";
-        $allowed_mentions["users"][] = $account->discord_id;
+        $user_id = $account->discord_id;
       }
-      $list_impacted[] = $name;
+      $list_impacted[] = ["text" => $name, "user_id" => $user_id];
     }
   }
 
-  $impacted_str = implode(", ", $list_impacted);
-  if (count($list_impacted) == 0) {
-    $impacted_str = "No Submissions";
-  }
   $impacted_count = count($list_impacted);
-  $message = ":bangbang: All difficulty suggestions for {$challenge_name} were marked as personal, as new strats have been discovered! Impacted submissions (**$impacted_count** out of **$total_count**): {$impacted_str}";
-  send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+  if ($impacted_count == 0) {
+    $list_impacted[] = ["text" => "No Submissions", "user_id" => null];
+  }
+  $message = ":bangbang: All difficulty suggestions for {$challenge_name} were marked as personal, as new strats have been discovered! Impacted submissions (**$impacted_count** out of **$total_count**):";
+  send_segmented_webhook_message($webhook_url, $message, $list_impacted, " ", ", ");
 }
 
 function send_webhook_challenge_moved($challenge, $new_difficulty_id)
@@ -554,7 +550,6 @@ function send_webhook_challenge_moved($challenge, $new_difficulty_id)
   $new_sort = $new_difficulty_obj->sort;
 
   $ping_list = [];
-  $allowed_mentions = ["users" => []];
   foreach ($challenge->submissions as $submission) {
     $account = $submission->player->get_account($DB);
     if ($account !== null) {
@@ -562,12 +557,10 @@ function send_webhook_challenge_moved($challenge, $new_difficulty_id)
         continue; //Ignore suspended users
       }
       if ($account->discord_id !== null && $account->has_notification_flag(Account::$NOTIF_CHALL_MOVED)) {
-        $ping_list[] = "<@{$account->discord_id}>";
-        $allowed_mentions["users"][] = $account->discord_id;
+        $ping_list[] = ["text" => "<@{$account->discord_id}>", "user_id" => $account->discord_id];
       }
     }
   }
-  $ping_addition = count($ping_list) > 0 ? "\n" . implode(" ", $ping_list) : "";
 
   $emote = ":memo:";
   if ($old_id === $UNDETERMINED_ID) {
@@ -578,8 +571,8 @@ function send_webhook_challenge_moved($challenge, $new_difficulty_id)
     $emote = ":chart_with_upwards_trend:";
   }
 
-  $message = "{$emote} {$challenge_name} **$old_difficulty** → **$new_difficulty**{$ping_addition}";
-  send_simple_webhook_message($webhook_url, $message, $allowed_mentions);
+  $message = "{$emote} {$challenge_name} **$old_difficulty** → **$new_difficulty**";
+  send_segmented_webhook_message($webhook_url, $message, $ping_list, "\n");
 }
 
 function send_webhook_post_created(Post $post)
@@ -680,6 +673,47 @@ function send_simple_webhook_message($url, $message, $allowed_mentions = null)
     "allowed_mentions" => $allowed_mentions
   ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   send_webhook($url, $json_data);
+}
+
+$DISCORD_MAX_MESSAGE_LENGTH = 2000;
+$DISCORD_MAX_ALLOWED_MENTIONS = 100;
+
+//Sends $message followed by a list of $items, split across multiple messages if Discord's limits would be exceeded
+//(max. 2000 characters per message, max. 100 entries in allowed_mentions.users per message).
+//Each item is an array: ["text" => string, "user_id" => discord id or null]
+//The first message contains $message + $first_separator + items, follow-up messages only contain items.
+function send_segmented_webhook_message($url, $message, $items, $first_separator = " ", $item_separator = " ")
+{
+  global $DISCORD_MAX_MESSAGE_LENGTH, $DISCORD_MAX_ALLOWED_MENTIONS;
+
+  $current_content = $message;
+  $current_users = [];
+  $current_has_items = false;
+
+  foreach ($items as $item) {
+    $separator = $current_has_items ? $item_separator : ($current_content === "" ? "" : $first_separator);
+    $item_has_user = $item["user_id"] !== null;
+    $exceeds_length = mb_strlen($current_content . $separator . $item["text"]) > $DISCORD_MAX_MESSAGE_LENGTH;
+    $exceeds_mentions = $item_has_user && count($current_users) >= $DISCORD_MAX_ALLOWED_MENTIONS;
+
+    if (($exceeds_length || $exceeds_mentions) && $current_content !== "") {
+      send_simple_webhook_message($url, $current_content, ["users" => $current_users]);
+      $current_content = "";
+      $current_users = [];
+      $current_has_items = false;
+      $separator = "";
+    }
+
+    $current_content .= $separator . $item["text"];
+    $current_has_items = true;
+    if ($item_has_user) {
+      $current_users[] = $item["user_id"];
+    }
+  }
+
+  if ($current_content !== "") {
+    send_simple_webhook_message($url, $current_content, ["users" => $current_users]);
+  }
 }
 
 function webhook_check_high_time_taken($submission)
