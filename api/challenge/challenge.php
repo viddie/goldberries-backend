@@ -46,6 +46,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
 
   $data = format_assoc_array_bools(parse_post_body_as_json());
+
+  #region Mass Update
+  if (array_is_list($data)) {
+    //Mass update request. data is a list of objects with the fields "id" and optionally "sort" and "label"
+    //Only the sort and label fields are updated, all other fields are ignored. Fields that are missing are left unchanged
+    check_api_key_scope($account, ApiKey::$SCOPE_CONTENT_MANAGE);
+
+    //Validate all entries before writing anything, so that invalid input doesn't lead to partial updates
+    $updates = array();
+    foreach ($data as $entry) {
+      if (!is_array($entry) || !isset($entry['id'])) {
+        die_json(400, "Missing id");
+      }
+      $challenge = Challenge::get_by_id($DB, intval($entry['id']));
+      if ($challenge === false) {
+        die_json(404, "Challenge not found");
+      }
+
+      $sort = $challenge->sort;
+      if (array_key_exists('sort', $entry)) {
+        $sort = $entry['sort'];
+        if ($sort !== null && $sort !== "" && !is_numeric($sort)) {
+          die_json(400, "Invalid sort value for challenge ({$challenge->id})");
+        }
+        $sort = $sort === null || $sort === "" ? null : intval($sort);
+      }
+
+      $label = $challenge->label;
+      if (array_key_exists('label', $entry)) {
+        $label = $entry['label'];
+        if ($label !== null && !is_string($label)) {
+          die_json(400, "Invalid label for challenge ({$challenge->id})");
+        }
+        $label = $label === null || trim($label) === "" ? null : trim($label);
+      }
+
+      $updates[] = array($challenge, $sort, $label);
+    }
+
+    $challenges = array();
+    foreach ($updates as [$old_challenge, $sort, $label]) {
+      $challenge = clone $old_challenge;
+      $challenge->sort = $sort;
+      $challenge->label = $label;
+      $challenges[] = $challenge;
+      if ($old_challenge->sort === $sort && $old_challenge->label === $label) {
+        continue;
+      }
+      if (!$challenge->update($DB)) {
+        die_json(500, "Failed to update challenge ({$challenge->id})");
+      }
+      Challenge::generate_changelog($DB, $old_challenge, $challenge);
+      log_info("'{$account->player->name}' updated {$challenge} via mass edit", "Challenge");
+      submission_embed_change($challenge->id, "challenge");
+    }
+
+    api_write($challenges);
+    exit();
+  }
+  #endregion
+
   // Split and merge requests modify existing challenges
   $is_modification = isset($data['id']) || ($data['split'] ?? null) === "t" || ($data['merge'] ?? null) === "t";
   check_api_key_scope($account, $is_modification ? ApiKey::$SCOPE_CONTENT_MANAGE : ApiKey::$SCOPE_CONTENT_CREATE);
