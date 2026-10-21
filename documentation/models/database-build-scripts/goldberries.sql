@@ -559,7 +559,7 @@ CREATE INDEX api_key_account_id_idx ON api_key ( account_id );
 
 -- ====== ingame_status ======
 -- Progress updates sent by the ingame mod (CCT). map_name is only set if challenge_id couldn't be determined
--- event: 'status' (regular update), 'death', 'reset', 'win' or 'exit'
+-- event: 'status' (regular update), 'death', 'reset', 'win', 'exit' (left the map) or 'close' (closed the game)
 -- room_name/custom_room_name are only set while on the path, debug_room_name is always the current room's debug name
 CREATE TABLE ingame_status
 (

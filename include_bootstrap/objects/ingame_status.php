@@ -7,7 +7,7 @@ class IngameStatus extends DbObject
   public static int $MAX_ENTRIES_PER_ACCOUNT = 1000;
   public static int $MAX_STRING_LENGTH = 128;
 
-  public static array $EVENTS = ['status', 'death', 'reset', 'win', 'exit'];
+  public static array $EVENTS = ['status', 'death', 'reset', 'win', 'exit', 'close'];
 
   public int $account_id;
   public ?JsonDateTime $date = null;
@@ -148,6 +148,7 @@ class IngameStatus extends DbObject
   }
 
   // Returns the newest $count entries of every account that had activity in the last $recency_minutes, grouped by account_id.
+  // Accounts whose latest entry is a 'close' event (game was closed) are excluded.
   // Accounts are ordered by their most recent activity, newest first
   static function find_online($DB, int $recency_minutes, int $count, ?int $account_id = null)
   {
@@ -158,11 +159,13 @@ class IngameStatus extends DbObject
       $account_filter = "AND account_id = $3";
     }
 
-    $query = "WITH active AS (
-        SELECT account_id, MAX(date) AS last_activity
+    $query = "WITH latest AS (
+        SELECT DISTINCT ON (account_id) account_id, date AS last_activity, event
         FROM ingame_status
         WHERE date >= NOW() - make_interval(mins => $1) {$account_filter}
-        GROUP BY account_id
+        ORDER BY account_id, date DESC, id DESC
+      ), active AS (
+        SELECT account_id, last_activity FROM latest WHERE event <> 'close'
       ), ranked AS (
         SELECT s.*, a.last_activity, ROW_NUMBER() OVER (PARTITION BY s.account_id ORDER BY s.date DESC, s.id DESC) AS rn
         FROM ingame_status s
