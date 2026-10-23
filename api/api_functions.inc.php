@@ -99,6 +99,12 @@ function api_unified_output($DB, string $table_noesc, $object_skel)
   $output = api_unified_get($DB, $table_noesc, $object_skel);
   api_write($output);
 }
+function api_cache_public(int $seconds)
+{
+  header("Cache-Control: public, max-age={$seconds}");
+  header("Vary: Origin");
+}
+
 function api_write($output, $check_numbers = false, $run_profiler = false)
 {
   $flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES;

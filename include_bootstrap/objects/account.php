@@ -4,6 +4,7 @@ require_once(__DIR__ . '/../../assets/data/country-codes.php');
 class Account extends DbObject
 {
   public static string $table_name = 'account';
+  protected static bool $batch_expand = true;
 
   public static int $NOTIF_SUB_VERIFIED = 1;
   public static int $NOTIF_CHALL_PERSONAL = 2;
