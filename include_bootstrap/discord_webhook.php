@@ -307,7 +307,7 @@ function send_webhook_new_hardest_submission($submission)
     return;
   }
 
-  $webhook_url = constant($sort > 13 ? 'MILESTONES_WEBHOOK_URL' : 'CHANGELOG_WEBHOOK_URL');
+  $webhook_url = constant('NEW_HARDEST_WEBHOOK_URL');
   $player_name = "@`{$submission->player->get_name_escaped()}`";
   $allowed_mentions = ["users" => []];
   if ($account->discord_id !== null) {
