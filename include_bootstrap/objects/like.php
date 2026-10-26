@@ -244,6 +244,46 @@ class Like extends DbObject
 
     return $likes;
   }
+
+  /**
+   * Get the wishlist entries of the given players on the given challenges that contain at least one piece of
+   * information (progress or comment). Low death PBs require a progress, so they are covered by the progress check.
+   * @param resource $DB Database connection
+   * @param array $challenge_ids_by_player player_id => list of challenge IDs
+   * @return array player_id => list of Like objects (without linked objects)
+   */
+  static function find_wishlist_info_for_players($DB, array $challenge_ids_by_player): array
+  {
+    if (count($challenge_ids_by_player) === 0)
+      return [];
+
+    $player_ids = [];
+    $challenge_ids = [];
+    foreach ($challenge_ids_by_player as $player_id => $ids) {
+      foreach ($ids as $challenge_id) {
+        $player_ids[] = intval($player_id);
+        $challenge_ids[] = intval($challenge_id);
+      }
+    }
+    if (count($player_ids) === 0)
+      return [];
+
+    // Pairs are matched by unnesting both arrays in parallel
+    $query = "SELECT l.* FROM \"like\" l
+      JOIN UNNEST($1::int[], $2::int[]) AS pair(player_id, challenge_id)
+        ON l.player_id = pair.player_id AND l.challenge_id = pair.challenge_id
+      WHERE l.is_wishlist = true AND (l.progress IS NOT NULL OR (l.comment IS NOT NULL AND l.comment <> ''))";
+    $params = ["{" . implode(",", $player_ids) . "}", "{" . implode(",", $challenge_ids) . "}"];
+    $result = pg_query_params_or_die($DB, $query, $params, "Failed to get wishlist entries for players");
+
+    $likes = [];
+    while ($row = pg_fetch_assoc($result)) {
+      $like = new Like();
+      $like->apply_db_data($row);
+      $likes[$like->player_id][] = $like;
+    }
+    return $likes;
+  }
   #endregion
 
   #region Utility Functions

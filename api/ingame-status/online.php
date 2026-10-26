@@ -65,10 +65,30 @@ foreach ($grouped as $account_id => $statuses) {
 }
 
 IngameStatus::expand_challenges($DB, $all_statuses);
+attach_wishlist_entries($DB, $result);
 api_write($result);
 
 
 #region Utility Functions
+// Attaches the player's wishlist entries (only those with information in them) for all challenges in their statuses
+function attach_wishlist_entries($DB, array &$result): void
+{
+  $challenge_ids_by_player = [];
+  foreach ($result as $entry) {
+    foreach ($entry['statuses'] as $status) {
+      if ($status->challenge_id !== null) {
+        $challenge_ids_by_player[$entry['player']->id][$status->challenge_id] = $status->challenge_id;
+      }
+    }
+  }
+
+  $wishlist = Like::find_wishlist_info_for_players($DB, array_map('array_values', $challenge_ids_by_player));
+  foreach ($result as &$entry) {
+    $entry['wishlist'] = $wishlist[$entry['player']->id] ?? [];
+  }
+  unset($entry);
+}
+
 function parse_int_param(string $name, int $default, int $min, int $max): int
 {
   if (!isset($_REQUEST[$name])) {
