@@ -138,24 +138,89 @@ grind_session($s, 9, 30);
 $s->practice([3, 4, 5]);
 $scenarios[] = $s->finish(45);
 
+// Closed the game: latest entry is a close event, should NOT show up on the Online page
+$s = new TestScenario("Closed the game (should NOT be shown)", ['challenge_id' => $map_challenges[1], 'max_room_number' => 25], null, 20);
+$s->run(1, 7, 'death');
+$s->practice([8, 9]);
+$s->event('close', 9, false);
+$scenarios[] = $s->finish(40);
+
+// Closed the game and started it again: shown again, graph shows a close marker
+$s = new TestScenario("Closed the game, then started it again (close marker)", ['challenge_id' => $map_challenges[3], 'max_room_number' => 20], null, 12);
+$s->run(1, 6, 'death');
+$s->event('close', 6, false);
+$s->switch(['challenge_id' => $map_challenges[3], 'max_room_number' => 20], null, 12);
+$s->practice([1, 2, 3]);
+$scenarios[] = $s->finish(25);
+
 // Stale: last activity 8 minutes ago, should NOT show up on the Online page
 $s = new TestScenario("Stale (8 minutes ago, should NOT be shown)", ['challenge_id' => $map_challenges[2], 'max_room_number' => 30]);
 $s->practice([3, 4, 5]);
 $scenarios[] = $s->finish(8 * 60);
 #endregion
 
+#region Wishlist scenarios
+// Players playing a challenge that is on their wishlist. Each case looks up an existing wishlist entry and uses the
+// account of its player, so these scenarios bring their own accounts. Low death PBs require a progress, so there is
+// no "only low death" case. The last case has no info in the entry, so no wishlist label should be shown
+$wishlist_cases = [
+  "all props set" => "l.progress IS NOT NULL AND l.progress < 100 AND l.low_death IS NOT NULL AND l.comment <> '' AND l.time_taken > 0",
+  "progress + comment, no low death" => "l.progress IS NOT NULL AND l.progress < 100 AND l.low_death IS NULL AND l.comment <> ''",
+  "progress + low death, no comment" => "l.progress IS NOT NULL AND l.progress < 100 AND l.low_death IS NOT NULL AND l.comment IS NULL",
+  "only progress" => "l.progress IS NOT NULL AND l.progress < 100 AND l.low_death IS NULL AND l.comment IS NULL AND l.time_taken IS NULL",
+  "only comment" => "l.progress IS NULL AND l.comment <> '' AND l.time_taken IS NULL",
+  "comment + time taken" => "l.progress IS NULL AND l.comment <> '' AND l.time_taken > 0",
+  "progress 100%" => "l.progress = 100",
+  "no info, should NOT show the label" => "l.progress IS NULL AND l.comment IS NULL",
+];
+
+$wishlist_scenarios = []; // List of [scenario, account]
+$used_account_ids = [$account->id]; // The current admin is kept for the regular scenarios
+foreach ($wishlist_cases as $case => $condition) {
+  $query = "SELECT l.challenge_id, account.id, player.name, account.stream_url
+    FROM \"like\" l
+    JOIN account ON account.player_id = l.player_id
+    JOIN player ON player.id = account.player_id
+    JOIN challenge ON challenge.id = l.challenge_id
+    WHERE l.is_wishlist = true AND account.is_suspended = false AND challenge.is_rejected = false
+      AND NOT (account.id = ANY($1::int[])) AND {$condition}
+    ORDER BY l.id
+    LIMIT 1";
+  $result = pg_query_params_or_die($DB, $query, ["{" . implode(",", $used_account_ids) . "}"]);
+  $row = pg_fetch_assoc($result);
+  if ($row === false) {
+    echo "Skipped wishlist case '{$case}': no matching wishlist entry found\n";
+    continue;
+  }
+  $used_account_ids[] = intval($row['id']);
+
+  $s = new TestScenario("Wishlist: {$case}", ['challenge_id' => intval($row['challenge_id']), 'max_room_number' => 30], null, 16);
+  $s->practice([4, 5, 6]);
+  $s->run(1, 9, 'death');
+  $s->run(1, 6);
+  $wishlist_scenarios[] = [$s->finish(15 + count($wishlist_scenarios) * 10), $row];
+}
+#endregion
+
 #region Load accounts
-// The current admin first (if they have a player), then accounts with a stream URL, so that the stream link is visible too
+// The current admin first (if they have a player), then accounts with a stream URL, so that the stream link is visible
+// too. Accounts used by the wishlist scenarios are excluded
 $query = "SELECT account.id, player.name, account.stream_url
   FROM account JOIN player ON player.id = account.player_id
-  WHERE account.is_suspended = false
+  WHERE account.is_suspended = false AND (account.id = $1 OR NOT (account.id = ANY($3::int[])))
   ORDER BY (account.id = $1) DESC, (account.stream_url IS NOT NULL) DESC, account.id
   LIMIT $2";
-$result = pg_query_params_or_die($DB, $query, [$account->id, count($scenarios)]);
+$result = pg_query_params_or_die($DB, $query, [$account->id, count($scenarios), "{" . implode(",", $used_account_ids) . "}"]);
 $accounts = pg_fetch_all($result) ?: [];
 if (count($accounts) < count($scenarios)) {
   die_json(500, "Need at least " . count($scenarios) . " non-suspended accounts with a player");
 }
+
+$targets = []; // List of [scenario, account]
+foreach ($scenarios as $i => $scenario) {
+  $targets[] = [$scenario, $accounts[$i]];
+}
+array_push($targets, ...$wishlist_scenarios);
 #endregion
 
 #region Insert
@@ -167,8 +232,7 @@ $insert_query = "INSERT INTO ingame_status
   VALUES ($1, NOW() - make_interval(secs => $2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)";
 
 $total = 0;
-foreach ($scenarios as $i => $scenario) {
-  $target = $accounts[$i];
+foreach ($targets as [$scenario, $target]) {
   foreach ($scenario->rows as $row) {
     pg_query_params_or_die($DB, $insert_query, [
       $target['id'],
@@ -259,7 +323,7 @@ class TestScenario
     }
     $this->push($event, $room, $golden);
     $this->elapsed += self::RESPAWN_DELAY;
-    if (in_array($event, ['death', 'reset', 'exit'], true)) {
+    if (in_array($event, ['death', 'reset', 'exit', 'close'], true)) {
       $this->last_path_room = null;
     }
   }
