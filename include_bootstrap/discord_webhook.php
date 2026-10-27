@@ -454,7 +454,7 @@ function send_webhook_first_clear_verified($submission)
   $difficulty = $submission->challenge->difficulty;
   $sort = $difficulty->sort;
   $webhook_url = constant('CHANGELOG_WEBHOOK_URL');
-  if ($sort >= 14) {
+  if ($sort >= 8) {
     $webhook_url = constant('MILESTONES_WEBHOOK_URL');
   }
 
