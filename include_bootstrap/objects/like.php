@@ -137,14 +137,14 @@ class Like extends DbObject
   #region Find Functions
 
   /**
-   * Get all likes for a specific challenge
+   * Get all likes for a specific challenge, excluding likes of suspended players
    * @param resource $DB Database connection
    * @param int $challenge_id The challenge ID to get likes for
    * @return array Array of Like objects
    */
   static function getLikes($DB, int $challenge_id): array
   {
-    $query = "SELECT * FROM \"like\" WHERE challenge_id = $1 ORDER BY date_created DESC";
+    $query = "SELECT * FROM \"like\" WHERE challenge_id = $1 AND " . Account::sql_not_suspended("\"like\".player_id") . " ORDER BY date_created DESC";
     $result = pg_query_params_or_die($DB, $query, [$challenge_id], "Failed to get likes for challenge {$challenge_id}");
 
     $likes = [];
@@ -187,8 +187,8 @@ class Like extends DbObject
    */
   static function recalculate_challenge_likes($DB, int $challenge_id): bool
   {
-    // Count all likes for this challenge
-    $query = "SELECT COUNT(*) as count FROM \"like\" WHERE challenge_id = $1";
+    // Count all likes for this challenge, ignoring likes of suspended players
+    $query = "SELECT COUNT(*) as count FROM \"like\" WHERE challenge_id = $1 AND " . Account::sql_not_suspended("\"like\".player_id");
     $result = pg_query_params_or_die($DB, $query, [$challenge_id], "Failed to count likes for challenge {$challenge_id}");
 
     $row = pg_fetch_assoc($result);
@@ -199,6 +199,20 @@ class Like extends DbObject
     pg_query_params_or_die($DB, $update_query, [$count, $challenge_id], "Failed to update likes count for challenge {$challenge_id}");
 
     return true;
+  }
+
+  /**
+   * Recalculate the likes count of all challenges a player has liked (e.g. after the player's suspension changed)
+   * @param resource $DB Database connection
+   * @param int $player_id The player ID whose liked challenges should be recalculated
+   */
+  static function recalculate_player_likes($DB, int $player_id): void
+  {
+    $query = "UPDATE challenge SET likes = (
+        SELECT COUNT(*) FROM \"like\" WHERE \"like\".challenge_id = challenge.id AND " . Account::sql_not_suspended("\"like\".player_id") . "
+      )
+      WHERE challenge.id IN (SELECT challenge_id FROM \"like\" WHERE player_id = $1)";
+    pg_query_params_or_die($DB, $query, [$player_id], "Failed to recalculate likes for challenges liked by player {$player_id}");
   }
 
   static function get_player_wishlist($DB, int $player_id): array

@@ -184,6 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
       die_json(500, "Failed to update account in database");
     } else {
       log_info("'{$account->player->name}' updated {$target} in database", "Account");
+      //Likes of suspended players don't count towards the challenge likes count
+      if ($was_suspended !== $target->is_suspended && $target->player_id !== null) {
+        Like::recalculate_player_likes($DB, $target->player_id);
+      }
       $target->remove_sensitive_info();
       $target->expand_foreign_keys($DB, 2);
       api_write($target);
