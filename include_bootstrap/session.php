@@ -84,7 +84,13 @@ function create_session_token($length = 32)
 {
   $token = generate_random_token($length);
   //Set cookie for 365 days
-  setcookie('token', $token, time() + 60 * 60 * 24 * 365, '/');
+  setcookie('token', $token, [
+    'expires' => time() + 60 * 60 * 24 * 365,
+    'path' => '/',
+    'secure' => getenv('DEBUG') !== 'true',
+    'httponly' => true,
+    'samesite' => 'Lax',
+  ]);
   return $token;
 }
 function generate_random_token($length)

@@ -11,6 +11,7 @@ pg_dump -h 109.123.243.54 -p 5432 -U postgres -d goldberries -Fc \
    --exclude-table-data=public.logging \
    --exclude-table-data=public.traffic \
    --exclude-table-data=public.traffic_agg \
+   --exclude-table-data=public.api_key \
    -f backup-safe.dump
 
 ## Load dump

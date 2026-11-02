@@ -26,3 +26,12 @@ if (key_exists('REQUEST_METHOD', $_SERVER) && $_SERVER['REQUEST_METHOD'] === 'OP
   http_response_code(200);
   exit();
 }
+
+//CSRF protection: Browsers attach the session cookie no matter which site triggered a request, so state-changing requests from other origins are rejected.
+//Browsers always send the Origin header on these methods, so a missing header means the request doesn't come from a website (e.g. a script).
+//API key clients don't use the session cookie and aren't affected by this.
+$allowed_origins = getenv('DEBUG') === 'true' ? ["http://localhost:3000", "http://localhost"] : [constant('BASE_URL')];
+$is_safe_method = !key_exists('REQUEST_METHOD', $_SERVER) || in_array($_SERVER['REQUEST_METHOD'], ['GET', 'HEAD'], true);
+if (!$is_safe_method && isset($_COOKIE['token']) && $http_origin !== null && !in_array($http_origin, $allowed_origins, true)) {
+  die_json(403, "Cross-site request rejected");
+}
