@@ -12,6 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 $recency = parse_int_param('recency', DEFAULT_RECENCY_MINUTES, 1, MAX_RECENCY_MINUTES);
 $count = parse_int_param('count', DEFAULT_COUNT, 1, IngameStatus::$MAX_ENTRIES_PER_ACCOUNT);
+// Also return players that aren't online anymore, if they had a win in this many minutes. Off by default
+$recent_wins = parse_int_param('recent_wins', 0, 0, MAX_RECENCY_MINUTES);
 
 $account_filter = null;
 if (isset($_REQUEST['player_id'])) {
@@ -23,7 +25,7 @@ if (isset($_REQUEST['player_id'])) {
   $account_filter = $accounts[0]->id;
 }
 
-$grouped = IngameStatus::find_online($DB, $recency, $count, $account_filter);
+$grouped = IngameStatus::find_online($DB, $recency, $count, $account_filter, $recent_wins);
 if (count($grouped) === 0) {
   api_write([]);
   exit();
@@ -47,7 +49,8 @@ if (count($accounts) > 0) {
 
 $result = [];
 $all_statuses = [];
-foreach ($grouped as $account_id => $statuses) {
+foreach ($grouped as $account_id => $group) {
+  $statuses = $group['statuses'];
   $account = $accounts[$account_id] ?? null;
   if ($account === null || !isset($players[$account->player_id])) {
     continue;
@@ -59,6 +62,7 @@ foreach ($grouped as $account_id => $statuses) {
     'player' => $player,
     'stream_url' => $account->stream_url,
     'last_activity' => $statuses[0]->date,
+    'is_online' => $group['is_online'],
     'statuses' => $statuses,
   ];
   array_push($all_statuses, ...$statuses);

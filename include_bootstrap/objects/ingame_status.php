@@ -147,27 +147,34 @@ class IngameStatus extends DbObject
     return $statuses;
   }
 
-  // Returns the newest $count entries of every account that had activity in the last $recency_minutes, grouped by account_id.
-  // Accounts whose latest entry is a 'close' event (game was closed) are excluded.
+  // Returns the newest $count entries of every online account, grouped by account_id into ['is_online', 'statuses'].
+  // Accounts are online if they had activity in the last $recency_minutes and their latest entry isn't a 'close' event
+  // (game was closed). Accounts that aren't online are only included if they had a win in the last $recent_win_minutes.
   // Accounts are ordered by their most recent activity, newest first
-  static function find_online($DB, int $recency_minutes, int $count, ?int $account_id = null)
+  static function find_online($DB, int $recency_minutes, int $count, ?int $account_id = null, int $recent_win_minutes = 0)
   {
-    $params = [$recency_minutes, $count];
+    $params = [$recency_minutes, $count, $recent_win_minutes];
     $account_filter = "";
     if ($account_id !== null) {
       $params[] = $account_id;
-      $account_filter = "AND account_id = $3";
+      $account_filter = "AND account_id = $4";
     }
 
     $query = "WITH latest AS (
-        SELECT DISTINCT ON (account_id) account_id, date AS last_activity, event
+        SELECT DISTINCT ON (account_id) account_id, date AS last_activity,
+          event <> 'close' AND date >= NOW() - make_interval(mins => $1) AS is_online
         FROM ingame_status
-        WHERE date >= NOW() - make_interval(mins => $1) {$account_filter}
+        WHERE date >= NOW() - make_interval(mins => GREATEST($1, $3)) {$account_filter}
         ORDER BY account_id, date DESC, id DESC
       ), active AS (
-        SELECT account_id, last_activity FROM latest WHERE event <> 'close'
+        SELECT l.account_id, l.last_activity, l.is_online
+        FROM latest l
+        WHERE l.is_online OR EXISTS (
+          SELECT 1 FROM ingame_status w
+          WHERE w.account_id = l.account_id AND w.event = 'win' AND w.date >= NOW() - make_interval(mins => $3)
+        )
       ), ranked AS (
-        SELECT s.*, a.last_activity, ROW_NUMBER() OVER (PARTITION BY s.account_id ORDER BY s.date DESC, s.id DESC) AS rn
+        SELECT s.*, a.last_activity, a.is_online, ROW_NUMBER() OVER (PARTITION BY s.account_id ORDER BY s.date DESC, s.id DESC) AS rn
         FROM ingame_status s
         JOIN active a ON a.account_id = s.account_id
       )
@@ -178,7 +185,8 @@ class IngameStatus extends DbObject
     while ($row = pg_fetch_assoc($result)) {
       $status = new IngameStatus();
       $status->apply_db_data($row);
-      $grouped[$status->account_id][] = $status;
+      $grouped[$status->account_id]['is_online'] = $row['is_online'] === 't';
+      $grouped[$status->account_id]['statuses'][] = $status;
     }
     return $grouped;
   }
