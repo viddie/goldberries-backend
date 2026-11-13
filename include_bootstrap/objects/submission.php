@@ -374,6 +374,15 @@ class Submission extends DbObject
     return "(Submission, id:{$this->id}, player_id:{$this->player_id}, challenge_id:{$this->challenge_id})";
   }
 
+  // Suggestions landing exactly on tier 14.88 are moved to 14.89
+  static function adjust_frac(Difficulty $difficulty, ?int $frac): ?int
+  {
+    if ($difficulty->sort === 14 && $frac === 88) {
+      return 89;
+    }
+    return $frac;
+  }
+
   function status_string()
   {
     if ($this->is_verified === null) {
