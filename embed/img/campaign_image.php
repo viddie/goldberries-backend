@@ -33,7 +33,12 @@ $gbCategory = $gbInfo['category'];
 $cacheFile = $cache_folder . "/" . $gbCategory . "_" . $modId . ".jpg";
 if (!file_exists($cacheFile)) {
   //If not found, download the image from the internet
-  $img = imagecreatefromjpeg("https://gamebanana.com/{$gbCategory}/embeddables/" . $modId . "?type=sd_image");
+  $image_data = file_get_contents("https://gamebanana.com/{$gbCategory}/embeddables/" . $modId . "?type=sd_image");
+  $img = $image_data === false ? false : imagecreatefromstring($image_data);
+  if ($img === false) {
+    http_response_code(502);
+    die();
+  }
   //Crop the top 20 pixels
   $cropTop = 62;
   $img = imagecrop($img, ['x' => 0, 'y' => $cropTop, 'width' => imagesx($img), 'height' => imagesy($img) - $cropTop]);
