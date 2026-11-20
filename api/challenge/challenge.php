@@ -25,9 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   }
 
   if (is_array($challenges)) {
-    foreach ($challenges as $challenge) {
-      $challenge->expand_foreign_keys($DB, $depth);
-    }
+    Challenge::expand_many($DB, $challenges, $depth);
   } else {
     $challenges->expand_foreign_keys($DB, $depth);
   }
